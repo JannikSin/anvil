@@ -14,7 +14,7 @@
 // per path: a name that collides with a sibling app's, or a cleanup pass that
 // deletes by anything looser than this prefix, evicts that sibling.
 const CACHE_PREFIX = "anvil-shell-";
-const CACHE_VERSION = `${CACHE_PREFIX}v3`;
+const CACHE_VERSION = `${CACHE_PREFIX}v4`;
 
 const SHELL = [
   "./",
@@ -22,6 +22,7 @@ const SHELL = [
   "./manifest.webmanifest",
   "./app/styles.css",
   "./app/main.js",
+  "./app/data/program.json",
   "./app/lib/awake.js",
   "./app/lib/core.js",
   "./app/lib/daily.js",

@@ -50,7 +50,7 @@ function nextSessionLabel(schedule, templates, todayIso) {
  * for forty times a session.
  *
  * @param {{
- *   workouts: { templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null> },
+ *   workouts: { templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, baselines?: Record<string, any> },
  *   daily: { days: Record<string, any>[] },
  *   targets: Record<string, any> | null,
  *   today: string,
@@ -122,6 +122,7 @@ export function TodayView({
       )
     : null;
   const tokenBad = tokenBroken(repo?.auth);
+  const baselines = /** @type {Record<string, any>} */ (workouts.baselines ?? {});
   const todayRow = (daily.days ?? []).find((d) => d.date === today) ?? {};
 
   const logSet = (/** @type {string} */ name) => {
@@ -253,6 +254,7 @@ export function TodayView({
           <div class="slots">
             ${template.exercises.map((/** @type {Record<string, any>} */ ex) => {
               const last = lastSetsFor(/** @type {any} */ (workouts.sessions), ex.name);
+              const baseline = last ? null : baselines[ex.name];
               const logged = session?.exercises.find((/** @type {any} */ e) => e.name === ex.name);
               const inp = inputs[ex.name] ?? { w: "", r: "" };
               return html`
@@ -262,7 +264,18 @@ export function TodayView({
                     <span class="q num">${ex.targetSets}×${ex.targetReps}</span>
                   </div>
                   <div class="liftmeta num">
-                    last: ${last ? formatSets(last) : "—"}
+                    ${
+                      // A real logged set always wins. Failing that, show the
+                      // planned working weight rather than an em dash: "last: —"
+                      // on every lift of a first session is the app telling him
+                      // it knows nothing about a man whose numbers have been
+                      // written down since July.
+                      last
+                        ? `last: ${formatSets(last)}`
+                        : baseline
+                          ? `plan: ${baseline.weight}×${baseline.reps}`
+                          : "last: —"
+                    }
                     ${logged && html` <b>· now: ${formatSets(logged.sets)}</b>`}
                   </div>
                   ${ex.note && html`<div class="hint">${ex.note}</div>`}

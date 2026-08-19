@@ -1,0 +1,247 @@
+{
+  "_note": "The programme, bundled into the app shell so anvil is usable on first open with no token and no network. Structure and coaching cues only: this repo is public and never carries real logged data, loads, or personal health details. The live copy lives in the private data repo and wins whenever it loads.",
+  "schedule": {
+    "mon": "lower-a",
+    "tue": "pull-a",
+    "wed": "push-a",
+    "thu": "pull-b",
+    "fri": "lower-b",
+    "sat": "push-b",
+    "sun": null
+  },
+  "templates": [
+    {
+      "id": "lower-a",
+      "name": "Mon: Lower A (Squat focus)",
+      "exercises": [
+        {
+          "name": "Back Squat",
+          "targetSets": 4,
+          "targetReps": "5-8",
+          "note": "Primary. Leave 1-2 in reserve. Depth + control."
+        },
+        {
+          "name": "Leg Press",
+          "targetSets": 3,
+          "targetReps": "10-12"
+        },
+        {
+          "name": "Seated Leg Curl",
+          "targetSets": 3,
+          "targetReps": "10-12"
+        },
+        {
+          "name": "Leg Extension",
+          "targetSets": 3,
+          "targetReps": "15-20",
+          "note": "Single-leg, or a 3s eccentric once the two-leg stack runs out."
+        },
+        {
+          "name": "Standing Calf Raise",
+          "targetSets": 4,
+          "targetReps": "12-15",
+          "note": "Pause + full stretch at the bottom."
+        },
+        {
+          "name": "Hanging Leg Raise",
+          "targetSets": 3,
+          "targetReps": "10"
+        }
+      ]
+    },
+    {
+      "id": "pull-a",
+      "name": "Tue: Pull A (Back/Biceps, heavy)",
+      "exercises": [
+        {
+          "name": "Weighted Pull-up or Lat Pulldown",
+          "targetSets": 4,
+          "targetReps": "6-10",
+          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar."
+        },
+        {
+          "name": "Chest-Supported Row (or DB Row)",
+          "targetSets": 3,
+          "targetReps": "8-12",
+          "note": "Strict, pad stops cheating. Squeeze + pause."
+        },
+        {
+          "name": "Cable Row",
+          "targetSets": 3,
+          "targetReps": "10-12"
+        },
+        {
+          "name": "Face Pull",
+          "targetSets": 3,
+          "targetReps": "15-20",
+          "note": "Shoulder health. Do not skip."
+        },
+        {
+          "name": "Incline DB Curl",
+          "targetSets": 3,
+          "targetReps": "8-12",
+          "note": "Arms behind torso = deep biceps stretch. Last set to failure + partials."
+        },
+        {
+          "name": "Hammer Curl",
+          "targetSets": 2,
+          "targetReps": "12"
+        }
+      ]
+    },
+    {
+      "id": "push-a",
+      "name": "Wed: Push A (Chest/Shoulders/Tri)",
+      "exercises": [
+        {
+          "name": "Incline DB Press",
+          "targetSets": 4,
+          "targetReps": "6-10",
+          "note": "Main press."
+        },
+        {
+          "name": "Flat Bench or Machine Chest Press",
+          "targetSets": 3,
+          "targetReps": "8-10"
+        },
+        {
+          "name": "Cable Fly",
+          "targetSets": 3,
+          "targetReps": "12-15",
+          "note": "Deep stretch at the bottom."
+        },
+        {
+          "name": "Overhead Press",
+          "targetSets": 3,
+          "targetReps": "6-10"
+        },
+        {
+          "name": "Cable Lateral Raise",
+          "targetSets": 4,
+          "targetReps": "12-20"
+        },
+        {
+          "name": "Overhead Triceps Extension",
+          "targetSets": 3,
+          "targetReps": "10-15",
+          "note": "Full stretch overhead."
+        },
+        {
+          "name": "Triceps Pushdown",
+          "targetSets": 2,
+          "targetReps": "12-15"
+        }
+      ]
+    },
+    {
+      "id": "pull-b",
+      "name": "Thu: Pull B (Back width/Grip + skill)",
+      "exercises": [
+        {
+          "name": "Pull-up / Muscle-up Skill Work",
+          "targetSets": 1,
+          "targetReps": "10 min",
+          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives."
+        },
+        {
+          "name": "Lat Pulldown (wide) or Pull-up",
+          "targetSets": 4,
+          "targetReps": "8-12"
+        },
+        {
+          "name": "Single-arm DB Row",
+          "targetSets": 3,
+          "targetReps": "10-12",
+          "note": "Big stretch. Last set near failure."
+        },
+        {
+          "name": "Straight-arm Pulldown",
+          "targetSets": 3,
+          "targetReps": "12-15",
+          "note": "Lat stretch."
+        },
+        {
+          "name": "Rear Delt Fly",
+          "targetSets": 3,
+          "targetReps": "15"
+        },
+        {
+          "name": "Shrug / Grip Work",
+          "targetSets": 2,
+          "targetReps": "15"
+        },
+        {
+          "name": "Dead Hang",
+          "targetSets": 3,
+          "targetReps": "max time",
+          "note": "Grip + shoulder decompression, climbing carryover."
+        }
+      ]
+    },
+    {
+      "id": "lower-b",
+      "name": "Fri: Lower B (Hinge focus)",
+      "exercises": [
+        {
+          "name": "Romanian Deadlift",
+          "targetSets": 4,
+          "targetReps": "6-10",
+          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch."
+        },
+        {
+          "name": "Bulgarian Split Squat",
+          "targetSets": 3,
+          "targetReps": "8-10 each",
+          "note": "Single-leg strength; carries over to court and rock."
+        },
+        {
+          "name": "Seated Leg Curl",
+          "targetSets": 3,
+          "targetReps": "12-15"
+        },
+        {
+          "name": "Leg Press (feet high, glute/ham)",
+          "targetSets": 2,
+          "targetReps": "12-15"
+        },
+        {
+          "name": "Seated Calf Raise",
+          "targetSets": 4,
+          "targetReps": "15-20"
+        }
+      ]
+    },
+    {
+      "id": "push-b",
+      "name": "Sat: Push B / Upper pump + weak points",
+      "exercises": [
+        {
+          "name": "Machine/DB Chest Press",
+          "targetSets": 3,
+          "targetReps": "10-15"
+        },
+        {
+          "name": "Lateral Raise",
+          "targetSets": 4,
+          "targetReps": "15-20"
+        },
+        {
+          "name": "Biceps + Triceps Superset",
+          "targetSets": 3,
+          "targetReps": "superset rounds"
+        },
+        {
+          "name": "Lagging Area (upper chest, arms, weak point)",
+          "targetSets": 3,
+          "targetReps": "10-15"
+        },
+        {
+          "name": "Shoulder-health Circuit",
+          "targetSets": 3,
+          "targetReps": "ext rotations + face pulls + band pull-aparts",
+          "note": "Prehab for a press-heavy week."
+        }
+      ]
+    }
+  ]
+}

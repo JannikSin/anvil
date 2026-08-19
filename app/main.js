@@ -63,7 +63,7 @@ function App() {
   // ---- data ---------------------------------------------------------------
 
   const [workouts, setWorkouts] = useState(
-    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null> }} */ ({
+    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, bundled?: boolean, baselines?: Record<string, any> }} */ ({
       templates: [],
       sessions: [],
     }),
@@ -73,6 +73,32 @@ function App() {
   const [targets, setTargets] = useState(/** @type {Record<string, any> | null} */ (null));
   const [loaded, setLoaded] = useState(false);
   const [vitalsLoaded, setVitalsLoaded] = useState(false);
+
+  // The bundled programme. anvil is useless on first open without it: the
+  // split lives in a PRIVATE data repo, so a fresh install with no token used
+  // to render an empty screen that asked David to go and create a credential —
+  // the fifth unfinished step in a chain where the observed completion rate of
+  // such steps is zero. Structure ships in the app shell, is precached by the
+  // service worker, and the repo copy overrides it the moment it loads.
+  useEffect(() => {
+    let alive = true;
+    fetch(new URL("./data/program.json", import.meta.url))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((prog) => {
+        if (!alive || !prog) return;
+        setWorkouts((cur) =>
+          // never clobber the real thing, and never drop logged sessions
+          cur.schedule === undefined && cur.templates.length === 0
+            ? { ...cur, schedule: prog.schedule, templates: prog.templates, bundled: true }
+            : cur,
+        );
+        setLoaded(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
