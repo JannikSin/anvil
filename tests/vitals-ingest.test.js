@@ -267,3 +267,44 @@ test("endpoint: GET is rejected", async () => {
   );
   assert.equal(res.status, 405);
 });
+
+// ---------------------------------------------------------------------------
+// Metric-name aliases, added 2026-08-19.
+//
+// The ingest drops an unrecognised metric name SILENTLY. That is the worst
+// failure mode this pipe has: the Worker returns 200, vitals.json gets written,
+// and the trend line the whole point of the exercise stays empty for weeks with
+// nothing anywhere reporting a problem. Health Auto Export has shipped the
+// cardio-fitness metric under more than one label, and the normaliser only
+// strips punctuation, so "Cardio Fitness" would not reach "vo2max" on its own.
+// ---------------------------------------------------------------------------
+
+test("Cardio Fitness reaches vo2max under either metric label", () => {
+  for (const name of ["VO2 Max", "vo2_max", "Cardio Fitness", "cardio_fitness"]) {
+    const { days } = parseHealthExport(
+      hae([{ name, units: "mL/min·kg", data: [{ date: "2026-08-19 00:00:00 -0500", qty: 47.3 }] }]),
+    );
+    assert.equal(days[0]?.vo2max, 47.3, `"${name}" did not reach vo2max`);
+  }
+});
+
+test("respiratory rate is parsed rather than dropped on the floor", () => {
+  const { days, recognized } = parseHealthExport(
+    hae([{ name: "respiratory_rate", units: "count/min", data: [{ date: "2026-08-19 00:00:00 -0500", qty: 14.62 }] }]),
+  );
+  assert.equal(days[0]?.respiratoryRate, 14.6, "respiratory rate was dropped");
+  assert.ok(recognized.includes("respiratoryRate"), "and it reports itself as recognised");
+});
+
+test("an unknown metric lands in `ignored` rather than vanishing", () => {
+  // This is the guard that makes the whole pipe honest. A metric the map does
+  // not know is skipped, the Worker still returns 200, and vitals.json still
+  // gets written, so nothing anywhere would say the feed is incomplete. The
+  // `ignored` list is the only place that shows up, so it must never be
+  // quietly dropped: it is what the response echoes back.
+  const { days, ignored } = parseHealthExport(
+    hae([{ name: "blood_alcohol_content", units: "%", data: [{ date: "2026-08-19 00:00:00 -0500", qty: 0 }] }]),
+  );
+  assert.deepEqual(days, [], "an unknown metric invented a day row");
+  assert.deepEqual(ignored, ["blood_alcohol_content"], "an unknown metric vanished without a trace");
+});

@@ -42,6 +42,12 @@ const METRIC_FIELD = {
   heartratevariabilitysdnn: "hrvMs",
   sleepanalysis: "sleepHours",
   vo2max: "vo2max",
+  // Health Auto Export has shipped this metric under more than one label and
+  // the normaliser only strips punctuation, so "Cardio Fitness" would miss.
+  // A metric name that does not match is dropped SILENTLY, which is the worst
+  // failure mode here: the pipe looks healthy and the trend line stays empty.
+  cardiofitness: "vo2max",
+  respiratoryrate: "respiratoryRate",
 };
 
 /**
@@ -56,6 +62,7 @@ const FIELD_ROUND = {
   hrvMs: 1,
   sleepHours: 1,
   vo2max: 1,
+  respiratoryRate: 1,
 };
 
 /**

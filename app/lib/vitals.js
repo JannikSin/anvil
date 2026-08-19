@@ -12,7 +12,8 @@
  *   restingHR?: number,
  *   hrvMs?: number,
  *   sleepHours?: number,
- *   vo2max?: number
+ *   vo2max?: number,
+ *   respiratoryRate?: number
  * }} VitalsDay
  * @typedef {{ date: string, result: string, avgBpm?: number }} EkgEvent
  * @typedef {{ days?: VitalsDay[], ekg?: EkgEvent[] }} Vitals
