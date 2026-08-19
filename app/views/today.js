@@ -208,9 +208,24 @@ export function TodayView({
         </p>`
       }
       ${
+        // Cold start. A fresh install has no schedule because it has no TOKEN,
+        // not because the schedule is missing: David's six-day split has been
+        // sitting in anvil-data the whole time. Telling him to go and edit a
+        // JSON file is both wrong and the kind of dead end that gets an app
+        // deleted on first open.
         !hasSchedule &&
+        !hasToken &&
         html`<p class="hint">
-          no schedule set yet — add one to workouts.json. pick a session for now.
+          nothing here yet because anvil cannot reach your data. Add a GitHub token in
+          <a href="#/system">Settings</a> and your split appears.
+        </p>`
+      }
+      ${
+        !hasSchedule &&
+        hasToken &&
+        html`<p class="hint">
+          no weekly schedule in workouts.json yet. Pick a session below and it still logs
+          normally.
         </p>`
       }
       ${
@@ -315,7 +330,7 @@ export function TodayView({
             ${
               workouts.templates.length === 0 &&
               html`<div class="empty">
-                ${hasToken ? (loading ? "loading…" : "no split templates yet") : "connect token in Settings"}
+                ${hasToken ? (loading ? "loading…" : "no split templates yet") : "add a token in Settings to load your split"}
               </div>`
             }
           </div>
