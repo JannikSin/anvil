@@ -1,7 +1,7 @@
 import { html } from "htm/preact";
 import { CoreWorkout } from "./core-workout.js";
 import { CORE_SESSIONS } from "../lib/core.js";
-import { MOBILITY_SESSIONS, WARMUPS } from "../lib/routines.js";
+import { MOBILITY_SESSIONS, PREHAB_SESSIONS, WARMUPS } from "../lib/routines.js";
 
 /**
  * Floor work: the three families of timed session, all driven by the same
@@ -33,6 +33,13 @@ export function CoreView() {
         sessions=${MOBILITY_SESSIONS}
         title="🧘 Mobility + stretch"
         subtitle="static holds — after training, never before"
+        rotate=${false}
+      />
+
+      <${CoreWorkout}
+        sessions=${PREHAB_SESSIONS}
+        title="🛡️ Shoulder prehab"
+        subtitle="after tennis or on a rest day, never on a press day"
         rotate=${false}
       />
 

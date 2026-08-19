@@ -404,6 +404,20 @@ export const MOBILITY_SESSIONS = [
         cue: "Elbows on a surface, hips back, chest sinks toward the floor. Breathe into the armpits.",
       },
       {
+        name: "Sleeper stretch",
+        seconds: 40,
+        rest: 0,
+        side: "L",
+        cue: "On your side, shoulder under you at 90 degrees, gently press the forearm toward the floor. STOP at a stretch, never at a pinch. This is the internal rotation an overhead athlete loses.",
+      },
+      {
+        name: "Sleeper stretch",
+        seconds: 40,
+        rest: 10,
+        side: "R",
+        cue: "Same. The serving side is usually the tighter one.",
+      },
+      {
         name: "Cross-body posterior shoulder",
         seconds: 35,
         rest: 0,
@@ -422,6 +436,80 @@ export const MOBILITY_SESSIONS = [
         seconds: 50,
         rest: 0,
         cue: "Sit back on the heels, walk the hands left and hold, then right and hold. Lats and the side of the ribcage.",
+      },
+    ],
+  },
+];
+
+/**
+ * Shoulder prehab. Strengthening, not stretching, and deliberately its own
+ * routine rather than a circuit tacked onto a pressing day.
+ *
+ * It came OFF Push B on 2026-08-19. His own Tennis Conditioning note says to do
+ * this work after tennis or on a non-lifting day and NOT stacked onto a heavy
+ * bench and overhead session, and the programme was doing exactly that. The old
+ * entry also had no prescription at all: its whole dose was the string
+ * "ext rotations + face pulls + band pull-aparts". These are Ellenbecker's
+ * actual numbers, light band, 3 sets of 15 to 20 per arm.
+ *
+ * The evidence that matters here is unglamorous: 22 RCTs and 1,281 people say
+ * PROGRESSIVE loading works for shoulder pain, and that non-progressive,
+ * non-resisted movement confers no benefit. So the band gets heavier over time
+ * or this is decoration.
+ * @type {CoreSession[]}
+ */
+export const PREHAB_SESSIONS = [
+  {
+    id: "prehab-shoulder",
+    name: "Shoulder prehab",
+    focus: "the tennis shoulder, on a day you did not press",
+    note: "After tennis, or on a rest day. NOT on Push A or Push B. Light band, slow, and step the band up when 20 reps stops being work.",
+    steps: [
+      {
+        name: "Band external rotation, elbow at side",
+        seconds: 45,
+        rest: 0,
+        side: "L",
+        cue: "Elbow pinned to the ribs, forearm rotates out. Small range, deliberate. 15 to 20 reps in the time.",
+      },
+      {
+        name: "Band external rotation, elbow at side",
+        seconds: 45,
+        rest: 10,
+        side: "R",
+        cue: "Same. This is the conservative entry point and it stays in the programme.",
+      },
+      {
+        name: "Standing 90/90 external rotation",
+        seconds: 45,
+        rest: 0,
+        side: "L",
+        cue: "Elbow up at shoulder height, rotate the forearm up and back. Better activation of the cuff and lower trap without the upper trap stealing it. STOP if it pinches at the front.",
+      },
+      {
+        name: "Standing 90/90 external rotation",
+        seconds: 45,
+        rest: 10,
+        side: "R",
+        cue: "Same. Added on top of the elbow-at-side version, never as a replacement for it.",
+      },
+      {
+        name: "Band pull-apart",
+        seconds: 45,
+        rest: 10,
+        cue: "Straight arms, pull to the chest, squeeze the blades, slow on the way back.",
+      },
+      {
+        name: "Face pull, high to eyes",
+        seconds: 45,
+        rest: 10,
+        cue: "Pull to eye level, elbows high, finish with the hands wide and the thumbs back.",
+      },
+      {
+        name: "Prone Y-T-W",
+        seconds: 60,
+        rest: 0,
+        cue: "Face down, thumbs up. Twenty seconds in each shape. Tiny range, zero momentum. Lower traps and rear delts.",
       },
     ],
   },

@@ -15,12 +15,20 @@
       "name": "Lower A (Squat focus)",
       "exercises": [
         {
+          "name": "Med Ball Slam",
+          "targetSets": 3,
+          "targetReps": "8",
+          "increment": 5,
+          "rest": 90,
+          "note": "Power, first, while fresh. Throw it hard, do not grind it. The only rate-of-force work in the week."
+        },
+        {
           "name": "Back Squat",
           "targetSets": 4,
           "targetReps": "5-8",
-          "note": "Primary. Leave 1-2 in reserve. Depth + control.",
           "increment": 10,
-          "rest": 180
+          "rest": 180,
+          "note": "Primary. Leave 1-2 in reserve. Depth + control."
         },
         {
           "name": "Leg Press",
@@ -37,27 +45,12 @@
           "rest": 90
         },
         {
-          "name": "Leg Extension",
-          "targetSets": 3,
-          "targetReps": "15-20",
-          "note": "Single-leg, or a 3s eccentric once the two-leg stack runs out.",
-          "increment": 10,
-          "rest": 90
-        },
-        {
           "name": "Standing Calf Raise",
-          "targetSets": 4,
+          "targetSets": 2,
           "targetReps": "12-15",
-          "note": "Pause + full stretch at the bottom.",
           "increment": 10,
-          "rest": 90
-        },
-        {
-          "name": "Hanging Leg Raise",
-          "targetSets": 3,
-          "targetReps": "10",
-          "increment": 10,
-          "rest": 90
+          "rest": 90,
+          "note": "Pause + full stretch at the bottom."
         }
       ]
     },
@@ -69,47 +62,33 @@
           "name": "Weighted Pull-up or Lat Pulldown",
           "targetSets": 4,
           "targetReps": "6-10",
-          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar.",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar."
         },
         {
           "name": "Chest-Supported Row (or DB Row)",
           "targetSets": 3,
           "targetReps": "8-12",
-          "note": "Strict, pad stops cheating. Squeeze + pause.",
           "increment": 5,
-          "rest": 180
-        },
-        {
-          "name": "Cable Row",
-          "targetSets": 3,
-          "targetReps": "10-12",
-          "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "note": "Strict, pad stops cheating. Squeeze + pause."
         },
         {
           "name": "Face Pull",
-          "targetSets": 3,
+          "targetSets": 2,
           "targetReps": "15-20",
-          "note": "Shoulder health. Do not skip.",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "note": "Shoulder health. Do not skip."
         },
         {
           "name": "Incline DB Curl",
           "targetSets": 3,
           "targetReps": "8-12",
-          "note": "Arms behind torso = deep biceps stretch. Last set to failure + partials.",
           "increment": 5,
-          "rest": 90
-        },
-        {
-          "name": "Hammer Curl",
-          "targetSets": 2,
-          "targetReps": "12",
-          "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "note": "Arms behind torso = deep biceps stretch. Last set to failure."
         }
       ]
     },
@@ -121,24 +100,16 @@
           "name": "Incline DB Press",
           "targetSets": 4,
           "targetReps": "6-10",
-          "note": "Main press.",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "note": "Main press."
         },
         {
           "name": "Flat Bench or Machine Chest Press",
-          "targetSets": 3,
+          "targetSets": 2,
           "targetReps": "8-10",
           "increment": 5,
           "rest": 180
-        },
-        {
-          "name": "Cable Fly",
-          "targetSets": 3,
-          "targetReps": "12-15",
-          "note": "Deep stretch at the bottom.",
-          "increment": 5,
-          "rest": 90
         },
         {
           "name": "Overhead Press",
@@ -149,25 +120,18 @@
         },
         {
           "name": "Cable Lateral Raise",
-          "targetSets": 4,
+          "targetSets": 2,
           "targetReps": "12-20",
           "increment": 5,
           "rest": 90
         },
         {
           "name": "Overhead Triceps Extension",
-          "targetSets": 3,
-          "targetReps": "10-15",
-          "note": "Full stretch overhead.",
-          "increment": 5,
-          "rest": 90
-        },
-        {
-          "name": "Triceps Pushdown",
           "targetSets": 2,
-          "targetReps": "12-15",
+          "targetReps": "10-15",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "note": "Full stretch overhead."
         }
       ]
     },
@@ -179,9 +143,9 @@
           "name": "Pull-up / Muscle-up Skill Work",
           "targetSets": 1,
           "targetReps": "10 min",
-          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives.",
           "increment": 5,
-          "rest": 180
+          "rest": 120,
+          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives."
         },
         {
           "name": "Lat Pulldown (wide) or Pull-up",
@@ -194,27 +158,20 @@
           "name": "Single-arm DB Row",
           "targetSets": 3,
           "targetReps": "10-12",
-          "note": "Big stretch. Last set near failure.",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "note": "Big stretch. Last set near failure."
         },
         {
           "name": "Straight-arm Pulldown",
-          "targetSets": 3,
+          "targetSets": 2,
           "targetReps": "12-15",
-          "note": "Lat stretch.",
           "increment": 5,
-          "rest": 180
+          "rest": 90,
+          "note": "Lat stretch."
         },
         {
           "name": "Rear Delt Fly",
-          "targetSets": 3,
-          "targetReps": "15",
-          "increment": 5,
-          "rest": 90
-        },
-        {
-          "name": "Shrug / Grip Work",
           "targetSets": 2,
           "targetReps": "15",
           "increment": 5,
@@ -222,11 +179,11 @@
         },
         {
           "name": "Dead Hang",
-          "targetSets": 3,
+          "targetSets": 2,
           "targetReps": "max time",
-          "note": "Grip + shoulder decompression, climbing carryover.",
           "increment": 5,
-          "rest": 120
+          "rest": 90,
+          "note": "Grip + shoulder decompression. Bar, open hand, never an edge."
         }
       ]
     },
@@ -235,39 +192,41 @@
       "name": "Lower B (Hinge focus)",
       "exercises": [
         {
+          "name": "Med Ball Side Toss",
+          "targetSets": 3,
+          "targetReps": "6 each",
+          "increment": 5,
+          "rest": 90,
+          "note": "Rotational power, first, while fresh. The transverse plane nothing else trains."
+        },
+        {
           "name": "Romanian Deadlift",
           "targetSets": 4,
           "targetReps": "6-10",
-          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch.",
           "increment": 10,
-          "rest": 180
+          "rest": 180,
+          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch."
+        },
+        {
+          "name": "Lateral Lunge",
+          "targetSets": 3,
+          "targetReps": "8 each",
+          "increment": 10,
+          "rest": 120,
+          "note": "THE frontal plane, taken from Ben's sheet. You play a lateral sport and this programme trained one plane."
         },
         {
           "name": "Bulgarian Split Squat",
           "targetSets": 3,
           "targetReps": "8-10 each",
-          "note": "Single-leg strength; carries over to court and rock.",
           "increment": 10,
-          "rest": 180
+          "rest": 180,
+          "note": "Single-leg strength; carries over to court and rock."
         },
         {
           "name": "Seated Leg Curl",
-          "targetSets": 3,
-          "targetReps": "12-15",
-          "increment": 10,
-          "rest": 90
-        },
-        {
-          "name": "Leg Press (feet high, glute/ham)",
           "targetSets": 2,
           "targetReps": "12-15",
-          "increment": 10,
-          "rest": 180
-        },
-        {
-          "name": "Seated Calf Raise",
-          "targetSets": 4,
-          "targetReps": "15-20",
           "increment": 10,
           "rest": 90
         }
@@ -275,7 +234,7 @@
     },
     {
       "id": "push-b",
-      "name": "Push B / Upper pump + weak points",
+      "name": "Push B (Upper pump + weak points)",
       "exercises": [
         {
           "name": "Machine/DB Chest Press",
@@ -285,33 +244,41 @@
           "rest": 180
         },
         {
+          "name": "DB Half-Kneeling One-Arm Press",
+          "targetSets": 3,
+          "targetReps": "8 each",
+          "increment": 5,
+          "rest": 120,
+          "note": "From Ben's sheet. A shoulder-friendlier overhead position than a loaded bilateral press."
+        },
+        {
           "name": "Lateral Raise",
-          "targetSets": 4,
+          "targetSets": 3,
           "targetReps": "15-20",
           "increment": 5,
           "rest": 90
         },
         {
-          "name": "Biceps + Triceps Superset",
-          "targetSets": 3,
-          "targetReps": "superset rounds",
-          "increment": 5,
-          "rest": 120
-        },
-        {
-          "name": "Lagging Area (upper chest, arms, weak point)",
-          "targetSets": 3,
+          "name": "Incline DB Curl",
+          "targetSets": 2,
           "targetReps": "10-15",
           "increment": 5,
-          "rest": 120
+          "rest": 90
         },
         {
-          "name": "Shoulder-health Circuit",
-          "targetSets": 3,
-          "targetReps": "ext rotations + face pulls + band pull-aparts",
-          "note": "Prehab for a press-heavy week.",
+          "name": "Triceps Pushdown",
+          "targetSets": 2,
+          "targetReps": "12-15",
           "increment": 5,
-          "rest": 120
+          "rest": 90
+        },
+        {
+          "name": "Side Plank with Hip Hike",
+          "targetSets": 3,
+          "targetReps": "10 each",
+          "increment": 5,
+          "rest": 90,
+          "note": "From Ben's sheet, and it upgrades the bodyweight version in Core. Anti-lateral-flexion, loaded."
         }
       ]
     }
