@@ -193,56 +193,93 @@ export function TodayView({
               const last = lastSetsFor(/** @type {any} */ (workouts.sessions), ex.name);
               const baseline = last ? null : baselines[ex.name];
               const logged = session?.exercises.find((/** @type {any} */ e) => e.name === ex.name);
-              const inp = inputs[ex.name] ?? { w: "", r: "" };
+
+              // PREFILL, the single biggest change to how this logs. The
+              // fields arrive already carrying last session's numbers (or the
+              // planned ones), so an unchanged set costs ONE tap on LOG rather
+              // than typing two numbers with chalk on your hands. Typing still
+              // wins the moment you touch a field, which is David's stated
+              // preference; the prefill just means he usually does not have to.
+              const seed = last?.[last.length - 1] ?? baseline ?? null;
+              const inp = inputs[ex.name] ?? {
+                w: seed ? String(seed.weight) : "",
+                r: seed ? String(seed.reps) : "",
+              };
+              const same =
+                seed && inp.w === String(seed.weight) && inp.r === String(seed.reps);
+              const set = (/** @type {Record<string, string>} */ patch) =>
+                onDraft({ ...draft, inputs: { ...inputs, [ex.name]: { ...inp, ...patch } } });
+              const nudge = (/** @type {"w" | "r"} */ field, /** @type {number} */ by) => {
+                const cur = Number(inp[field]);
+                const next = Math.max(0, (Number.isFinite(cur) ? cur : 0) + by);
+                set({ [field]: String(Math.round(next * 100) / 100) });
+              };
+              const stepBtn = (
+                /** @type {string} */ label,
+                /** @type {"w" | "r"} */ field,
+                /** @type {number} */ by,
+                /** @type {string} */ aria,
+              ) => html`
+                <button class="step" aria-label=${aria} onClick=${() => nudge(field, by)}>
+                  ${label}
+                </button>
+              `;
+
               return html`
-                <div class="lift" key=${ex.name}>
+                <div class="lift ${logged ? "islogged" : ""}" key=${ex.name}>
                   <div class="liftrow">
                     <span class="food">${ex.name}</span>
                     <span class="q num">${ex.targetSets}×${ex.targetReps}</span>
                   </div>
                   <div class="liftmeta num">
                     ${
-                      // A real logged set always wins. Failing that, show the
-                      // planned working weight rather than an em dash: "last: —"
-                      // on every lift of a first session is the app telling him
-                      // it knows nothing about a man whose numbers have been
-                      // written down since July.
-                      last
-                        ? `last: ${formatSets(last)}`
-                        : baseline
-                          ? `plan: ${baseline.weight}×${baseline.reps}`
-                          : "last: —"
+                      logged
+                        ? `logged ${formatSets(logged.sets)}`
+                        : last
+                          ? `last: ${formatSets(last)}`
+                          : baseline
+                            ? `plan: ${baseline.weight}×${baseline.reps}`
+                            : "last: —"
                     }
-                    ${logged && html` <b>· now: ${formatSets(logged.sets)}</b>`}
                   </div>
-                  ${ex.note && html`<div class="hint">${ex.note}</div>`}
-                  <div class="setform ${invalid === ex.name ? "inputerr" : ""}">
-                    <input
-                      type="number"
-                      inputmode="decimal"
-                      placeholder="lb"
-                      aria-label=${`Weight for ${ex.name} (0 for bodyweight)`}
-                      value=${inp.w}
-                      onInput=${(/** @type {any} */ e) =>
-                        onDraft({
-                          ...draft,
-                          inputs: { ...inputs, [ex.name]: { ...inp, w: e.currentTarget.value } },
-                        })}
-                    />
-                    <input
-                      type="number"
-                      inputmode="numeric"
-                      placeholder="reps"
-                      aria-label=${`Reps for ${ex.name}`}
-                      value=${inp.r}
-                      onInput=${(/** @type {any} */ e) =>
-                        onDraft({
-                          ...draft,
-                          inputs: { ...inputs, [ex.name]: { ...inp, r: e.currentTarget.value } },
-                        })}
-                    />
-                    <button class="primary" onClick=${() => logSet(ex.name)}>LOG</button>
-                  </div>
+                  ${ex.note && !logged && html`<div class="hint">${ex.note}</div>`}
+                  ${
+                    logged &&
+                    html`<button class="secondary logagain" onClick=${() => set({})}>CHANGE</button>`
+                  }
+                  ${
+                    !logged &&
+                    html`
+                      <div class="setform steppers ${invalid === ex.name ? "inputerr" : ""}">
+                        ${stepBtn("−5", "w", -5, `five pounds off ${ex.name}`)}
+                        <input
+                          type="number"
+                          inputmode="decimal"
+                          placeholder="lb"
+                          aria-label=${`Weight for ${ex.name}, 0 for bodyweight`}
+                          value=${inp.w}
+                          onFocus=${(/** @type {any} */ e) => e.currentTarget.select()}
+                          onInput=${(/** @type {any} */ e) => set({ w: e.currentTarget.value })}
+                        />
+                        ${stepBtn("+5", "w", 5, `five pounds on ${ex.name}`)}
+                        <span class="by num">×</span>
+                        ${stepBtn("−", "r", -1, `one rep off ${ex.name}`)}
+                        <input
+                          type="number"
+                          inputmode="numeric"
+                          placeholder="reps"
+                          aria-label=${`Reps for ${ex.name}`}
+                          value=${inp.r}
+                          onFocus=${(/** @type {any} */ e) => e.currentTarget.select()}
+                          onInput=${(/** @type {any} */ e) => set({ r: e.currentTarget.value })}
+                        />
+                        ${stepBtn("+", "r", 1, `one rep on ${ex.name}`)}
+                      </div>
+                      <button class="primary logbtn" onClick=${() => logSet(ex.name)}>
+                        ${same ? "LOG · SAME AS LAST" : "LOG"}
+                      </button>
+                    `
+                  }
                 </div>
               `;
             })}

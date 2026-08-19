@@ -1923,3 +1923,76 @@ details.dayrow summary:focus-visible {
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 }
+
+/* Set entry, rebuilt 2026-08-18 for one-handed use between sets.
+   The row is weight, then a literal ×, then reps, each flanked by its own
+   stepper, so the numbers read as "185 × 6" rather than as two unrelated
+   boxes. Steppers are 44px minimum because that is the smallest thing a thumb
+   reliably hits, and the LOG button is full width underneath rather than
+   squeezed onto the same line: it is the one control pressed forty times a
+   session. */
+.setform.steppers {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.setform.steppers input {
+  /* the base rule sets width:0 with flex:1, a flexbox idiom that collapses the
+     input to nothing once this row became a grid */
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 17px;
+}
+
+.setform.steppers .step {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.setform.steppers .step:active {
+  background: var(--signal-08);
+  border-color: var(--signal-dark);
+}
+
+.setform.steppers .by {
+  color: var(--dim);
+  padding: 0 2px;
+}
+
+button.primary.logbtn {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 46px;
+}
+
+/* A logged lift steps back rather than shouting: the work is done, the row is
+   now a receipt. It still has to be correctable, so CHANGE stays. */
+.lift.islogged {
+  border-color: var(--signal-dark);
+}
+
+.lift.islogged .food {
+  color: var(--dim);
+}
+
+.lift.islogged .liftmeta {
+  color: var(--signal);
+}
+
+button.secondary.logagain {
+  margin-top: 6px;
+  min-height: 38px;
+  font-size: 12px;
+}
