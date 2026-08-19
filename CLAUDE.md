@@ -7,6 +7,14 @@
 > specific to this app: **does it add an action to logging?** If it does, it
 > needs a promise number and an argument, because P4 (logging costs less than
 > skipping it) is the keystone and wins every tie.
+>
+> **Every promise in that document carries a status line, and `tests/promises.test.js`
+> parses the document and fails the build if the document and the suite disagree.**
+> If you build a promise, flip its status line to `Proven by: ... > "<test name>"`
+> and add the test **in the same commit**. If you break one, say so there. The
+> document is allowed to describe things that are not built; it is not allowed to
+> be wrong about which ones. This exists because Mise's equivalent document
+> promised a protein ceiling that was never implemented and nobody noticed.
 
 The lifting half of Mise, on its own two feet. Split out on 2026-08-18; the
 plan of record is Crystal `Lanes/Fitness-App-Build.md`.
