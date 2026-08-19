@@ -302,6 +302,60 @@ const PROMISES = [
 for (const p of PROMISES) test(p.name, p.fn);
 
 // ---------------------------------------------------------------------------
+// UNBUILT PROMISES ARE `todo`, NEVER ABSENT.
+//
+// Adopted 2026-08-20 from the Mise promise audit, which produced the sharpest
+// diagnosis available of how a Core Purpose document rots. The finding:
+//
+//   P5 was never silent. It was detected, measured, persisted to disk, rendered
+//   on screen, and written into the working list, and then RECLASSIFIED from a
+//   failure into a schedule item. "The document said DONE WHEN, the working list
+//   said GATED, and nothing in the system is capable of noticing that those two
+//   sentences contradict each other."
+//
+// A `NOT BUILT` line in a document is exactly that reclassification. It reads as
+// a plan and it is indistinguishable from an abandonment. So every unbuilt
+// promise gets a todo test here carrying an OWNER and a DATE, and the runner
+// prints it on every single run. The Core Purpose's own corollary, "no feature
+// ships dark: anything built behind a gate gets a date and an owner in the same
+// commit," becomes machine-checked for the first time.
+//
+// This list IS the gate register. A promise cannot leave it silently.
+// ---------------------------------------------------------------------------
+
+/** @type {{ id: string, name: string, why: string }[]} */
+const UNBUILT = [
+  {
+    id: "P3",
+    name: "P3 every session has three tiers and all of them advance the rotation",
+    why: "unbuilt, owner David, Fix-List job 2. Six days a week with no reduced version is a five-day plan with one guaranteed failure in it.",
+  },
+  {
+    id: "P11",
+    name: "P11 a dated event is held and the remaining session count is correct",
+    why: "unbuilt, owner David, Fix-List job 3. The 2 Oct bench competition lives in a vault note and in nothing the app can read.",
+  },
+  {
+    id: "NAMED-USER",
+    name: "DOC every claim in the document that is not a numbered promise",
+    why:
+      "FAILING, owner David, found 2026-08-20. The document's 'Who it is for' says " +
+      "'No user is named in the design, and the public repo contains nothing measured " +
+      "about a person.' There are 25 occurrences of the first profile's given name in " +
+      "app/, all in comments recording why a decision was made. Milder than Mise's " +
+      "store.js:44 (`p === \"david\" ? path : ...`), which makes one named user the " +
+      "privileged root of the data layout, but the clause as written forbids it. " +
+      "TWO HONEST FIXES AND THIS TEST MUST NOT PICK ONE: strip the names, or narrow " +
+      "the clause to forbid measured personal DATA (loads, weights, health numbers) " +
+      "while permitting design rationale to cite the first profile. Softening a promise " +
+      "to make a failure disappear is the exact move this file exists to prevent, so it " +
+      "stays red until David rules.",
+  },
+];
+
+for (const u of UNBUILT) test(u.name, { todo: u.why }, () => {});
+
+// ---------------------------------------------------------------------------
 // The meta-tests. These are the ones that make the document honest.
 // ---------------------------------------------------------------------------
 
@@ -372,6 +426,29 @@ test("META: a promise marked NOT BUILT has not quietly acquired a test", () => {
       `${id} is marked NOT BUILT in the document but this file has a test for it. ` +
         `If it got built, say so in the document in the same commit.`,
     );
+  }
+});
+
+test("META: every NOT BUILT promise is on the gate register, with an owner and a date", () => {
+  // The one that would have caught Mise's P5. A promise cannot be marked unbuilt
+  // in the document and then simply not exist here, because that is the state
+  // where "planned" and "abandoned" look identical.
+  const ledger = parseLedger(readFileSync(DOC, "utf8"));
+  const registered = new Set(UNBUILT.map((u) => u.id));
+  for (const [id, entry] of Object.entries(ledger)) {
+    if (entry.kind !== "not-built") continue;
+    assert.ok(
+      registered.has(id),
+      `${id} is marked NOT BUILT in the document and has no todo test here. ` +
+        `Add it to UNBUILT with an owner and a reason. An unbuilt promise that is ` +
+        `merely absent from the suite is indistinguishable from an abandoned one, ` +
+        `which is precisely how Mise's protein ceiling was lost: it was reclassified ` +
+        `from a failure into a schedule item and nothing could tell the difference.`,
+    );
+  }
+  for (const u of UNBUILT) {
+    assert.ok(u.why && u.why.length > 20, `${u.id}: the todo reason must name an owner and why`);
+    assert.match(u.why, /owner /i, `${u.id}: every gated item needs a named owner`);
   }
 });
 
