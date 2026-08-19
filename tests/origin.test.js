@@ -29,10 +29,11 @@ test("the service worker cache name is anvil-prefixed", () => {
 });
 
 test("activate deletes ONLY anvil's own caches", () => {
-  // Mise, Tally, Finesse and Bonmot all shipped
+  // Mise still ships
   //   keys.filter((k) => k !== CACHE_VERSION)
   // which deletes every cache on the origin, i.e. every sibling app, on every
-  // deploy. That one missing prefix check is the eviction bug, six times over.
+  // deploy. The other five PWAs were prefix-scoped on 2026-07-27; that one
+  // missing check is the whole eviction bug.
   assert.match(sw, /k\.startsWith\(CACHE_PREFIX\) && k !== CACHE_VERSION/);
   assert.doesNotMatch(
     sw,

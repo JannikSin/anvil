@@ -81,11 +81,13 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            // THE correction. Mise (and Tally, and Finesse, and Bonmot) all
-            // shipped `keys.filter((k) => k !== CACHE_VERSION)`, which reads
-            // as "drop my old caches" and actually means "drop every cache on
-            // janniksin.github.io" — every sibling PWA, evicted on every
-            // deploy. Only ever delete our own prefix.
+            // THE correction. Mise still ships
+            // `keys.filter((k) => k !== CACHE_VERSION)`, which reads as "drop
+            // my old caches" and actually means "drop every cache on
+            // janniksin.github.io" — so every Mise deploy evicts Tally,
+            // Finesse, Bonmot, Grandstand and AIMap. Those five were
+            // prefix-scoped on 2026-07-27; Mise never was. Only ever delete
+            // our own prefix.
             .filter((k) => k.startsWith(CACHE_PREFIX) && k !== CACHE_VERSION)
             .map((k) => caches.delete(k)),
         ),

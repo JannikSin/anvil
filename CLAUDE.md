@@ -18,10 +18,11 @@ ORIGIN, not per path. That means:
 - `DB_NAME` is `"anvil"`.
 - The service worker cache is `anvil-shell-vN`, registered with scope `./`,
   never at the origin root.
-- `activate` deletes only caches starting with `anvil-shell-`. Mise, Tally,
-  Finesse and Bonmot all shipped `keys.filter((k) => k !== CACHE_VERSION)`,
-  which deletes every cache on the origin — that is the eviction bug that has
-  bitten six apps. `tests/origin.test.js` guards all of this.
+- `activate` deletes only caches starting with `anvil-shell-`. Mise still ships
+  `keys.filter((k) => k !== CACHE_VERSION)`, which deletes every cache on the
+  origin; Tally, Finesse, Bonmot, Grandstand and AIMap were prefix-scoped on
+  2026-07-27, so Mise is the one app still evicting its siblings on every
+  deploy. `tests/origin.test.js` guards all of this.
 
 **2. Two data repos.** `lib/github.js` `repoFor()` routes by path:
 
