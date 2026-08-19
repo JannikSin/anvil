@@ -46,7 +46,14 @@ export const DATA_REPO = {
 const MISE_REPO = { owner: "JannikSin", repo: "mise-data" };
 export const SHARED_DAILY = "fitness/daily.json";
 export const MISE_TARGETS = "fitness/targets.json";
-const MISE_PATHS = new Set([SHARED_DAILY, MISE_TARGETS]);
+// Apple Health rows still arrive through MISE's worker until David re-points
+// the Health Auto Export app on his phone at anvil's worker (a physical step,
+// not a code one). Until then this is where vitals actually are, and reading
+// it keeps the Vitals screen alive across the switch instead of going blank
+// the moment Mise's Vitals tab is deleted. After the phone moves, anvil's own
+// vitals.json wins and this stays as the read-only history.
+export const MISE_VITALS = "health/vitals.json";
+const MISE_PATHS = new Set([SHARED_DAILY, MISE_TARGETS, MISE_VITALS]);
 
 /**
  * Which repo owns a path. Anvil's own data lives in anvil-data; the two
@@ -213,7 +220,9 @@ export async function readFile(path) {
 export async function writeFile(path, data, sha) {
   // Anvil never writes a calorie number (Fitness-App-Build §2.5). Code, not
   // a comment, because the failure mode is silent corruption of Mise's spine.
-  if (path === MISE_TARGETS) throw new Error(`refusing to write ${path}: owned by Mise`);
+  if (path === MISE_TARGETS || path === MISE_VITALS) {
+    throw new Error(`refusing to write ${path}: owned by Mise`);
+  }
   const res = await fetch(contentsUrl(path), {
     method: "PUT",
     headers: authedHeaders(),

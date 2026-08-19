@@ -16,7 +16,13 @@ import { html } from "htm/preact";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { initRouter } from "./lib/router.js";
 import { initStore, read, write, getSyncStatus, onSyncChange } from "./lib/store.js";
-import { checkDataRepo, getToken, SHARED_DAILY, MISE_TARGETS } from "./lib/github.js";
+import {
+  checkDataRepo,
+  getToken,
+  SHARED_DAILY,
+  MISE_TARGETS,
+  MISE_VITALS,
+} from "./lib/github.js";
 import { localIsoDate } from "./lib/dates.js";
 import { upsertDay } from "./lib/daily.js";
 import { TodayView } from "./views/today.js";
@@ -79,10 +85,20 @@ function App() {
       read(SHARED_DAILY).then((d) => {
         if (alive && d) setDaily(/** @type {any} */ (d));
       });
+      // anvil's own file first; fall back to the rows Mise's worker is still
+      // writing until the phone is re-pointed (see MISE_VITALS)
       read("vitals.json").then((v) => {
         if (!alive) return;
-        if (v) setVitals(/** @type {any} */ (v));
-        setVitalsLoaded(true);
+        if (v && Array.isArray(/** @type {any} */ (v).days) && /** @type {any} */ (v).days.length) {
+          setVitals(/** @type {any} */ (v));
+          setVitalsLoaded(true);
+          return;
+        }
+        read(MISE_VITALS).then((legacy) => {
+          if (!alive) return;
+          if (legacy) setVitals(/** @type {any} */ (legacy));
+          setVitalsLoaded(true);
+        });
       });
       // read-only: Mise owns this file, github.js refuses to write it
       read(MISE_TARGETS).then((t) => {
