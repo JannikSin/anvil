@@ -1,8 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 
-import { nextInRotation, progressionFor, sessionsOn } from "../app/lib/workouts.js";
+import {
+  nextInRotation,
+  progressionFor,
+  sessionAtTier,
+  sessionsOn,
+  tierMinutes,
+} from "../app/lib/workouts.js";
 import {
   AEROBIC,
   TYPES,
@@ -112,6 +118,55 @@ const PROMISES = [
 
       // Unreadable prescriptions refuse rather than guess.
       assert.equal(progressionFor([at("2026-08-01", 0, 0)], "Plank", "max time", 5), null);
+    },
+  },
+  {
+    id: "P3",
+    name: "P3 every session has three tiers and all of them advance the rotation",
+    fn: () => {
+    for (const t of program.templates) {
+      const one = sessionAtTier(t, 1);
+      const two = sessionAtTier(t, 2);
+      const three = sessionAtTier(t, 3);
+
+      // all three exist and are genuinely different sizes
+      assert.ok(one && two && three, `${t.id} is missing a tier`);
+      assert.equal(one.exercises.length, t.exercises.length, `${t.id} tier 1 is not the full session`);
+      assert.ok(two.exercises.length < one.exercises.length, `${t.id} tier 2 cuts nothing`);
+      assert.equal(three.exercises.length, 1, `${t.id} tier 3 must be exactly one movement`);
+
+      // nesting: the smaller tier is always a subset of the larger one, so
+      // dropping a tier never introduces a lift the person has not warmed up for
+      const names = (s) => s.exercises.map((e) => e.name);
+      for (const n of names(three)) assert.ok(names(two).includes(n), `${t.id} tier 3 lift absent from tier 2`);
+      for (const n of names(two)) assert.ok(names(one).includes(n), `${t.id} tier 2 lift absent from tier 1`);
+
+      // the tier 3 movement is the one that matters, not whatever sorted first
+      assert.ok(
+        t.exercises.find((e) => e.name === names(three)[0]).tier === 3,
+        `${t.id} tier 3 picked an exercise not marked tier 3`,
+      );
+
+      // and it is honestly shorter, which is the only reason anyone picks it
+      assert.ok(
+        tierMinutes(t, 3) < tierMinutes(t, 2) && tierMinutes(t, 2) < tierMinutes(t, 1),
+        `${t.id} tiers do not actually save time (${tierMinutes(t, 1)}/${tierMinutes(t, 2)}/${tierMinutes(t, 3)} min)`,
+      );
+    }
+
+    // A tier 3 completion advances the rotation exactly as a tier 1 does. This is
+    // the half of the promise that is easy to get wrong: nextInRotation must key
+    // off the session having HAPPENED, never off how much of it happened.
+    const done = [{ date: "2026-08-19", templateId: "lower-a", exercises: [] }];
+    const full = nextInRotation(program.schedule, program.templates, done);
+    const reduced = nextInRotation(program.schedule, program.templates, [
+      { ...done[0], tier: 3, exercises: [{ name: "Back Squat", sets: [{ weight: 225, reps: 5 }] }] },
+    ]);
+    assert.equal(reduced?.id, full?.id, "a tier 3 day did not advance the rotation like a tier 1 day");
+
+    // a template with no tier data must not collapse to an empty session
+    const untiered = { id: "x", name: "X", exercises: [{ name: "A", targetSets: 3, targetReps: "5" }] };
+    assert.equal(sessionAtTier(untiered, 3).exercises.length, 1, "untiered template offered an empty fallback");
     },
   },
   {
@@ -326,34 +381,120 @@ for (const p of PROMISES) test(p.name, p.fn);
 /** @type {{ id: string, name: string, why: string }[]} */
 const UNBUILT = [
   {
-    id: "P3",
-    name: "P3 every session has three tiers and all of them advance the rotation",
-    why: "unbuilt, owner David, Fix-List job 2. Six days a week with no reduced version is a five-day plan with one guaranteed failure in it.",
-  },
-  {
     id: "P11",
     name: "P11 a dated event is held and the remaining session count is correct",
     why: "unbuilt, owner David, Fix-List job 3. The 2 Oct bench competition lives in a vault note and in nothing the app can read.",
   },
-  {
-    id: "NAMED-USER",
-    name: "DOC every claim in the document that is not a numbered promise",
-    why:
-      "FAILING, owner David, found 2026-08-19. The document's 'Who it is for' says " +
-      "'No user is named in the design, and the public repo contains nothing measured " +
-      "about a person.' There are 25 occurrences of the first profile's given name in " +
-      "app/, all in comments recording why a decision was made. Milder than Mise's " +
-      "store.js:44 (`p === \"david\" ? path : ...`), which makes one named user the " +
-      "privileged root of the data layout, but the clause as written forbids it. " +
-      "TWO HONEST FIXES AND THIS TEST MUST NOT PICK ONE: strip the names, or narrow " +
-      "the clause to forbid measured personal DATA (loads, weights, health numbers) " +
-      "while permitting design rationale to cite the first profile. Softening a promise " +
-      "to make a failure disappear is the exact move this file exists to prevent, so it " +
-      "stays red until David rules.",
-  },
 ];
 
 for (const u of UNBUILT) test(u.name, { todo: u.why }, () => {});
+
+// ---------------------------------------------------------------------------
+// The narrowed named-user clause, ruled by David 2026-08-19, now enforced.
+//
+// The old clause said "no user is named in the design" and was read as
+// forbidding the 25 comments in app/ that record WHO asked for a decision and
+// WHEN. That made it permanently false, and a permanently false promise is the
+// same as no promise: nothing can go red, so nothing is watched.
+//
+// David narrowed it: the DESIGN is the code paths, the data model, the defaults
+// and the UI copy. Provenance comments are history and are allowed. What is
+// forbidden is a person's name reaching anything the program branches on.
+//
+// The failure this prevents is not hypothetical. Mise's store.js:44 reads
+//   p === "david" ? path : `profiles/${p}/${path}`
+// which makes one named user the privileged ROOT of the data layout and every
+// other person a subdirectory. That is a named user in the design. Anvil must
+// never acquire that shape, and now it cannot do so quietly.
+// ---------------------------------------------------------------------------
+
+/** Strip line comments, block comments and JSDoc, leaving executable text. */
+function stripComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+}
+
+// Given names and surnames only. The GitHub ACCOUNT handle "JannikSin" is
+// deliberately NOT on this list, and the reason is the whole distinction the
+// clause turns on: `github.js` uses it as a DEFAULT_REPO fallback that any
+// install replaces with one localStorage key ("anvil.dataRepo"), and nothing
+// branches on it. Mise's `p === "david" ? path : ...` branches, which is what
+// makes one person the privileged root. A default a second profile overrides
+// is the core-plus-profile design working; a branch is the design naming a
+// person. The override itself is asserted below so this exclusion stays honest.
+const NAMES = ["david", "taranowski"];
+
+test("no person is named in the design, only in the margins", () => {
+  const dir = new URL("../app/", import.meta.url);
+  /** @param {URL} d @returns {URL[]} */
+  const walk = (d) =>
+    readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? walk(new URL(e.name + "/", d))
+        : /\.(js|css|html)$/.test(e.name)
+          ? [new URL(e.name, d)]
+          : [],
+    );
+
+  /** @type {string[]} */
+  const offences = [];
+  for (const file of walk(dir)) {
+    const code = stripComments(readFileSync(file, "utf8")).toLowerCase();
+    for (const name of NAMES) {
+      if (code.includes(name)) {
+        const line =
+          code.slice(0, code.indexOf(name)).split("\n").length;
+        offences.push(
+          `${file.pathname.split("/app/")[1]}:${line} has "${name}" in executable code`,
+        );
+      }
+    }
+  }
+
+  assert.deepEqual(
+    offences,
+    [],
+    "A personal name reached a code path, a key, a route or a default. " +
+      "The person belongs in the profile, not in the design. " +
+      offences.join("; "),
+  );
+});
+
+test("the one account handle in the code is a default, not a privilege", () => {
+  // Keeps the NAMES exclusion above honest. If someone ever deletes the
+  // override and hardcodes the owner, the handle stops being a default and
+  // becomes exactly the thing the clause forbids, and this goes red.
+  const gh = readFileSync(new URL("../app/lib/github.js", import.meta.url), "utf8");
+  assert.match(
+    gh,
+    /localStorage\.getItem\(REPO_KEY\)/,
+    "DEFAULT_REPO must stay overridable per install, or its owner name is a privilege",
+  );
+  assert.ok(
+    !/===\s*["'`](?:david|taranowski)/i.test(gh),
+    "github.js branches on a person's name: that is the Mise store.js:44 shape",
+  );
+});
+
+test("the profile is the only thing that personalises the app", () => {
+  // The positive half of the same promise: the bundled programme must be
+  // structure and coaching craft, so a second profile loading its own data
+  // gets a genuinely different app out of identical code. If the shipped
+  // default ever hardened into one person's actual programme, the clause
+  // would be true by letter and false in spirit.
+  const raw = readFileSync(
+    new URL("../app/data/program.json", import.meta.url),
+    "utf8",
+  ).toLowerCase();
+  for (const name of NAMES) {
+    assert.ok(!raw.includes(name), `the bundled programme names "${name}"`);
+  }
+  assert.ok(
+    program._note.includes("private data repo"),
+    "the bundle must say in its own text that the live copy is per-profile",
+  );
+});
 
 // ---------------------------------------------------------------------------
 // The meta-tests. These are the ones that make the document honest.

@@ -31,6 +31,96 @@ export function templateForDate(schedule, templates, dateIso) {
 }
 
 /**
+ * Today's conditioning, if the day carries any.
+ *
+ * Two hard sessions a week, on the upper-body mornings. This is a dose, not an
+ * appetite: the VO2max dose-response curve flattens hard past two to three
+ * quality sessions for a non-elite athlete, so a third hard day buys fatigue
+ * rather than adaptation, and it would be spent against six lifting mornings.
+ *
+ * Every prescription carries a `fallback` for the same reason every session
+ * carries a tier 3: the realistic alternative to the full version is nothing.
+ *
+ * @param {Record<string, any> | undefined} conditioning
+ * @param {string} dateIso
+ * @param {boolean} [short] true when the day has 20 minutes, not 40
+ * @returns {Record<string, any> | null}
+ */
+export function conditioningForDate(conditioning, dateIso, short = false) {
+  if (!conditioning) return null;
+  const weekday = WEEKDAY_KEYS[parseLocalIso(dateIso).getDay()] ?? "sun";
+  const plan = conditioning[weekday];
+  if (!plan || typeof plan !== "object") return null;
+  if (!short) return { ...plan, reduced: false };
+  return {
+    ...plan,
+    reduced: true,
+    minutes: plan.fallbackMinutes ?? plan.minutes,
+    work: plan.fallback ?? plan.work,
+  };
+}
+
+/**
+ * P3: the three versions of today.
+ *
+ * The session as written assumes a normal day, and most days are not normal.
+ * The realistic alternative to a full session is not a shorter session, it is
+ * nothing at all, so every session carries a reduced version and picking one
+ * is a button rather than a judgement made while tired.
+ *
+ *   Tier 1  the session as written
+ *   Tier 2  the main work, accessories cut
+ *   Tier 3  the one movement that matters most that day, done once
+ *
+ * An exercise's `tier` is the LOWEST tier it survives to, so tier N returns
+ * everything with `tier >= N`. An exercise with no `tier` is an accessory.
+ *
+ * The caller must treat all three the same way afterwards. A tier 3 day is a
+ * completed day and advances the rotation exactly as tier 1 does; the app is
+ * never allowed to render a reduced session as a failure, because a person who
+ * is told their 12 minutes did not count does not come back tomorrow.
+ *
+ * @param {Record<string, any> | null} template
+ * @param {1 | 2 | 3} [tier]
+ * @returns {Record<string, any> | null} the template with `exercises` filtered
+ */
+export function sessionAtTier(template, tier = 1) {
+  if (!template) return null;
+  const want = Math.min(3, Math.max(1, Math.round(tier)));
+  const exercises = (template.exercises ?? []).filter(
+    (/** @type {Record<string, any>} */ e) => (e.tier ?? 1) >= want,
+  );
+  // A template with no tier data would collapse to nothing at tier 2 or 3 and
+  // silently offer an empty session, which reads as "you have no fallback"
+  // exactly when the fallback is what is needed. Fall back to the full session.
+  if (!exercises.length) return { ...template, tier: 1 };
+  return { ...template, tier: want, exercises };
+}
+
+/**
+ * Minutes the three tiers are honestly worth, from the sets and rests actually
+ * prescribed rather than from a guess. Used to label the tier buttons, because
+ * "Tier 2" means nothing at 6am and "18 min" means everything.
+ * @param {Record<string, any> | null} template
+ * @param {1 | 2 | 3} [tier]
+ * @returns {number} whole minutes, 0 for a rest day
+ */
+export function tierMinutes(template, tier = 1) {
+  const session = sessionAtTier(template, tier);
+  if (!session) return 0;
+  const seconds = (session.exercises ?? []).reduce(
+    (/** @type {number} */ total, /** @type {Record<string, any>} */ e) => {
+      const sets = Number(e.targetSets) || 0;
+      const rest = Number(e.rest) || 90;
+      // work is roughly 30 s a set; the last set's rest is not spent in the gym
+      return total + sets * 30 + Math.max(0, sets - 1) * rest;
+    },
+    0,
+  );
+  return Math.round(seconds / 60);
+}
+
+/**
  * Most recent session's sets for a lift (the progressive-overload anchor).
  * @param {Session[]} sessions
  * @param {string} exercise

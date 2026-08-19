@@ -20,7 +20,8 @@
           "targetReps": "8",
           "increment": 5,
           "rest": 90,
-          "note": "Power, first, while fresh. Throw it hard, do not grind it. The only rate-of-force work in the week."
+          "note": "Power, first, while fresh. Throw it hard, do not grind it. The only rate-of-force work in the week.",
+          "tier": 2
         },
         {
           "name": "Back Squat",
@@ -28,21 +29,24 @@
           "targetReps": "5-8",
           "increment": 10,
           "rest": 180,
-          "note": "Primary. Leave 1-2 in reserve. Depth + control."
+          "note": "Primary. Leave 1-2 in reserve. Depth + control.",
+          "tier": 3
         },
         {
           "name": "Leg Press",
           "targetSets": 3,
           "targetReps": "10-12",
           "increment": 10,
-          "rest": 180
+          "rest": 180,
+          "tier": 2
         },
         {
           "name": "Seated Leg Curl",
           "targetSets": 3,
           "targetReps": "10-12",
           "increment": 10,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         },
         {
           "name": "Standing Calf Raise",
@@ -50,7 +54,8 @@
           "targetReps": "12-15",
           "increment": 10,
           "rest": 90,
-          "note": "Pause + full stretch at the bottom."
+          "note": "Pause + full stretch at the bottom.",
+          "tier": 1
         }
       ]
     },
@@ -64,7 +69,8 @@
           "targetReps": "6-10",
           "increment": 5,
           "rest": 180,
-          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar."
+          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar.",
+          "tier": 3
         },
         {
           "name": "Chest-Supported Row (or DB Row)",
@@ -72,7 +78,8 @@
           "targetReps": "8-12",
           "increment": 5,
           "rest": 180,
-          "note": "Strict, pad stops cheating. Squeeze + pause."
+          "note": "Strict, pad stops cheating. Squeeze + pause.",
+          "tier": 2
         },
         {
           "name": "Face Pull",
@@ -80,7 +87,8 @@
           "targetReps": "15-20",
           "increment": 5,
           "rest": 90,
-          "note": "Shoulder health. Do not skip."
+          "note": "Shoulder health. Do not skip.",
+          "tier": 1
         },
         {
           "name": "Incline DB Curl",
@@ -88,7 +96,8 @@
           "targetReps": "8-12",
           "increment": 5,
           "rest": 90,
-          "note": "Arms behind torso = deep biceps stretch. Last set to failure."
+          "note": "Arms behind torso = deep biceps stretch. Last set to failure.",
+          "tier": 1
         }
       ]
     },
@@ -102,28 +111,32 @@
           "targetReps": "6-10",
           "increment": 5,
           "rest": 180,
-          "note": "Main press."
+          "note": "Main press.",
+          "tier": 3
         },
         {
           "name": "Flat Bench or Machine Chest Press",
           "targetSets": 2,
           "targetReps": "8-10",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "tier": 1
         },
         {
           "name": "Overhead Press",
           "targetSets": 3,
           "targetReps": "6-10",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "tier": 2
         },
         {
           "name": "Cable Lateral Raise",
           "targetSets": 2,
           "targetReps": "12-20",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         },
         {
           "name": "Overhead Triceps Extension",
@@ -131,7 +144,8 @@
           "targetReps": "10-15",
           "increment": 5,
           "rest": 90,
-          "note": "Full stretch overhead."
+          "note": "Full stretch overhead.",
+          "tier": 1
         }
       ]
     },
@@ -145,14 +159,16 @@
           "targetReps": "10 min",
           "increment": 5,
           "rest": 120,
-          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives."
+          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives.",
+          "tier": 2
         },
         {
           "name": "Lat Pulldown (wide) or Pull-up",
           "targetSets": 4,
           "targetReps": "8-12",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "tier": 3
         },
         {
           "name": "Single-arm DB Row",
@@ -160,7 +176,8 @@
           "targetReps": "10-12",
           "increment": 5,
           "rest": 180,
-          "note": "Big stretch. Last set near failure."
+          "note": "Big stretch. Last set near failure.",
+          "tier": 2
         },
         {
           "name": "Straight-arm Pulldown",
@@ -168,14 +185,16 @@
           "targetReps": "12-15",
           "increment": 5,
           "rest": 90,
-          "note": "Lat stretch."
+          "note": "Lat stretch.",
+          "tier": 1
         },
         {
           "name": "Rear Delt Fly",
           "targetSets": 2,
           "targetReps": "15",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         },
         {
           "name": "Dead Hang",
@@ -183,7 +202,8 @@
           "targetReps": "max time",
           "increment": 5,
           "rest": 90,
-          "note": "Grip + shoulder decompression. Bar, open hand, never an edge."
+          "note": "Grip + shoulder decompression. Bar, open hand, never an edge.",
+          "tier": 1
         }
       ]
     },
@@ -197,7 +217,8 @@
           "targetReps": "6 each",
           "increment": 5,
           "rest": 90,
-          "note": "Rotational power, first, while fresh. The transverse plane nothing else trains."
+          "note": "Rotational power, first, while fresh. The transverse plane nothing else trains.",
+          "tier": 2
         },
         {
           "name": "Romanian Deadlift",
@@ -205,7 +226,8 @@
           "targetReps": "6-10",
           "increment": 10,
           "rest": 180,
-          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch."
+          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch.",
+          "tier": 3
         },
         {
           "name": "Lateral Lunge",
@@ -213,7 +235,8 @@
           "targetReps": "8 each",
           "increment": 10,
           "rest": 120,
-          "note": "THE frontal plane, taken from Ben's sheet. You play a lateral sport and this programme trained one plane."
+          "note": "THE frontal plane, taken from Ben's sheet. You play a lateral sport and this programme trained one plane.",
+          "tier": 1
         },
         {
           "name": "Bulgarian Split Squat",
@@ -221,14 +244,16 @@
           "targetReps": "8-10 each",
           "increment": 10,
           "rest": 180,
-          "note": "Single-leg strength; carries over to court and rock."
+          "note": "Single-leg strength; carries over to court and rock.",
+          "tier": 2
         },
         {
           "name": "Seated Leg Curl",
           "targetSets": 2,
           "targetReps": "12-15",
           "increment": 10,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         }
       ]
     },
@@ -241,7 +266,8 @@
           "targetSets": 3,
           "targetReps": "10-15",
           "increment": 5,
-          "rest": 180
+          "rest": 180,
+          "tier": 3
         },
         {
           "name": "DB Half-Kneeling One-Arm Press",
@@ -249,28 +275,32 @@
           "targetReps": "8 each",
           "increment": 5,
           "rest": 120,
-          "note": "From Ben's sheet. A shoulder-friendlier overhead position than a loaded bilateral press."
+          "note": "From Ben's sheet. A shoulder-friendlier overhead position than a loaded bilateral press.",
+          "tier": 2
         },
         {
           "name": "Lateral Raise",
           "targetSets": 3,
           "targetReps": "15-20",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         },
         {
           "name": "Incline DB Curl",
           "targetSets": 2,
           "targetReps": "10-15",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         },
         {
           "name": "Triceps Pushdown",
           "targetSets": 2,
           "targetReps": "12-15",
           "increment": 5,
-          "rest": 90
+          "rest": 90,
+          "tier": 1
         },
         {
           "name": "Side Plank with Hip Hike",
@@ -278,9 +308,57 @@
           "targetReps": "10 each",
           "increment": 5,
           "rest": 90,
-          "note": "From Ben's sheet, and it upgrades the bodyweight version in Core. Anti-lateral-flexion, loaded."
+          "note": "From Ben's sheet, and it upgrades the bodyweight version in Core. Anti-lateral-flexion, loaded.",
+          "tier": 1
         }
       ]
     }
-  ]
+  ],
+  "_tiers": "P3. Every session has three versions and all of them advance the rotation. An exercise's `tier` is the LOWEST tier it survives to: 3 = the one movement that still counts as having trained, 2 = the main work, 1 = accessory. Tier N shows every exercise with tier >= N. A tier 3 day is a completed day; the alternative to tier 3 is not tier 1, it is nothing.",
+  "conditioning": {
+    "_note": "Replaces the inspiratory-muscle trainer, cancelled 2026-08-19: its one mechanism is available free from running, and the device's effect sizes shrink toward zero in trained people. Two hard sessions a week is the dose where the VO2max curve flattens (Rosenblat 2020/2022); a third buys fatigue rather than adaptation. They sit on upper-body mornings because explosive strength is the one thing concurrent training genuinely costs (Schumann 2022, SMD -0.28) and it is worst same-session with heavy lower work.",
+    "watchRule": "Apple Watch Cardio Fitness updates ONLY from Outdoor Walk, Outdoor Run and Outdoor Hike. Treadmill, gym and indoor interval work never move the number no matter how hard it was. Log at least one session a week OUTDOORS under open sky, started as an Outdoor Run, or a whole training block reads as a flat line.",
+    "tue": {
+      "id": "4x4",
+      "name": "Norwegian 4x4",
+      "after": "pull-a",
+      "minutes": 19,
+      "fallbackMinutes": 10,
+      "work": "4 x 4 min at 90-95% max HR",
+      "recovery": "3 min jog at ~70% max HR",
+      "fallback": "2 x 4 min, same intensity, one recovery between",
+      "why": "The most replicated interval protocol there is: ~7% VO2max in 8 weeks at 3 sessions a week, beating long slow distance, threshold work and 15/15 on the same time budget (Helgerud 2007). Long intervals are the powerful tool.",
+      "progression": "Weeks 4-6: 5 x 4 min if resting HR trend and lifting numbers are both holding. Weeks 10-12: back to 4 reps as the long run takes over."
+    },
+    "thu": {
+      "id": "10-20-30",
+      "name": "10-20-30",
+      "after": "pull-b",
+      "minutes": 16,
+      "fallbackMinutes": 10,
+      "work": "5 x (30 s easy, 20 s moderate, 10 s near-maximal), 2-3 blocks",
+      "recovery": "1-2 min between blocks",
+      "fallback": "2 blocks instead of 3",
+      "why": "Best adaptation per minute in the literature: ~4% VO2max, 1500 m down 21 s and 5 km down 48 s in 7 weeks, on about 12-18 min of actual work, in runners who were already training (Gunnarsson and Bangsbo 2012). Short intervals are the efficient tool.",
+      "outdoor": true,
+      "progression": "Hold the volume, sharpen the 10 s reps toward true sprint effort."
+    },
+    "sat": {
+      "id": "alternating",
+      "name": "Alternating: sprints one week, long run the next",
+      "after": "push-b",
+      "minutes": 33,
+      "fallbackMinutes": 15,
+      "work": "Week A: 10 x 20 s near-maximal, 40 s easy. Week B: continuous easy run at 60-70% max HR",
+      "recovery": "Week A: 40 s between reps. Week B: none, it is the easy session",
+      "fallback": "Week A: 6 reps. Week B: 15 min easy",
+      "why": "The one session serving the half marathon rather than VO2max. Week B grows from week 7 as race specificity starts outweighing marginal VO2max, which is flattening by then anyway.",
+      "outdoor": true
+    },
+    "mon": null,
+    "wed": null,
+    "fri": null,
+    "sun": null
+  },
+  "_conditioningRest": "Monday and Wednesday are the heavy and technical lower days and carry no conditioning on purpose. Friday is left clear so a missed Tuesday or Thursday has somewhere to go without stacking two hard sessions back to back."
 }
