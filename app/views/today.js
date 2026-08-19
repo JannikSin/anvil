@@ -12,7 +12,12 @@ import {
 import { warmupFor } from "../lib/routines.js";
 import { CoreWorkout } from "./core-workout.js";
 
-const REST_SECONDS = 90;
+// Rest is a property of the LIFT, not a constant. His own Training Principles
+// note prescribes 3 to 5 minutes on heavy compounds where performance matters
+// and 1 to 2 on isolation; the app shipped a flat 90 seconds for everything,
+// which under-rests every compound in the programme. 90 is now only the
+// fallback for an exercise that carries no rest of its own.
+const REST_FALLBACK = 90;
 
 /**
  * Today: what is on, the set-entry form for it, and the fitness half of the
@@ -64,9 +69,9 @@ export function TodayView({
     };
   }, []);
 
-  const startRest = () => {
+  const startRest = (/** @type {number} */ seconds = REST_FALLBACK) => {
     if (restRef.current) clearInterval(restRef.current);
-    setRest(REST_SECONDS);
+    setRest(seconds);
     restRef.current = setInterval(() => {
       setRest((r) => {
         if (r <= 1 && restRef.current) clearInterval(restRef.current);
@@ -120,7 +125,8 @@ export function TodayView({
       ...draft,
       session: setTopSet(/** @type {any} */ (base), name, { weight, reps }),
     });
-    startRest();
+    const ex = template?.exercises?.find((/** @type {any} */ e) => e.name === name);
+    startRest(Number(ex?.rest) || REST_FALLBACK);
   };
 
   const finishSession = () => {
@@ -179,7 +185,7 @@ export function TodayView({
         template &&
         html`
           <div class="actions wrap">
-            <button class="primary" onClick=${startRest}>REST ${REST_SECONDS}s</button>
+            <button class="primary" onClick=${() => startRest()}>REST ${REST_FALLBACK}s</button>
             <button
               class="secondary ${confirmFinish ? "arm" : ""}"
               onClick=${finishSession}
