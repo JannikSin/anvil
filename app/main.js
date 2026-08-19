@@ -199,7 +199,12 @@ function App() {
     }
     ${
       route.view === "vitals" &&
-      html`<${VitalsView} vitals=${vitals} loading=${!vitalsLoaded} hasToken=${hasToken} />`
+      html`<${VitalsView}
+        vitals=${vitals}
+        loading=${!vitalsLoaded}
+        hasToken=${hasToken}
+        today=${today}
+      />`
     }
     ${
       route.view === "system" &&

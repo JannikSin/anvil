@@ -10,12 +10,26 @@ import { latestWith, series, average, sparkPoints, latestEkg } from "../lib/vita
  * Six metric tiles (latest value + a 14-day sparkline where a trend helps)
  * plus the most recent EKG. Every metric is optional: a watch that never
  * posts HRV simply hides that tile.
- * @param {{ vitals: import("../lib/vitals.js").Vitals | null, loading: boolean, hasToken: boolean }} props
+ * @param {{ vitals: import("../lib/vitals.js").Vitals | null, loading: boolean, hasToken: boolean, today: string }} props
  * @returns {import("preact").VNode}
  */
-export function VitalsView({ vitals, loading, hasToken }) {
+export function VitalsView({ vitals, loading, hasToken, today }) {
   const days = vitals?.days ?? [];
   const ekg = latestEkg(vitals?.ekg ?? []);
+
+  // Is this feed actually live? Health Auto Export posts on a schedule, so a
+  // newest row more than a few days old means the pipe is dead, not that
+  // David sat still. This matters more than it looks: the file anvil reads
+  // today still contains the seven SEED rows from 2026-07-12 to 07-18 that
+  // were written to prove the endpoint worked, and a screen rendering month-old
+  // invented numbers as if they were this morning's is worse than a blank one.
+  const newest = days.length ? String(days[days.length - 1]?.date ?? "") : "";
+  const staleDays = (() => {
+    if (!newest || !today) return null;
+    const ms = new Date(`${today}T00:00:00`).getTime() - new Date(`${newest}T00:00:00`).getTime();
+    return Number.isFinite(ms) ? Math.round(ms / 86400000) : null;
+  })();
+  const stale = staleDays !== null && staleDays > 3;
 
   /**
    * @param {string} label
@@ -65,6 +79,12 @@ export function VitalsView({ vitals, loading, hasToken }) {
 
   return html`
     <div class="view">
+      ${
+        stale &&
+        html`<p class="hint">
+          ${`NOT LIVE. The newest row here is ${staleDays} days old (${newest}), so nothing is arriving from the watch. Anything below is history, not today. Fix: install Health Auto Export and point it at anvil's Worker.`}
+        </p>`
+      }
       <div class="hero"><h1>Vitals</h1></div>
       ${loading && html`<p class="hint">loading…</p>`}
       ${
