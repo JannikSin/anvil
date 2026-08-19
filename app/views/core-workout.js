@@ -41,16 +41,40 @@ const titleOf = (/** @type {any} */ step) =>
   step ? `${step.name}${step.side ? ` · ${step.side === "L" ? "LEFT" : "RIGHT"}` : ""}` : "";
 
 /**
- * The directed core session (replaces the old configurable interval timer,
- * David 2026-07-27: the timer still made him decide what to do). Pick a
- * session or take the day's, press START, and it calls every exercise, counts
- * it down, and moves itself on. Screen stays awake while it runs.
- * @param {{ open?: boolean }} props
+ * A directed timed session: pick one, press START, and it calls every move,
+ * counts it down and moves itself on. The screen stays awake while it runs.
+ *
+ * Generalised 2026-08-18 from "the core session" to any list of timed steps,
+ * so warm-ups and mobility run on the same engine rather than getting a second
+ * timer written for them. The engine was the hard-won part: it derives from a
+ * start timestamp so backgrounding never drifts it, beeps and buzzes on every
+ * change, ticks the last three seconds, and previews the next move during rest.
+ *
+ * @param {{
+ *   open?: boolean,
+ *   sessions?: import("../lib/core.js").CoreSession[],
+ *   title?: string,
+ *   subtitle?: string,
+ *   rotate?: boolean
+ * }} props
  */
-export function CoreWorkout({ open = false }) {
+export function CoreWorkout({
+  open = false,
+  sessions = CORE_SESSIONS,
+  title = "🧱 Core session",
+  subtitle = "floor, no kit, it calls every move",
+  rotate = true,
+}) {
   const today = localIsoDate(new Date());
   const [pickedId, setPickedId] = useState(/** @type {string | null} */ (null));
-  const session = CORE_SESSIONS.find((s) => s.id === pickedId) ?? sessionForDay(today);
+  // rotate=false (warm-ups, mobility): no day-of-week pick, first is default.
+  // Nothing here should imply a schedule the lifting programme no longer has.
+  // Every caller passes a non-empty list, so the cast states that rather than
+  // scattering optional chaining through the render.
+  const CS = (/** @type {any} */ x) =>
+    /** @type {import("../lib/core.js").CoreSession} */ (x);
+  const dayPick = CS(rotate ? sessionForDay(today, sessions) : sessions[0]);
+  const session = CS(sessions.find((s) => s.id === pickedId) ?? dayPick);
   // null = idle; { startedAt, elapsed } drives everything else
   const [run, setRun] = useState(
     /** @type {{ startedAt: number | null, elapsed: number } | null} */ (null),
@@ -132,14 +156,14 @@ export function CoreWorkout({ open = false }) {
   return html`
     <details class="coreblock" open=${open}>
       <summary class="block-title">
-        🧱 Core session <span class="hint">floor, no kit, it calls every move</span>
+        ${title} <span class="hint">${subtitle}</span>
       </summary>
 
       ${
         run === null &&
         html`
           <div class="chips wrapchips" role="group" aria-label="Which core session">
-            ${CORE_SESSIONS.map(
+            ${sessions.map(
               (s) => html`
                 <button
                   key=${s.id}
@@ -147,18 +171,17 @@ export function CoreWorkout({ open = false }) {
                   aria-pressed=${session.id === s.id}
                   onClick=${() => setPickedId(s.id)}
                 >
-                  ${s.name}${sessionForDay(today).id === s.id ? " ·today" : ""}
+                  ${s.name}${rotate && dayPick.id === s.id ? " ·today" : ""}
                 </button>
               `,
             )}
           </div>
           <p class="hint">
-            ${session.focus}. ${session.steps.length} moves,
-            <span class="num">${dur(total)}</span> including rest. ${session.note}
+            ${`${session.focus}. ${session.steps.length} moves, ${dur(total)} including rest. ${session.note}`}
           </p>
           <div class="slots corelist">
             ${session.steps.map(
-              (s, i) => html`
+              (/** @type {any} */ s, /** @type {number} */ i) => html`
                 <div class="checkrow static corerow" key=${`${s.name}-${i}`}>
                   <${CoreFigure} name=${s.name} small=${true} />
                   <span class="food">${titleOf(s)}</span>
@@ -226,8 +249,11 @@ export function CoreWorkout({ open = false }) {
             ${
               at.phase === "done" &&
               html`<p class="hint">
-                ${session.steps.length} moves done. Tomorrow's rotation:
-                ${sessionForDay(localIsoDate(new Date(Date.now() + 86400000))).name}.
+                ${`${session.steps.length} moves done.${
+                  rotate
+                    ? ` Tomorrow's rotation: ${sessionForDay(localIsoDate(new Date(Date.now() + 86400000)), sessions).name}.`
+                    : ""
+                }`}
               </p>`
             }
           </div>

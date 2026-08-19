@@ -2,6 +2,8 @@ import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { tokenBroken } from "../lib/github.js";
 import { formatSets, lastSetsFor, nextInRotation, sessionsOn, setTopSet } from "../lib/workouts.js";
+import { warmupFor } from "../lib/routines.js";
+import { CoreWorkout } from "./core-workout.js";
 
 const REST_SECONDS = 90;
 
@@ -179,6 +181,12 @@ export function TodayView({
               ${confirmFinish ? "TAP AGAIN TO FINISH" : "FINISH SESSION"}
             </button>
           </div>
+          <${CoreWorkout}
+            sessions=${[warmupFor(template.id)]}
+            title="🔥 Warm up"
+            subtitle=${`${Math.round(warmupFor(template.id).steps.reduce((n, x) => n + x.seconds + x.rest, 0) / 60)} min, dynamic, before you lift`}
+            rotate=${false}
+          />
           <h2 class="block-title">${template.name}</h2>
           <div class="slots">
             ${template.exercises.map((/** @type {Record<string, any>} */ ex) => {

@@ -14,7 +14,7 @@
 // per path: a name that collides with a sibling app's, or a cleanup pass that
 // deletes by anything looser than this prefix, evicts that sibling.
 const CACHE_PREFIX = "anvil-shell-";
-const CACHE_VERSION = `${CACHE_PREFIX}v6`;
+const CACHE_VERSION = `${CACHE_PREFIX}v7`;
 
 const SHELL = [
   "./",
@@ -32,6 +32,7 @@ const SHELL = [
   "./app/lib/merge.js",
   "./app/lib/music.js",
   "./app/lib/router.js",
+  "./app/lib/routines.js",
   "./app/lib/store.js",
   "./app/lib/sync.js",
   "./app/lib/vitals.js",
