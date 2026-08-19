@@ -1,7 +1,14 @@
 import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { tokenBroken } from "../lib/github.js";
-import { formatSets, lastSetsFor, nextInRotation, sessionsOn, setTopSet } from "../lib/workouts.js";
+import {
+  formatSets,
+  lastSetsFor,
+  nextInRotation,
+  progressionFor,
+  sessionsOn,
+  setTopSet,
+} from "../lib/workouts.js";
 import { warmupFor } from "../lib/routines.js";
 import { CoreWorkout } from "./core-workout.js";
 
@@ -194,18 +201,35 @@ export function TodayView({
               const baseline = last ? null : baselines[ex.name];
               const logged = session?.exercises.find((/** @type {any} */ e) => e.name === ex.name);
 
-              // PREFILL, the single biggest change to how this logs. The
-              // fields arrive already carrying last session's numbers (or the
-              // planned ones), so an unchanged set costs ONE tap on LOG rather
-              // than typing two numbers with chalk on your hands. Typing still
-              // wins the moment you touch a field, which is David's stated
-              // preference; the prefill just means he usually does not have to.
-              const seed = last?.[last.length - 1] ?? baseline ?? null;
+              // PREFILL, and it prefills the NEXT set rather than the last one.
+              //
+              // The first version seeded last session's numbers and the button
+              // read "LOG · SAME AS LAST", which is an anti-progression default
+              // with a green button on it: his own corpus says a stimulus
+              // applied unchanged stops producing adaptation. Now the seed is
+              // double progression, the rule that corpus states operationally
+              // (add reps to the top of the range, then add load and reset),
+              // and the button says which one it is.
+              //
+              // progressionFor returns null when it has no history or cannot
+              // read the prescription ("10 min", "max time"), and null means no
+              // opinion, so the fallback is the honest plain repeat.
+              // the programme's own step for this lift: 10 lb lower, 5 upper,
+              // which is the corpus's range. The steppers use it too, so a
+              // squat moves in plate-sized jumps and a curl does not.
+              const inc = Number(ex.increment) || 5;
+              const prog = progressionFor(
+                /** @type {any} */ (workouts.sessions),
+                ex.name,
+                ex.targetReps,
+                inc,
+              );
+              const seed = prog ?? last?.[last.length - 1] ?? baseline ?? null;
               const inp = inputs[ex.name] ?? {
                 w: seed ? String(seed.weight) : "",
                 r: seed ? String(seed.reps) : "",
               };
-              const same =
+              const onTarget =
                 seed && inp.w === String(seed.weight) && inp.r === String(seed.reps);
               const set = (/** @type {Record<string, string>} */ patch) =>
                 onDraft({ ...draft, inputs: { ...inputs, [ex.name]: { ...inp, ...patch } } });
@@ -242,6 +266,17 @@ export function TodayView({
                             : "last: —"
                     }
                   </div>
+                  ${
+                    // Three sessions at the same weight AND reps means the
+                    // exercise is the problem, not the effort. Straight out of
+                    // the corpus's overload list.
+                    !logged &&
+                    prog &&
+                    prog.stalled >= 3 &&
+                    html`<div class="hint stall">
+                      ${`stuck at ${inp.w || "?"}×${last?.[last.length - 1]?.reps ?? "?"} for ${prog.stalled} sessions. Add a set, or swap the exercise.`}
+                    </div>`
+                  }
                   ${ex.note && !logged && html`<div class="hint">${ex.note}</div>`}
                   ${
                     logged &&
@@ -251,7 +286,7 @@ export function TodayView({
                     !logged &&
                     html`
                       <div class="setform steppers ${invalid === ex.name ? "inputerr" : ""}">
-                        ${stepBtn("−5", "w", -5, `five pounds off ${ex.name}`)}
+                        ${stepBtn(`−${inc}`, "w", -inc, `${inc} pounds off ${ex.name}`)}
                         <input
                           type="number"
                           inputmode="decimal"
@@ -261,7 +296,7 @@ export function TodayView({
                           onFocus=${(/** @type {any} */ e) => e.currentTarget.select()}
                           onInput=${(/** @type {any} */ e) => set({ w: e.currentTarget.value })}
                         />
-                        ${stepBtn("+5", "w", 5, `five pounds on ${ex.name}`)}
+                        ${stepBtn(`+${inc}`, "w", inc, `${inc} pounds on ${ex.name}`)}
                         <span class="by num">×</span>
                         ${stepBtn("−", "r", -1, `one rep off ${ex.name}`)}
                         <input
@@ -276,7 +311,7 @@ export function TodayView({
                         ${stepBtn("+", "r", 1, `one rep on ${ex.name}`)}
                       </div>
                       <button class="primary logbtn" onClick=${() => logSet(ex.name)}>
-                        ${same ? "LOG · SAME AS LAST" : "LOG"}
+                        ${onTarget && prog ? `LOG · ${prog.label}` : "LOG"}
                       </button>
                     `
                   }

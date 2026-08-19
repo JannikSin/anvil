@@ -1,9 +1,7 @@
 import { html } from "htm/preact";
-import { personalRecords, seriesFor } from "../lib/workouts.js";
+import { personalRecords, primaryLifts, seriesFor } from "../lib/workouts.js";
 import { weightTrend } from "../lib/weight.js";
 import { Sparkline } from "./spark.js";
-
-const PRIMARY_LIFTS = ["Squat", "Bench Press", "Deadlift or Barbell Row", "Overhead Press"];
 
 /** @type {Record<string, string>} */
 const VERDICT_COPY = {
@@ -65,7 +63,14 @@ export function ProgressView({ workouts, daily, targets, today, loading }) {
       </p>
 
       <h2 class="block-title">Progression</h2>
-      ${PRIMARY_LIFTS.map((name) => {
+      ${
+        // Derived from the real programme and his real log. It used to be four
+        // hard-coded names carried over from Mise, three of which did not exist
+        // here, so three of these charts could never plot a point.
+        primaryLifts(
+          /** @type {any} */ (workouts.templates),
+          /** @type {any} */ (workouts.sessions),
+        ).map((name) => {
         const series = seriesFor(/** @type {any} */ (workouts.sessions), name);
         return html`
           <div class="liftrow chartrow" key=${name}>

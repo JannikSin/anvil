@@ -1996,3 +1996,9 @@ button.secondary.logagain {
   min-height: 38px;
   font-size: 12px;
 }
+
+/* A stalled lift. Amber, not red: three sessions at the same numbers is
+   information, not a failure, and this app does not tell him he is behind. */
+.hint.stall {
+  color: var(--amber);
+}

@@ -168,3 +168,133 @@ export function nextInRotation(schedule, templates, sessions) {
 export function sessionsOn(sessions, dateIso) {
   return (sessions ?? []).filter((s) => s && s.date === dateIso);
 }
+
+/**
+ * Parse a target rep range into [low, high]. Returns null for the entries that
+ * are not rep ranges at all ("10 min", "max time", "superset rounds", "ext
+ * rotations + face pulls"), because a progression rule must refuse to fire on
+ * a prescription it cannot read rather than invent one.
+ * @param {unknown} targetReps
+ * @returns {[number, number] | null}
+ */
+export function repRange(targetReps) {
+  const raw = String(targetReps ?? "").trim();
+  if (/min|max|round|circuit|superset/i.test(raw)) return null;
+  const m = raw.match(/^(\d+)\s*-\s*(\d+)/);
+  if (m) {
+    const lo = Number(m[1]);
+    const hi = Number(m[2]);
+    return lo > 0 && hi >= lo ? [lo, hi] : null;
+  }
+  const one = raw.match(/^(\d+)/);
+  if (one) {
+    const n = Number(one[1]);
+    return n > 0 ? [n, n] : null;
+  }
+  return null;
+}
+
+/**
+ * DOUBLE PROGRESSION, the rule David's own corpus states operationally:
+ * add reps toward the top of the range, and once the top is hit, add weight and
+ * drop back to the bottom.
+ *
+ * This exists because the app was shipping a button that read "LOG · SAME AS
+ * LAST" — prefilling last session's numbers and inviting him to repeat them
+ * forever. The same corpus that built the warm-ups says in plain words that a
+ * stimulus applied unchanged stops producing adaptation. The prefill was an
+ * anti-progression default with a green button on it.
+ *
+ * Returns null when it cannot see a last set, or when the prescription is not a
+ * rep range. Null means "no opinion", and the caller falls back to the plain
+ * repeat, which is the honest behaviour when nothing is known.
+ *
+ * @param {Record<string, any>[]} sessions
+ * @param {string} exercise
+ * @param {unknown} targetReps
+ * @param {number} increment pounds to add when the top of the range is cleared
+ * @returns {{ weight: number, reps: number, kind: "load" | "rep", label: string, stalled: number } | null}
+ */
+export function progressionFor(sessions, exercise, targetReps, increment) {
+  const range = repRange(targetReps);
+  if (!range) return null;
+  const [lo, hi] = range;
+
+  const history = [...(sessions ?? [])]
+    .filter((s) => s && Array.isArray(s.exercises))
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    .map((s) => s.exercises.find((/** @type {any} */ e) => e.name === exercise))
+    .filter(Boolean)
+    .map((/** @type {any} */ e) => e.sets?.[e.sets.length - 1])
+    .filter((/** @type {any} */ x) => x && Number.isFinite(x.weight) && Number.isFinite(x.reps));
+
+  const last = history[history.length - 1];
+  if (!last) return null;
+
+  // How many consecutive most-recent sessions sat on exactly this weight AND
+  // these reps. Three is the point at which adding a rep is no longer the
+  // answer and the exercise itself is the problem.
+  let stalled = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const h = history[i];
+    if (h && h.weight === last.weight && h.reps === last.reps) stalled++;
+    else break;
+  }
+
+  if (last.reps >= hi) {
+    const weight = Math.round((last.weight + increment) * 100) / 100;
+    return {
+      weight,
+      reps: lo,
+      kind: "load",
+      label: `+${increment} lb, back to ${lo}`,
+      stalled,
+    };
+  }
+  return {
+    weight: last.weight,
+    reps: last.reps + 1,
+    kind: "rep",
+    label: `+1 rep`,
+    stalled,
+  };
+}
+
+/**
+ * The lifts worth charting: the ones he has actually logged most often, and
+ * failing that the first exercise of each template, which is the primary of
+ * that session.
+ *
+ * Replaces a hard-coded list of four names carried over from Mise, THREE OF
+ * WHICH DID NOT EXIST in this programme ("Squat", "Bench Press", "Deadlift or
+ * Barbell Row" against a programme that says "Back Squat", "Flat Bench or
+ * Machine Chest Press", "Romanian Deadlift"). Those three charts could never
+ * have plotted a point no matter how long he trained, and a full test suite
+ * did not notice because every test asserted on source text rather than data.
+ *
+ * @param {Record<string, any>[]} templates
+ * @param {Record<string, any>[]} sessions
+ * @param {number} [n]
+ * @returns {string[]}
+ */
+export function primaryLifts(templates, sessions, n = 4) {
+  /** @type {Map<string, number>} */
+  const counts = new Map();
+  for (const s of sessions ?? []) {
+    for (const e of s?.exercises ?? []) {
+      if (e?.name) counts.set(e.name, (counts.get(e.name) ?? 0) + 1);
+    }
+  }
+  const logged = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
+  if (logged.length >= n) return logged.slice(0, n);
+
+  const firsts = (templates ?? [])
+    .map((t) => t?.exercises?.[0]?.name)
+    .filter((/** @type {any} */ x) => typeof x === "string");
+  const out = [...logged];
+  for (const f of firsts) {
+    if (out.length >= n) break;
+    if (!out.includes(f)) out.push(f);
+  }
+  return out;
+}

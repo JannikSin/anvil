@@ -18,34 +18,40 @@
           "name": "Back Squat",
           "targetSets": 4,
           "targetReps": "5-8",
-          "note": "Primary. Leave 1-2 in reserve. Depth + control."
+          "note": "Primary. Leave 1-2 in reserve. Depth + control.",
+          "increment": 10
         },
         {
           "name": "Leg Press",
           "targetSets": 3,
-          "targetReps": "10-12"
+          "targetReps": "10-12",
+          "increment": 10
         },
         {
           "name": "Seated Leg Curl",
           "targetSets": 3,
-          "targetReps": "10-12"
+          "targetReps": "10-12",
+          "increment": 10
         },
         {
           "name": "Leg Extension",
           "targetSets": 3,
           "targetReps": "15-20",
-          "note": "Single-leg, or a 3s eccentric once the two-leg stack runs out."
+          "note": "Single-leg, or a 3s eccentric once the two-leg stack runs out.",
+          "increment": 10
         },
         {
           "name": "Standing Calf Raise",
           "targetSets": 4,
           "targetReps": "12-15",
-          "note": "Pause + full stretch at the bottom."
+          "note": "Pause + full stretch at the bottom.",
+          "increment": 10
         },
         {
           "name": "Hanging Leg Raise",
           "targetSets": 3,
-          "targetReps": "10"
+          "targetReps": "10",
+          "increment": 10
         }
       ]
     },
@@ -57,35 +63,41 @@
           "name": "Weighted Pull-up or Lat Pulldown",
           "targetSets": 4,
           "targetReps": "6-10",
-          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar."
+          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar.",
+          "increment": 5
         },
         {
           "name": "Chest-Supported Row (or DB Row)",
           "targetSets": 3,
           "targetReps": "8-12",
-          "note": "Strict, pad stops cheating. Squeeze + pause."
+          "note": "Strict, pad stops cheating. Squeeze + pause.",
+          "increment": 5
         },
         {
           "name": "Cable Row",
           "targetSets": 3,
-          "targetReps": "10-12"
+          "targetReps": "10-12",
+          "increment": 5
         },
         {
           "name": "Face Pull",
           "targetSets": 3,
           "targetReps": "15-20",
-          "note": "Shoulder health. Do not skip."
+          "note": "Shoulder health. Do not skip.",
+          "increment": 5
         },
         {
           "name": "Incline DB Curl",
           "targetSets": 3,
           "targetReps": "8-12",
-          "note": "Arms behind torso = deep biceps stretch. Last set to failure + partials."
+          "note": "Arms behind torso = deep biceps stretch. Last set to failure + partials.",
+          "increment": 5
         },
         {
           "name": "Hammer Curl",
           "targetSets": 2,
-          "targetReps": "12"
+          "targetReps": "12",
+          "increment": 5
         }
       ]
     },
@@ -97,39 +109,46 @@
           "name": "Incline DB Press",
           "targetSets": 4,
           "targetReps": "6-10",
-          "note": "Main press."
+          "note": "Main press.",
+          "increment": 5
         },
         {
           "name": "Flat Bench or Machine Chest Press",
           "targetSets": 3,
-          "targetReps": "8-10"
+          "targetReps": "8-10",
+          "increment": 5
         },
         {
           "name": "Cable Fly",
           "targetSets": 3,
           "targetReps": "12-15",
-          "note": "Deep stretch at the bottom."
+          "note": "Deep stretch at the bottom.",
+          "increment": 5
         },
         {
           "name": "Overhead Press",
           "targetSets": 3,
-          "targetReps": "6-10"
+          "targetReps": "6-10",
+          "increment": 5
         },
         {
           "name": "Cable Lateral Raise",
           "targetSets": 4,
-          "targetReps": "12-20"
+          "targetReps": "12-20",
+          "increment": 5
         },
         {
           "name": "Overhead Triceps Extension",
           "targetSets": 3,
           "targetReps": "10-15",
-          "note": "Full stretch overhead."
+          "note": "Full stretch overhead.",
+          "increment": 5
         },
         {
           "name": "Triceps Pushdown",
           "targetSets": 2,
-          "targetReps": "12-15"
+          "targetReps": "12-15",
+          "increment": 5
         }
       ]
     },
@@ -141,40 +160,47 @@
           "name": "Pull-up / Muscle-up Skill Work",
           "targetSets": 1,
           "targetReps": "10 min",
-          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives."
+          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives.",
+          "increment": 5
         },
         {
           "name": "Lat Pulldown (wide) or Pull-up",
           "targetSets": 4,
-          "targetReps": "8-12"
+          "targetReps": "8-12",
+          "increment": 5
         },
         {
           "name": "Single-arm DB Row",
           "targetSets": 3,
           "targetReps": "10-12",
-          "note": "Big stretch. Last set near failure."
+          "note": "Big stretch. Last set near failure.",
+          "increment": 5
         },
         {
           "name": "Straight-arm Pulldown",
           "targetSets": 3,
           "targetReps": "12-15",
-          "note": "Lat stretch."
+          "note": "Lat stretch.",
+          "increment": 5
         },
         {
           "name": "Rear Delt Fly",
           "targetSets": 3,
-          "targetReps": "15"
+          "targetReps": "15",
+          "increment": 5
         },
         {
           "name": "Shrug / Grip Work",
           "targetSets": 2,
-          "targetReps": "15"
+          "targetReps": "15",
+          "increment": 5
         },
         {
           "name": "Dead Hang",
           "targetSets": 3,
           "targetReps": "max time",
-          "note": "Grip + shoulder decompression, climbing carryover."
+          "note": "Grip + shoulder decompression, climbing carryover.",
+          "increment": 5
         }
       ]
     },
@@ -186,28 +212,33 @@
           "name": "Romanian Deadlift",
           "targetSets": 4,
           "targetReps": "6-10",
-          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch."
+          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch.",
+          "increment": 10
         },
         {
           "name": "Bulgarian Split Squat",
           "targetSets": 3,
           "targetReps": "8-10 each",
-          "note": "Single-leg strength; carries over to court and rock."
+          "note": "Single-leg strength; carries over to court and rock.",
+          "increment": 10
         },
         {
           "name": "Seated Leg Curl",
           "targetSets": 3,
-          "targetReps": "12-15"
+          "targetReps": "12-15",
+          "increment": 10
         },
         {
           "name": "Leg Press (feet high, glute/ham)",
           "targetSets": 2,
-          "targetReps": "12-15"
+          "targetReps": "12-15",
+          "increment": 10
         },
         {
           "name": "Seated Calf Raise",
           "targetSets": 4,
-          "targetReps": "15-20"
+          "targetReps": "15-20",
+          "increment": 10
         }
       ]
     },
@@ -218,28 +249,33 @@
         {
           "name": "Machine/DB Chest Press",
           "targetSets": 3,
-          "targetReps": "10-15"
+          "targetReps": "10-15",
+          "increment": 5
         },
         {
           "name": "Lateral Raise",
           "targetSets": 4,
-          "targetReps": "15-20"
+          "targetReps": "15-20",
+          "increment": 5
         },
         {
           "name": "Biceps + Triceps Superset",
           "targetSets": 3,
-          "targetReps": "superset rounds"
+          "targetReps": "superset rounds",
+          "increment": 5
         },
         {
           "name": "Lagging Area (upper chest, arms, weak point)",
           "targetSets": 3,
-          "targetReps": "10-15"
+          "targetReps": "10-15",
+          "increment": 5
         },
         {
           "name": "Shoulder-health Circuit",
           "targetSets": 3,
           "targetReps": "ext rotations + face pulls + band pull-aparts",
-          "note": "Prehab for a press-heavy week."
+          "note": "Prehab for a press-heavy week.",
+          "increment": 5
         }
       ]
     }
