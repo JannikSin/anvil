@@ -304,7 +304,7 @@ for (const p of PROMISES) test(p.name, p.fn);
 // ---------------------------------------------------------------------------
 // UNBUILT PROMISES ARE `todo`, NEVER ABSENT.
 //
-// Adopted 2026-08-20 from the Mise promise audit, which produced the sharpest
+// Adopted 2026-08-19 from the Mise promise audit, which produced the sharpest
 // diagnosis available of how a Core Purpose document rots. The finding:
 //
 //   P5 was never silent. It was detected, measured, persisted to disk, rendered
@@ -339,7 +339,7 @@ const UNBUILT = [
     id: "NAMED-USER",
     name: "DOC every claim in the document that is not a numbered promise",
     why:
-      "FAILING, owner David, found 2026-08-20. The document's 'Who it is for' says " +
+      "FAILING, owner David, found 2026-08-19. The document's 'Who it is for' says " +
       "'No user is named in the design, and the public repo contains nothing measured " +
       "about a person.' There are 25 occurrences of the first profile's given name in " +
       "app/, all in comments recording why a decision was made. Milder than Mise's " +
