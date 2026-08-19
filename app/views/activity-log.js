@@ -88,7 +88,7 @@ export function ActivityLog({ activities, today, onLog }) {
         <div class="k">Interference</div>
         <div class="v">${warn ? "over" : "clear"}</div>
         <div class="d">
-          ${warn ?? "3 runs or fewer, 30 min or less each, keeps the lifting intact"}
+          ${warn ?? "Run count does not matter. Session length and replacing the calories do"}
         </div>
       </div>
     </div>

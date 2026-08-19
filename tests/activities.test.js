@@ -40,16 +40,53 @@ test("tennis, swimming and walking all count toward the aerobic target", () => {
   assert.equal(w.minutes, 105);
 });
 
-test("the interference guard fires on a fourth run, which is the real threshold", () => {
-  const three = ["2026-08-16", "2026-08-17", "2026-08-18"].map((d) => a(d, "run", 25));
-  assert.equal(interferenceWarning(three, "2026-08-19"), null);
-  const four = [...three, a("2026-08-19", "run", 25)];
-  assert.match(String(interferenceWarning(four, "2026-08-19")), /4 runs in 7 days/);
+test("THE CORRECTION: a fourth run is NOT a finding, and the old guard said it was", () => {
+  // Rewritten 2026-08-19. The previous version of this test asserted that a
+  // fourth run in 7 days raised a warning, encoding Wilson 2012's ">3 sessions
+  // a week" line. That line is one sentence of practical-applications advice
+  // read off a continuous correlation, with no breakpoint analysis behind it,
+  // and Schumann 2022 tested 4.1 vs 6.1 weekly concurrent sessions and found
+  // nothing. Five short runs is a normal week for someone building toward a
+  // half marathon and the app must not call it a problem.
+  const five = ["2026-08-15", "2026-08-16", "2026-08-17", "2026-08-18", "2026-08-19"].map((d) =>
+    a(d, "run", 30),
+  );
+  assert.equal(interferenceWarning(five, "2026-08-19"), null, "150 min across 5 runs is the plan");
 });
 
-test("the guard also fires on total volume, not just run count", () => {
-  const heavy = [a("2026-08-19", "tennis", 120), a("2026-08-18", "run", 70)];
-  assert.match(String(interferenceWarning(heavy, "2026-08-19")), /190 aerobic minutes/);
+test("the guard fires on the LONGEST SESSION, because duration is the moderator with evidence", () => {
+  // Hottenrott 2012: two groups matched at 2.5 h of running a week. Same half
+  // marathon time. The long-continuous-run group lost fat-free mass; the
+  // short-session group did not. Duration, at matched volume.
+  const ok = [a("2026-08-19", "run", 105)];
+  assert.equal(interferenceWarning(ok, "2026-08-19"), null, "105 min is inside the long-run cap");
+
+  const over = [a("2026-08-19", "run", 135)];
+  assert.match(String(interferenceWarning(over, "2026-08-19")), /135 min session/);
+  assert.match(String(interferenceWarning(over, "2026-08-19")), /session length/);
+});
+
+test("a long session outranks the weekly total, because it is the sharper signal", () => {
+  const both = [a("2026-08-19", "run", 130), a("2026-08-17", "tennis", 120)];
+  assert.match(String(interferenceWarning(both, "2026-08-19")), /130 min session/);
+});
+
+test("the weekly warning states the CALORIE cost, which is the thing that ends a gain phase", () => {
+  // Murphy & Koehler 2022: a ~500 kcal/day deficit abolishes lean-mass gain.
+  // A number of minutes means nothing to a person; the food it costs does.
+  const heavy = [a("2026-08-19", "tennis", 100), a("2026-08-18", "run", 90)];
+  const w = String(interferenceWarning(heavy, "2026-08-19"));
+  assert.match(w, /190 aerobic minutes/);
+  assert.match(w, /kcal to put back/);
+  // 190 min at 600 kcal/h = 1900 kcal. Asserted so a change to the rate is
+  // a deliberate edit rather than a silent drift.
+  assert.match(w, /1900 kcal/);
+});
+
+test("weeklyAerobic reports the longest session, and only aerobic types count toward it", () => {
+  const acts = [a("2026-08-19", "run", 40), a("2026-08-18", "climb", 180)];
+  const w = weeklyAerobic(acts, "2026-08-19");
+  assert.equal(w.longest, 40, "a 3-hour climbing session is not a 3-hour aerobic session");
 });
 
 test("a quiet week is silent, because a warning that always fires is noise", () => {

@@ -1,5 +1,13 @@
 # Anvil
 
+> **READ FIRST, EVERY SESSION: `C:\Users\DATar\Sanity\Obsidian\Crystal\Lanes\Anvil-Core-Purpose.md`.**
+> It is the authority on what this app is for. Eleven promises in four acts,
+> each with a done test. A change that serves no promise number does not get
+> built, it goes to Crystal `Lanes/Anvil-Later.md`. The second question is
+> specific to this app: **does it add an action to logging?** If it does, it
+> needs a promise number and an argument, because P4 (logging costs less than
+> skipping it) is the keystone and wins every tie.
+
 The lifting half of Mise, on its own two feet. Split out on 2026-08-18; the
 plan of record is Crystal `Lanes/Fitness-App-Build.md`.
 
