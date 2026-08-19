@@ -1,0 +1,231 @@
+// Anvil — the lifting half of Mise, on its own two feet.
+//
+// Split out of mise on 2026-08-18 (Crystal Lanes/Fitness-App-Build.md). The
+// stack is deliberately identical to Mise's: zero build, preact + htm from an
+// import map, an offline-first store over IndexedDB, one private data repo
+// reached with a fine-grained PAT.
+//
+// Data lives in TWO repos, which is the one structural difference from Mise:
+//   anvil-data   workouts.json, vitals.json, activities.json
+//   mise-data    fitness/daily.json  (shared, both apps write it)
+//                fitness/targets.json (Mise owns it, anvil only reads)
+// See lib/github.js repoFor().
+
+import { render } from "preact";
+import { html } from "htm/preact";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { initRouter } from "./lib/router.js";
+import { initStore, read, write, getSyncStatus, onSyncChange } from "./lib/store.js";
+import { checkDataRepo, getToken, SHARED_DAILY, MISE_TARGETS } from "./lib/github.js";
+import { localIsoDate } from "./lib/dates.js";
+import { upsertDay } from "./lib/daily.js";
+import { TodayView } from "./views/today.js";
+import { CoreView } from "./views/core.js";
+import { ProgressView } from "./views/progress.js";
+import { VitalsView } from "./views/vitals.js";
+import { SystemView } from "./views/system.js";
+
+const TABS = [
+  { hash: "#/today", view: "today", icon: "▲", label: "Today" },
+  { hash: "#/core", view: "core", icon: "◇", label: "Core" },
+  { hash: "#/progress", view: "progress", icon: "◫", label: "Progress" },
+  { hash: "#/vitals", view: "vitals", icon: "◉", label: "Vitals" },
+  { hash: "#/system", view: "system", icon: "☰", label: "Settings" },
+];
+
+/** @param {string | null} at */
+function formatSyncTime(at) {
+  if (!at) return "";
+  const d = new Date(at);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function App() {
+  const [route, setRoute] = useState(/** @type {{ view: string }} */ ({ view: "today" }));
+  useEffect(() => initRouter(setRoute), []);
+
+  const [sync, setSync] = useState(getSyncStatus());
+  useEffect(() => onSyncChange(() => setSync({ ...getSyncStatus() })), []);
+
+  const [hasToken, setHasToken] = useState(Boolean(getToken()));
+  const [repo, setRepo] = useState(/** @type {Record<string, any> | null} */ (null));
+  useEffect(() => {
+    if (!hasToken) return;
+    void checkDataRepo().then(setRepo);
+  }, [hasToken]);
+
+  // ---- data ---------------------------------------------------------------
+
+  const [workouts, setWorkouts] = useState(
+    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null> }} */ ({
+      templates: [],
+      sessions: [],
+    }),
+  );
+  const [daily, setDaily] = useState(/** @type {{ days: Record<string, any>[] }} */ ({ days: [] }));
+  const [vitals, setVitals] = useState(/** @type {Record<string, any> | null} */ (null));
+  const [targets, setTargets] = useState(/** @type {Record<string, any> | null} */ (null));
+  const [loaded, setLoaded] = useState(false);
+  const [vitalsLoaded, setVitalsLoaded] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    const load = () => {
+      read("workouts.json").then((w) => {
+        if (!alive) return;
+        if (w) setWorkouts(/** @type {any} */ (w));
+        setLoaded(true);
+      });
+      read(SHARED_DAILY).then((d) => {
+        if (alive && d) setDaily(/** @type {any} */ (d));
+      });
+      read("vitals.json").then((v) => {
+        if (!alive) return;
+        if (v) setVitals(/** @type {any} */ (v));
+        setVitalsLoaded(true);
+      });
+      // read-only: Mise owns this file, github.js refuses to write it
+      read(MISE_TARGETS).then((t) => {
+        if (alive && t) setTargets(/** @type {any} */ (t));
+      });
+    };
+    load();
+    const unsub = onSyncChange(load);
+    return () => {
+      alive = false;
+      unsub();
+    };
+  }, [hasToken]);
+
+  const workoutsRef = useRef(workouts);
+  workoutsRef.current = workouts;
+  const dailyRef = useRef(daily);
+  dailyRef.current = daily;
+
+  // The in-progress workout lives at App level, not inside the view:
+  // navigating tabs mid-session must never discard logged sets. This was a
+  // reviewer-flagged data-loss bug in Mise and the fix comes across with it.
+  const [draft, setDraft] = useState(
+    /** @type {{ templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> }} */ ({
+      templateId: null,
+      session: null,
+      inputs: {},
+    }),
+  );
+
+  const handleSaveSession = useCallback((/** @type {Record<string, any>} */ session) => {
+    const w = workoutsRef.current;
+    // sessions carry a unique id — the merge key — so two same-day sessions
+    // (or two devices) can never collapse into each other on a 409 merge
+    const withId = session.id ? session : { ...session, id: crypto.randomUUID().slice(0, 8) };
+    const next = { ...w, sessions: [...w.sessions, withId] };
+    workoutsRef.current = next;
+    setWorkouts(next);
+    void write("workouts.json", /** @type {any} */ (next));
+  }, []);
+
+  const handlePatchDay = useCallback((/** @type {Record<string, any>} */ patch) => {
+    const next = upsertDay(/** @type {any} */ (dailyRef.current), localIsoDate(new Date()), patch);
+    dailyRef.current = next;
+    setDaily(next);
+    // writes into MISE's repo: this row is shared and merge.js resolves it
+    // field-wise, so anvil touching sleep/weight/pushups cannot clobber
+    // Mise's water/supplements/dailyDozen on the same day
+    void write(SHARED_DAILY, /** @type {any} */ (next));
+  }, []);
+
+  const today = localIsoDate(new Date());
+
+  return html`
+    <div class="statusline">
+      <span>ANVIL</span>
+      <span class=${`sync ${sync.pending > 0 || !hasToken ? "off" : ""}`}>
+        ${
+          !hasToken
+            ? "NO TOKEN"
+            : sync.lastError
+              ? sync.lastError
+              : sync.flushing && sync.pending > 0
+                ? `SAVING ${sync.pending}…`
+                : sync.lastSyncAt
+                  ? `SYNCED ${formatSyncTime(sync.lastSyncAt)}`
+                  : "ONLINE"
+        }
+      </span>
+    </div>
+
+    ${
+      route.view === "today" &&
+      html`<${TodayView}
+        workouts=${workouts}
+        daily=${daily}
+        targets=${targets}
+        today=${today}
+        hasToken=${hasToken}
+        repo=${repo}
+        loading=${!loaded}
+        draft=${draft}
+        onDraft=${setDraft}
+        onSaveSession=${handleSaveSession}
+        onPatchDay=${handlePatchDay}
+      />`
+    }
+    ${route.view === "core" && html`<${CoreView} />`}
+    ${
+      route.view === "progress" &&
+      html`<${ProgressView}
+        workouts=${workouts}
+        daily=${daily}
+        targets=${targets}
+        today=${today}
+        loading=${!loaded}
+      />`
+    }
+    ${
+      route.view === "vitals" &&
+      html`<${VitalsView} vitals=${vitals} loading=${!vitalsLoaded} hasToken=${hasToken} />`
+    }
+    ${
+      route.view === "system" &&
+      html`<${SystemView}
+        sync=${sync}
+        repo=${repo}
+        hasToken=${hasToken}
+        onToken=${() => setHasToken(Boolean(getToken()))}
+      />`
+    }
+
+    <nav class="tabbar">
+      ${TABS.map(
+        (t) => html`
+          <a
+            class=${route.view === t.view ? "active" : ""}
+            aria-current=${route.view === t.view ? "page" : undefined}
+            href=${t.hash}
+          >
+            <span class="i" aria-hidden="true">${t.icon}</span>${t.label}
+          </a>
+        `,
+      )}
+    </nav>
+  `;
+}
+
+initStore();
+
+const root = document.getElementById("app");
+if (root) render(html`<${App} />`, root);
+
+if ("serviceWorker" in navigator) {
+  // scope is ./ on purpose: anvil lives at janniksin.github.io/anvil/ and a
+  // worker registered at the ORIGIN root would evict every sibling PWA
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("./sw.js", { scope: "./" });
+  });
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  });
+}

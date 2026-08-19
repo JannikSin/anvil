@@ -1,0 +1,16 @@
+{
+  "name": "Anvil",
+  "short_name": "Anvil",
+  "id": "./",
+  "description": "Lift, core, progress, vitals.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c0f11",
+  "theme_color": "#0c0f11",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "288x288", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "768x768", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "768x768", "type": "image/png", "purpose": "maskable" }
+  ]
+}

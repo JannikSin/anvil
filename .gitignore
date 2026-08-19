@@ -1,0 +1,13 @@
+node_modules/
+*.tsbuildinfo
+
+# secrets never exist as files — belt and suspenders
+.env
+.env.*
+*.pem
+*.key
+
+# personal data never enters this repo; it lives in the private anvil-data
+# repo. Fixtures only.
+seed-data/
+.claude/settings.local.json

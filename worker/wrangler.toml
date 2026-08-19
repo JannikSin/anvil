@@ -1,0 +1,17 @@
+name = "anvil-worker"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+account_id = "bd5fef067bffb5780b2fd25770606075"
+workers_dev = true
+# no per-version preview URLs — the phone posts to one fixed origin
+preview_urls = false
+
+# Secrets (set via dashboard or `npx wrangler secret put`, NEVER here):
+#   VITALS_KEY              high-entropy shared secret the phone presents
+#   ANVIL_DATA_WRITE_TOKEN  fine-grained PAT, contents:write on anvil-data
+#
+# No cron. Health Auto Export pushes on its own schedule; a worker that also
+# polls would be two clocks disagreeing about the same data.
+
+[observability]
+enabled = true
