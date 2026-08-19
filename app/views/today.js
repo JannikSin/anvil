@@ -10,6 +10,7 @@ import {
   setTopSet,
 } from "../lib/workouts.js";
 import { warmupFor } from "../lib/routines.js";
+import { hrRest } from "../lib/activities.js";
 import { CoreWorkout } from "./core-workout.js";
 import { ActivityLog } from "./activity-log.js";
 
@@ -67,6 +68,11 @@ export function TodayView({
   const [invalid, setInvalid] = useState(/** @type {string | null} */ (null));
   const [showPicker, setShowPicker] = useState(false);
   const restRef = useRef(/** @type {ReturnType<typeof setInterval> | null} */ (null));
+  // the floor for the lift currently resting, so an HR entry cannot undercut it
+  const restFloorRef = useRef(REST_FALLBACK);
+  // His measured numbers replace these the moment vitals or a real max exist.
+  const restHr = Number(targets?.restingHr) || 60;
+  const maxHr = Number(targets?.maxHr) || 195;
 
   useEffect(() => {
     return () => {
@@ -76,6 +82,7 @@ export function TodayView({
 
   const startRest = (/** @type {number} */ seconds = REST_FALLBACK) => {
     if (restRef.current) clearInterval(restRef.current);
+    restFloorRef.current = seconds;
     setRest(seconds);
     restRef.current = setInterval(() => {
       setRest((r) => {
@@ -149,7 +156,32 @@ export function TodayView({
 
   return html`
     <div class="view">
-      ${rest > 0 && html`<div class="restpill num" role="timer">REST ${rest}s</div>`}
+      ${
+        rest > 0 &&
+        html`<div class="restpill num" role="timer">
+          ${`REST ${rest}s`}
+          ${
+            // A browser cannot read HealthKit, so the peak comes from the watch
+            // he is already wearing. He supplies the one number a PWA cannot
+            // get, and the app does the arithmetic: resume at 60% of heart rate
+            // reserve, never below this lift's own floor, never past 240s.
+            html`<input
+              class="hrin num"
+              type="number"
+              inputmode="numeric"
+              placeholder="bpm"
+              aria-label="Peak heart rate from your watch, to set this rest"
+              onChange=${(/** @type {any} */ e) => {
+                const peak = Number(e.currentTarget.value);
+                if (!Number.isFinite(peak) || peak <= 0) return;
+                const r = hrRest(peak, restHr, maxHr, restFloorRef.current);
+                setRest(r.seconds);
+                e.currentTarget.value = "";
+              }}
+            />`
+          }
+        </div>`
+      }
       <div class="hero"><h1>Today</h1></div>
 
       ${

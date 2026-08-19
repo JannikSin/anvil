@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addActivity, interferenceWarning, weeklyAerobic } from "../app/lib/activities.js";
+import { addActivity, hrRest, interferenceWarning, weeklyAerobic } from "../app/lib/activities.js";
 
 const a = (date, type, minutes, extra = {}) => ({ id: date + type, date, type, minutes, ...extra });
 
@@ -55,4 +55,38 @@ test("the guard also fires on total volume, not just run count", () => {
 test("a quiet week is silent, because a warning that always fires is noise", () => {
   assert.equal(interferenceWarning([], "2026-08-19"), null);
   assert.equal(interferenceWarning([a("2026-08-19", "run", 30)], "2026-08-19"), null);
+});
+
+test("HR rest: the target is 60% of heart rate reserve, not a fixed drop", () => {
+  // His numbers: resting 60, max 195. 60 + 0.6*135 = 141.
+  const { target } = hrRest(170, 60, 195, 120);
+  assert.equal(target, 141);
+});
+
+test("HR rest never goes below the exercise's own floor, however fast he recovers", () => {
+  // A near-target peak would compute a few seconds. Phosphocreatine does not
+  // care about his pulse, so the compound floor wins.
+  const r = hrRest(142, 60, 195, 180);
+  assert.equal(r.seconds, 180);
+  assert.equal(r.capped, "floor");
+});
+
+test("HR rest caps at 240s, because failing to recover is itself the data", () => {
+  const r = hrRest(194, 60, 195, 120);
+  assert.ok(r.seconds <= 240);
+});
+
+test("a higher peak asks for more rest than a lower one", () => {
+  const hard = hrRest(180, 60, 195, 120).seconds;
+  const easy = hrRest(150, 60, 195, 120).seconds;
+  assert.ok(hard >= easy, `expected ${hard} >= ${easy}`);
+});
+
+test("THE POINT: a fixed 40 bpm drop would under-rest a hard set and over-rest an easy one", () => {
+  // From 170, "minus 40" lands at 130, which is BELOW the 141 target: he would
+  // have waited longer than the naive rule told him to.
+  const { target } = hrRest(170, 60, 195, 120);
+  assert.ok(170 - 40 < target, "the naive rule resumes too early after a hard set");
+  // From 120, "minus 40" lands at 80, far under target: a long pointless wait.
+  assert.ok(120 - 40 < target);
 });

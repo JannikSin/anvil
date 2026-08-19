@@ -96,3 +96,47 @@ export function interferenceWarning(activities, todayIso) {
   }
   return null;
 }
+
+/**
+ * HR-gated rest, the defensible version of David's "wait until it drops 40
+ * beats" idea.
+ *
+ * As he stated it, it is arbitrary: a fixed 40 bpm drop from 170 leaves him at
+ * 130 and under-rested, while 40 from 120 is a long wait that buys nothing. It
+ * also confuses cardiovascular recovery with phosphocreatine resynthesis, which
+ * is the actual limiter on a heavy compound set and runs its own 2 to 3 minute
+ * course regardless of pulse.
+ *
+ * So heart rate chooses only INSIDE a window the literature supports, and never
+ * overrides it:
+ *   target  = restHr + 0.60 x (maxHr - restHr)      60% of heart rate reserve
+ *   floor   = the exercise's own prescribed rest     PCr does not care about HR
+ *   ceiling = 240 s                                  failing to recover IS data
+ *
+ * A browser cannot read HealthKit, so the peak comes from him glancing at the
+ * watch he is already wearing. He supplies the one number a PWA cannot get.
+ *
+ * @param {number} peakHr what the watch showed at the end of the set
+ * @param {number} restHr his measured resting HR
+ * @param {number} maxHr his measured or estimated max
+ * @param {number} floorSeconds the exercise's own rest interval
+ * @returns {{ target: number, seconds: number, capped: "floor" | "ceiling" | null }}
+ */
+export function hrRest(peakHr, restHr, maxHr, floorSeconds) {
+  const target = Math.round(restHr + 0.6 * (maxHr - restHr));
+  // Recovery is roughly exponential; this approximates the time to fall from
+  // peak to target with a ~60 s half-life, which is a normal 1-minute HRR.
+  const excess = Math.max(0, peakHr - target);
+  const span = Math.max(1, peakHr - restHr);
+  const estimate = excess <= 0 ? 0 : Math.round(60 * Math.log2(1 + (2 * excess) / span));
+  const bounded = Math.min(240, Math.max(floorSeconds, estimate));
+  return {
+    target,
+    seconds: bounded,
+    capped: bounded === floorSeconds && estimate < floorSeconds
+      ? "floor"
+      : bounded === 240 && estimate > 240
+        ? "ceiling"
+        : null,
+  };
+}

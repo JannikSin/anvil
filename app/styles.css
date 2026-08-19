@@ -2002,3 +2002,19 @@ button.secondary.logagain {
 .hint.stall {
   color: var(--amber);
 }
+
+/* Peak-HR entry, living inside the rest pill because that is the only moment
+   it is useful: he is resting, the watch is on his wrist, and the number is
+   already on its face. */
+.restpill .hrin {
+  width: 62px;
+  margin-left: 10px;
+  padding: 2px 6px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: center;
+}
