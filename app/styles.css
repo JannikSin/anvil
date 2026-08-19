@@ -1900,3 +1900,26 @@ details.dayrow summary:focus-visible {
 .shotstrip .actions {
   margin-top: 6px;
 }
+/* The once-a-day check-in dialog. Reuses .modal-overlay and .modal; only the
+   things a form needs on a phone are added here. Bottom-aligned on short
+   viewports because the top of a phone screen is the hardest place to reach
+   with one thumb, and this gets opened one-handed. */
+.modal.checkin {
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.modal.checkin .block-title {
+  margin-top: 0;
+}
+
+.modal.checkin .slots {
+  margin-bottom: 14px;
+}
+
+@media (max-height: 700px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}

@@ -12,7 +12,7 @@
   "templates": [
     {
       "id": "lower-a",
-      "name": "Mon: Lower A (Squat focus)",
+      "name": "Lower A (Squat focus)",
       "exercises": [
         {
           "name": "Back Squat",
@@ -51,7 +51,7 @@
     },
     {
       "id": "pull-a",
-      "name": "Tue: Pull A (Back/Biceps, heavy)",
+      "name": "Pull A (Back/Biceps, heavy)",
       "exercises": [
         {
           "name": "Weighted Pull-up or Lat Pulldown",
@@ -91,7 +91,7 @@
     },
     {
       "id": "push-a",
-      "name": "Wed: Push A (Chest/Shoulders/Tri)",
+      "name": "Push A (Chest/Shoulders/Tri)",
       "exercises": [
         {
           "name": "Incline DB Press",
@@ -135,7 +135,7 @@
     },
     {
       "id": "pull-b",
-      "name": "Thu: Pull B (Back width/Grip + skill)",
+      "name": "Pull B (Back width/Grip + skill)",
       "exercises": [
         {
           "name": "Pull-up / Muscle-up Skill Work",
@@ -180,7 +180,7 @@
     },
     {
       "id": "lower-b",
-      "name": "Fri: Lower B (Hinge focus)",
+      "name": "Lower B (Hinge focus)",
       "exercises": [
         {
           "name": "Romanian Deadlift",
@@ -213,7 +213,7 @@
     },
     {
       "id": "push-b",
-      "name": "Sat: Push B / Upper pump + weak points",
+      "name": "Push B / Upper pump + weak points",
       "exercises": [
         {
           "name": "Machine/DB Chest Press",

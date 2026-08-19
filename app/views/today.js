@@ -1,43 +1,9 @@
 import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { tokenBroken } from "../lib/github.js";
-import {
-  formatSets,
-  lastSetsFor,
-  setTopSet,
-  templateForDate,
-} from "../lib/workouts.js";
+import { formatSets, lastSetsFor, nextInRotation, sessionsOn, setTopSet } from "../lib/workouts.js";
 
 const REST_SECONDS = 90;
-
-/** "lower-a" -> "Lower A" — short label for the rest-day "next up" line. */
-const shortName = (/** @type {string} */ id) =>
-  id
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-
-/**
- * Short label for the next scheduled session after today, e.g. "Pull A
- * tomorrow" — names what's coming instead of leaving the rest day blank.
- * @param {Record<string, string | null> | undefined} schedule
- * @param {Record<string, any>[]} templates
- * @param {string} todayIso
- * @returns {string | null}
- */
-function nextSessionLabel(schedule, templates, todayIso) {
-  if (!schedule) return null;
-  for (let ahead = 1; ahead <= 7; ahead++) {
-    const d = new Date(`${todayIso}T00:00:00`);
-    d.setDate(d.getDate() + ahead);
-    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const t = templateForDate(schedule, templates, iso);
-    if (!t) continue;
-    const when = ahead === 1 ? "tomorrow" : `in ${ahead} days`;
-    return `${t.name ?? shortName(String(t.id))} ${when}`;
-  }
-  return null;
-}
 
 /**
  * Today: what is on, the set-entry form for it, and the fitness half of the
@@ -60,7 +26,7 @@ function nextSessionLabel(schedule, templates, todayIso) {
  *   draft: { templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> },
  *   onDraft: (d: { templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> }) => void,
  *   onSaveSession: (session: Record<string, any>) => void,
- *   onPatchDay: (patch: Record<string, any>) => void
+ *   onOpenCheckin: () => void
  * }} props
  * @returns {import("preact").VNode}
  */
@@ -75,7 +41,7 @@ export function TodayView({
   draft,
   onDraft,
   onSaveSession,
-  onPatchDay,
+  onOpenCheckin,
 }) {
   const [rest, setRest] = useState(0);
   const [confirmFinish, setConfirmFinish] = useState(false);
@@ -105,22 +71,20 @@ export function TodayView({
   // draft.templateId is only set when David explicitly overrides through the
   // escape hatch, and that pick wins over the schedule for this draft.
   const hasSchedule = workouts.schedule !== undefined;
-  const scheduled = templateForDate(
+  // POSITION in the rotation, not the day of the week. A missed Monday used to
+  // delete Lower A outright, because Tuesday showed Pull A; now it just makes
+  // Lower A the next thing whenever he next trains. Nothing in the app can
+  // say he is behind, because behind is no longer representable.
+  const scheduled = nextInRotation(
     workouts.schedule,
     /** @type {any} */ (workouts.templates),
-    today,
+    /** @type {any} */ (workouts.sessions),
   );
+  const doneToday = sessionsOn(/** @type {any} */ (workouts.sessions), today);
   const pickedTemplate = draft.templateId
     ? workouts.templates.find((t) => t.id === draft.templateId)
     : null;
   const template = hasSchedule ? (pickedTemplate ?? scheduled) : pickedTemplate;
-  const nextLabel = hasSchedule
-    ? nextSessionLabel(
-        /** @type {any} */ (workouts.schedule),
-        /** @type {any} */ (workouts.templates),
-        today,
-      )
-    : null;
   const tokenBad = tokenBroken(repo?.auth);
   const baselines = /** @type {Record<string, any>} */ (workouts.baselines ?? {});
   const todayRow = (daily.days ?? []).find((d) => d.date === today) ?? {};
@@ -163,40 +127,6 @@ export function TodayView({
     setShowPicker(false);
   };
 
-  /**
-   * One numeric check-in field, committed on blur so a half-typed number is
-   * never written.
-   * @param {string} label
-   * @param {string} field
-   * @param {string} unit
-   * @param {string} [step]
-   */
-  const checkin = (label, field, unit, step = "1") => html`
-    <label class="lift" key=${field}>
-      <div class="liftrow">
-        <span class="food">${label}</span>
-        <span class="q num">${todayRow[field] ?? "—"}${todayRow[field] != null ? unit : ""}</span>
-      </div>
-      <div class="setform">
-        <input
-          type="number"
-          inputmode="decimal"
-          step=${step}
-          placeholder=${unit}
-          aria-label=${`${label} today`}
-          value=${todayRow[field] ?? ""}
-          onBlur=${(/** @type {any} */ e) => {
-            const raw = e.currentTarget.value.trim();
-            if (raw === "") return;
-            const n = Number(raw);
-            if (!Number.isFinite(n) || n < 0) return;
-            onPatchDay({ [field]: n });
-          }}
-        />
-      </div>
-    </label>
-  `;
-
   return html`
     <div class="view">
       ${rest > 0 && html`<div class="restpill num" role="timer">REST ${rest}s</div>`}
@@ -230,12 +160,11 @@ export function TodayView({
         </p>`
       }
       ${
-        !template &&
-        hasSchedule &&
-        html`
-          <h2 class="block-title">Rest day</h2>
-          <p class="hint">${nextLabel ? `next: ${nextLabel}.` : "nothing scheduled next."}</p>
-        `
+        doneToday.length > 0 &&
+        !session &&
+        html`<p class="hint">
+          ${`${doneToday.length === 1 ? "One session" : `${doneToday.length} sessions`} logged today. ${template ? `${template.name} is next whenever you train again.` : ""}`}
+        </p>`
       }
       ${
         template &&
@@ -351,18 +280,22 @@ export function TodayView({
       }
 
       <h2 class="block-title">Check-in</h2>
-      <div class="slots">
-        ${checkin("Sleep", "sleepHours", "h", "0.25")}
-        ${checkin("Weight", "weight", "lb", "0.1")}
-        ${checkin("Pushups", "pushups", "", "1")}
-      </div>
+      ${
+        // The dialog on first open of the day is the place these get typed.
+        // This is the read-back, plus a way in if he wants to correct a number
+        // later: the same three fields inline as well would be the third copy
+        // of one surface, which is the thing he objected to.
+        html`<button class="checkrow" onClick=${onOpenCheckin}>
+          <span class="food">
+            ${`${todayRow.weight != null ? `${todayRow.weight} lb` : "no weight"} · ${todayRow.sleepHours != null ? `${todayRow.sleepHours} h` : "no sleep"} · ${todayRow.pushups != null ? `${todayRow.pushups} pushups` : "no pushups"}`}
+          </span>
+          <span class="q num">EDIT</span>
+        </button>`
+      }
       ${
         targets?.sleepHoursTarget &&
         html`<p class="hint">
-          sleep target ${targets.sleepHoursTarget}h${targets?.pushupTarget
-            ? `, pushups ${targets.pushupTarget}`
-            : ""}
-          — read from Mise, never written here
+          ${`sleep target ${targets.sleepHoursTarget}h${targets?.pushupTarget ? `, pushups ${targets.pushupTarget}` : ""} — read from Mise, never written here`}
         </p>`
       }
     </div>

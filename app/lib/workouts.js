@@ -110,3 +110,61 @@ export function setTopSet(session, exercise, set) {
       : [...session.exercises, { name: exercise, sets: [set] }],
   };
 }
+
+const WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+/**
+ * The rotation, in order, derived from the weekly schedule. Duplicates
+ * collapse and rest days drop out, so mon..sun becomes the plain sequence of
+ * sessions the programme cycles through.
+ * @param {Record<string, string | null> | undefined} schedule
+ * @returns {string[]}
+ */
+export function rotationOrder(schedule) {
+  if (!schedule) return [];
+  /** @type {string[]} */
+  const out = [];
+  for (const day of WEEKDAY_ORDER) {
+    const id = schedule[day];
+    if (id && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
+/**
+ * The next session to do, by POSITION in the rotation rather than by weekday.
+ *
+ * The weekday version punished a timetable: miss Monday and Lower A was simply
+ * gone, because Tuesday showed Pull A. A pointer that advances only on a
+ * completed session means a missed day makes the next session later, never
+ * skipped, which is the only version that survives a semester schedule nobody
+ * has seen yet. It also removes every "you are behind" signal from the app,
+ * because being behind stops being representable.
+ *
+ * @param {Record<string, string | null> | undefined} schedule
+ * @param {Record<string, any>[]} templates
+ * @param {Record<string, any>[]} sessions
+ * @returns {Record<string, any> | null}
+ */
+export function nextInRotation(schedule, templates, sessions) {
+  const order = rotationOrder(schedule);
+  if (!order.length) return null;
+  const logged = [...(sessions ?? [])]
+    .filter((s) => s && s.templateId)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const last = logged.length ? String(logged[logged.length - 1]?.templateId) : null;
+  const at = last ? order.indexOf(last) : -1;
+  // an unknown last id (a template that was renamed or removed) restarts the
+  // cycle rather than throwing the pointer away
+  const nextId = at === -1 ? order[0] : order[(at + 1) % order.length];
+  return templates.find((t) => t.id === nextId) ?? null;
+}
+
+/**
+ * Sessions logged on a given local date.
+ * @param {Record<string, any>[]} sessions
+ * @param {string} dateIso
+ */
+export function sessionsOn(sessions, dateIso) {
+  return (sessions ?? []).filter((s) => s && s.date === dateIso);
+}

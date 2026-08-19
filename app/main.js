@@ -30,6 +30,7 @@ import { CoreView } from "./views/core.js";
 import { ProgressView } from "./views/progress.js";
 import { VitalsView } from "./views/vitals.js";
 import { SystemView } from "./views/system.js";
+import { CheckinModal } from "./views/checkin-modal.js";
 
 const TABS = [
   { hash: "#/today", view: "today", icon: "▲", label: "Today" },
@@ -177,8 +178,43 @@ function App() {
   }, []);
 
   const today = localIsoDate(new Date());
+  const todayRow = (daily.days ?? []).find((d) => d.date === today) ?? {};
+
+  // The once-a-day check-in. Fires on the FIRST open of a local day and then
+  // not again, whether he filled it in or saved nothing: a prompt that returns
+  // on every navigation is a prompt that teaches him to dismiss it. The stamp
+  // is local to the device on purpose, so a second device on the same day asks
+  // again rather than silently assuming the first one caught it.
+  const PROMPT_KEY = "anvil.checkinPromptedOn";
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(PROMPT_KEY) === today) return;
+    } catch {
+      return; // storage disabled: never nag rather than nag on every open
+    }
+    setCheckinOpen(true);
+  }, [today]);
+
+  const closeCheckin = useCallback(() => {
+    try {
+      localStorage.setItem(PROMPT_KEY, today);
+    } catch {
+      // no storage, no stamp; the dialog simply reappears next open
+    }
+    setCheckinOpen(false);
+  }, [today]);
 
   return html`
+    ${
+      checkinOpen &&
+      html`<${CheckinModal}
+        today=${today}
+        row=${todayRow}
+        onSave=${handlePatchDay}
+        onClose=${closeCheckin}
+      />`
+    }
     <div class="statusline">
       <span>ANVIL</span>
       <span class=${`sync ${sync.pending > 0 || !hasToken ? "off" : ""}`}>
@@ -209,7 +245,7 @@ function App() {
         draft=${draft}
         onDraft=${setDraft}
         onSaveSession=${handleSaveSession}
-        onPatchDay=${handlePatchDay}
+        onOpenCheckin=${() => setCheckinOpen(true)}
       />`
     }
     ${route.view === "core" && html`<${CoreView} />`}
