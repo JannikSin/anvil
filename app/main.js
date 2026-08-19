@@ -25,6 +25,7 @@ import {
 } from "./lib/github.js";
 import { localIsoDate } from "./lib/dates.js";
 import { upsertDay } from "./lib/daily.js";
+import { addActivity } from "./lib/activities.js";
 import { TodayView } from "./views/today.js";
 import { CoreView } from "./views/core.js";
 import { ProgressView } from "./views/progress.js";
@@ -70,6 +71,11 @@ function App() {
     }),
   );
   const [daily, setDaily] = useState(/** @type {{ days: Record<string, any>[] }} */ ({ days: [] }));
+  // runs, tennis, bouldering, swims: everything that is training and is not a
+  // barbell. Nothing measured any of this until his goals changed on 2026-08-19
+  const [activities, setActivities] = useState(
+    /** @type {{ activities: Record<string, any>[] }} */ ({ activities: [] }),
+  );
   const [vitals, setVitals] = useState(/** @type {Record<string, any> | null} */ (null));
   const [targets, setTargets] = useState(/** @type {Record<string, any> | null} */ (null));
   const [loaded, setLoaded] = useState(false);
@@ -114,6 +120,9 @@ function App() {
       });
       // anvil's own file first; fall back to the rows Mise's worker is still
       // writing until the phone is re-pointed (see MISE_VITALS)
+      read("activities.json").then((a) => {
+        if (alive && a) setActivities(/** @type {any} */ (a));
+      });
       read("vitals.json").then((v) => {
         if (!alive) return;
         if (v && Array.isArray(/** @type {any} */ (v).days) && /** @type {any} */ (v).days.length) {
@@ -144,6 +153,19 @@ function App() {
   workoutsRef.current = workouts;
   const dailyRef = useRef(daily);
   dailyRef.current = daily;
+  const activitiesRef = useRef(activities);
+  activitiesRef.current = activities;
+
+  const handleLogActivity = useCallback((/** @type {Record<string, any>} */ entry) => {
+    const next = addActivity(
+      /** @type {any} */ (activitiesRef.current),
+      /** @type {any} */ (entry),
+      crypto.randomUUID().slice(0, 8),
+    );
+    activitiesRef.current = next;
+    setActivities(next);
+    void write("activities.json", /** @type {any} */ (next));
+  }, []);
 
   // The in-progress workout lives at App level, not inside the view:
   // navigating tabs mid-session must never discard logged sets. This was a
@@ -246,6 +268,8 @@ function App() {
         onDraft=${setDraft}
         onSaveSession=${handleSaveSession}
         onOpenCheckin=${() => setCheckinOpen(true)}
+        activities=${activities.activities ?? []}
+        onLogActivity=${handleLogActivity}
       />`
     }
     ${route.view === "core" && html`<${CoreView} />`}

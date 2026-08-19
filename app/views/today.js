@@ -11,6 +11,7 @@ import {
 } from "../lib/workouts.js";
 import { warmupFor } from "../lib/routines.js";
 import { CoreWorkout } from "./core-workout.js";
+import { ActivityLog } from "./activity-log.js";
 
 // Rest is a property of the LIFT, not a constant. His own Training Principles
 // note prescribes 3 to 5 minutes on heavy compounds where performance matters
@@ -40,7 +41,9 @@ const REST_FALLBACK = 90;
  *   draft: { templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> },
  *   onDraft: (d: { templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> }) => void,
  *   onSaveSession: (session: Record<string, any>) => void,
- *   onOpenCheckin: () => void
+ *   onOpenCheckin: () => void,
+ *   activities: Record<string, any>[],
+ *   onLogActivity: (entry: Record<string, any>) => void
  * }} props
  * @returns {import("preact").VNode}
  */
@@ -56,6 +59,8 @@ export function TodayView({
   onDraft,
   onSaveSession,
   onOpenCheckin,
+  activities,
+  onLogActivity,
 }) {
   const [rest, setRest] = useState(0);
   const [confirmFinish, setConfirmFinish] = useState(false);
@@ -364,6 +369,8 @@ export function TodayView({
           </div>
         `
       }
+
+      <${ActivityLog} activities=${activities} today=${today} onLog=${onLogActivity} />
 
       <h2 class="block-title">Check-in</h2>
       ${
