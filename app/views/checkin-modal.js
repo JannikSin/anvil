@@ -72,48 +72,47 @@ export function CheckinModal({ today, row, onSave, onClose }) {
     /** @type {string} */ step,
     /** @type {boolean} */ first,
   ) => html`
-    <label class="lift" key=${label}>
-      <div class="liftrow">
-        <span class="food">${label}</span>
-        <span class="q num">${unit}</span>
-      </div>
-      <div class="setform">
-        <input
-          ref=${first ? firstRef : undefined}
-          type="number"
-          inputmode="decimal"
-          step=${step}
-          placeholder=${unit}
-          aria-label=${`${label} today`}
-          value=${value}
-          onInput=${(/** @type {any} */ e) => set(e.currentTarget.value)}
-          onKeyDown=${(/** @type {any} */ e) => {
-            if (e.key === "Enter") save();
-          }}
-        />
-      </div>
+    <label class="askrow" key=${label}>
+      <span>
+        <span class="askrow__k">${label}</span>
+        <span class="askrow__u">${unit || "count"}</span>
+      </span>
+      <input
+        class="well"
+        ref=${first ? firstRef : undefined}
+        type="number"
+        inputmode="decimal"
+        step=${step}
+        placeholder="—"
+        aria-label=${`${label} today`}
+        value=${value}
+        onInput=${(/** @type {any} */ e) => set(e.currentTarget.value)}
+        onKeyDown=${(/** @type {any} */ e) => {
+          if (e.key === "Enter") save();
+        }}
+      />
     </label>
   `;
 
   return html`
-    <div class="modal-overlay" onClick=${onClose}>
+    <div class="scrim" onClick=${onClose}>
       <div
-        class="modal checkin"
+        class="sheet"
         role="dialog"
         aria-modal="true"
         aria-label="Daily check-in"
         onClick=${(/** @type {any} */ e) => e.stopPropagation()}
       >
-        <h2 class="block-title">Check-in · ${today}</h2>
-        <p class="hint">Once a day, here only. Blank means skip that one.</p>
-        <div class="slots">
+        <h2 class="band">Check-in<span class="band__sub">${today}</span></h2>
+        <p class="note">Once a day, here only. Blank means skip that one.</p>
+        <div>
           ${field("Weight", "lb", weight, setWeight, "0.1", true)}
           ${field("Sleep", "h", sleep, setSleep, "0.25", false)}
           ${field("Pushups so far", "", pushups, setPushups, "1", false)}
         </div>
-        <div class="actions wrap">
-          <button class="primary" onClick=${save}>SAVE</button>
-          <button class="secondary" onClick=${onClose}>NOT NOW</button>
+        <div class="act">
+          <button class="cta" onClick=${save}>SAVE</button>
+          <button class="ghost" onClick=${onClose}>NOT NOW</button>
         </div>
       </div>
     </div>

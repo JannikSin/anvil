@@ -37,6 +37,8 @@ tests/        node --test, no framework
 
 **`app/lib/github.js` — a two-repo router.** Most files belong to this app's private repo; two specific paths belong to a sibling app's. `repoFor(path)` routes by path, and `writeFile` physically refuses to write the file this app must never own. The refusal is code, not a comment, because the failure mode is silent corruption of another app's data.
 
+**`app/styles.css` and `app/views/ring.js` — the interface, rebuilt from zero.** The app inherited its parent's stylesheet at the split, which meant a lifting app dressed as a kitchen: a green accent, a card feed, and about four hundred lines styling recipes, cook mode and food safety that nothing here has ever rendered. The rebuild has one accent, one surface shape (a rectangle with two chamfered corners) and one radial primitive: everything measured or timed is an arc eating a ring, and all of it comes through `ring.js` so the stroke weight, cap and start angle cannot drift apart between screens. `tests/design.test.js` holds the line.
+
 **`sw.js` — cache isolation on a shared origin.** Six applications share `janniksin.github.io`. Cache Storage, localStorage and IndexedDB are scoped per **origin**, not per path, so a sibling's service worker running `keys.filter(k => k !== CACHE_VERSION)` deletes every other app's cache on every deploy. This one deletes only its own prefix, and `tests/origin.test.js` fails the build if that check is ever removed.
 
 ---
@@ -44,7 +46,7 @@ tests/        node --test, no framework
 ## Testing
 
 ```bash
-node --test "tests/*.test.js"   # 141 tests
+node --test "tests/*.test.js"   # 192 tests
 npx eslint .
 npx tsc --noEmit -p jsconfig.json
 ```
@@ -52,6 +54,7 @@ npx tsc --noEmit -p jsconfig.json
 The interesting tests are the ones that encode a lesson rather than a behaviour:
 
 - **`origin.test.js`** walks the real import graph and fails if a module is missing from the service worker's precache list, and greps the source with comments stripped so a warning comment cannot be mistaken for the bug it warns about.
+- **`design.test.js`** parses every colour in the stylesheet and fails if any of them is green, lists the parent app's dead selectors by name so re-adding one is a deliberate act, and asserts that every stick-figure keyframe is actually attached to a selector. That last one exists because for the life of the app the figures had eight animations declared and none of them referenced, so every figure stood still and nothing could tell.
 - **`program-bundle.test.js`** asserts the public data file contains no loads, no body details and no second-person facts. The repo is public; the private repo holds anything measured about a person.
 - **`progression.test.js`** asserts that every charted lift actually exists in the programme. That test exists because it did not: four chart names were carried over from the parent app and three referred to exercises that were not in the programme, so three charts could never have plotted a point, and a full green suite did not notice because every assertion was on source text rather than on data.
 

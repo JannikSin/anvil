@@ -23,18 +23,18 @@ export function ConfirmModal({ message, onResolve }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   return html`
-    <div class="modal-overlay" onClick=${() => onResolve(false)}>
+    <div class="scrim" onClick=${() => onResolve(false)}>
       <div
-        class="modal"
+        class="sheet"
         role="alertdialog"
         aria-modal="true"
         aria-label=${message}
         onClick=${(/** @type {Event} */ e) => e.stopPropagation()}
       >
-        <p class="modal-msg">${message}</p>
-        <div class="modal-actions">
-          <button class="modal-btn" onClick=${() => onResolve(false)}>CANCEL</button>
-          <button class="modal-btn ok" ref=${okRef} onClick=${() => onResolve(true)}>OK</button>
+        <p class="sheet__msg">${message}</p>
+        <div class="act">
+          <button class="ghost" onClick=${() => onResolve(false)}>CANCEL</button>
+          <button class="cta" ref=${okRef} onClick=${() => onResolve(true)}>OK</button>
         </div>
       </div>
     </div>

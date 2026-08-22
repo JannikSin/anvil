@@ -1,21 +1,19 @@
 import { html } from "htm/preact";
 
-// Progression sparkline, ported verbatim from mise app/views/fitness.js.
-
-
 /**
- * Single-series progression sparkline (dataviz: 2px line, endpoint marker,
- * values as adjacent text in text tokens, aria summary, no legend needed).
+ * Single-series progression sparkline: a 2px line, the newest point marked,
+ * the value as adjacent text rather than as an axis, and an aria summary that
+ * says the same thing in words. No legend, because there is one series.
  * @param {{ series: { date: string, top: number }[], label: string, loading: boolean }} props
  */
 export function Sparkline({ series, label, loading }) {
   if (series.length < 2) {
-    return html`<div class="spark-empty hint">
+    return html`<div class="spark-empty">
       ${
         loading
-          ? "loading…"
+          ? "loading"
           : series.length === 1
-            ? `one session — ${series[0]?.top || "bw"}`
+            ? `one session · ${series[0]?.top || "bw"}`
             : "no sessions yet"
       }
     </div>`;
@@ -39,8 +37,10 @@ export function Sparkline({ series, label, loading }) {
         <polyline points=${points} class="spark-line" />
         <circle cx=${x(series.length - 1)} cy=${y(last?.top ?? min)} r="2.5" class="spark-dot" />
       </svg>
-      <span class="spark-vals num">${last?.top} <small>best ${max}</small></span>
+      <span class="spark-vals">
+        ${last?.top}
+        <small>${`best ${max}`}</small>
+      </span>
     </div>
   `;
 }
-

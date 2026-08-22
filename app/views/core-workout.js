@@ -2,6 +2,7 @@ import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { CORE_SESSIONS, coreStepAt, LEAD_IN, sessionForDay, sessionSeconds } from "../lib/core.js";
 import { CoreFigure } from "./core-figure.js";
+import { Ring } from "./ring.js";
 import { keepAwake } from "../lib/awake.js";
 import { pickForTraining } from "../lib/music.js";
 import { localIsoDate } from "../lib/dates.js";
@@ -71,8 +72,7 @@ export function CoreWorkout({
   // Nothing here should imply a schedule the lifting programme no longer has.
   // Every caller passes a non-empty list, so the cast states that rather than
   // scattering optional chaining through the render.
-  const CS = (/** @type {any} */ x) =>
-    /** @type {import("../lib/core.js").CoreSession} */ (x);
+  const CS = (/** @type {any} */ x) => /** @type {import("../lib/core.js").CoreSession} */ (x);
   const dayPick = CS(rotate ? sessionForDay(today, sessions) : sessions[0]);
   const session = CS(sessions.find((s) => s.id === pickedId) ?? dayPick);
   // null = idle; { startedAt, elapsed } drives everything else
@@ -153,40 +153,51 @@ export function CoreWorkout({
     setRun({ startedAt: running ? Date.now() : null, elapsed: mark });
   };
 
+  // What the ring is a fraction of, per phase. A countdown drawn against the
+  // wrong span is worse than no ring: it would read as nearly done at the start
+  // of a long hold.
+  const span =
+    at.phase === "ready"
+      ? LEAD_IN
+      : at.phase === "work"
+        ? (at.step?.seconds ?? 1)
+        : at.phase === "rest"
+          ? (at.step?.rest ?? 1)
+          : 1;
+  const frac = at.phase === "done" ? 1 : span > 0 ? at.remaining / span : 0;
+
   return html`
-    <details class="coreblock" open=${open}>
-      <summary class="block-title">
-        ${title} <span class="hint">${subtitle}</span>
-      </summary>
+    <details class="block" open=${open}>
+      <summary class="band">${title}<span class="band__sub">${subtitle}</span></summary>
 
       ${
         run === null &&
         html`
-          <div class="chips wrapchips" role="group" aria-label="Which core session">
+          <div class="chiprow" role="group" aria-label="Which session">
             ${sessions.map(
               (s) => html`
                 <button
                   key=${s.id}
-                  class=${session.id === s.id ? "chip on" : "chip"}
+                  class=${session.id === s.id ? "chip is-on" : "chip"}
                   aria-pressed=${session.id === s.id}
                   onClick=${() => setPickedId(s.id)}
                 >
-                  ${s.name}${rotate && dayPick.id === s.id ? " ·today" : ""}
+                  ${s.name}${rotate && dayPick.id === s.id ? " · today" : ""}
                 </button>
               `,
             )}
           </div>
-          <p class="hint">
+          <p class="note">
             ${`${session.focus}. ${session.steps.length} moves, ${dur(total)} including rest. ${session.note}`}
           </p>
-          <div class="slots corelist">
+          <div class="rack">
             ${session.steps.map(
               (/** @type {any} */ s, /** @type {number} */ i) => html`
-                <div class="checkrow static corerow" key=${`${s.name}-${i}`}>
+                <div class="bar figrow" key=${`${s.name}-${i}`}>
                   <${CoreFigure} name=${s.name} small=${true} />
-                  <span class="food">${titleOf(s)}</span>
-                  <span class="q num">
-                    ${dur(s.seconds)}${s.rest > 0 ? ` · ${s.rest}s rest` : " · straight in"}
+                  <span class="bar__name">${titleOf(s)}</span>
+                  <span class="bar__meta num">
+                    ${`${dur(s.seconds)}${s.rest > 0 ? ` · ${s.rest}s rest` : " · straight in"}`}
                   </span>
                 </div>
               `,
@@ -197,11 +208,11 @@ export function CoreWorkout({
       ${
         run !== null &&
         html`
-          <div class="tface ${at.phase}" role="timer" aria-live="polite">
-            <div class="tphase">
+          <div class=${`timer ${at.phase}`} role="timer" aria-live="polite">
+            <div class="timer__phase">
               ${
                 at.phase === "done"
-                  ? "DONE ✓"
+                  ? "SESSION COMPLETE"
                   : at.phase === "ready"
                     ? "GET READY · FIRST UP"
                     : at.phase === "rest"
@@ -209,7 +220,7 @@ export function CoreWorkout({
                       : `${at.index + 1}/${session.steps.length} · ${dur(Math.ceil(at.workLeft))} of work left`
               }
             </div>
-            <div class="corename">
+            <div class="timer__name">
               ${
                 at.phase === "done"
                   ? session.name
@@ -220,6 +231,19 @@ export function CoreWorkout({
                       : titleOf(at.step)
               }
             </div>
+            <div class="timer__face">
+              <${Ring}
+                frac=${frac}
+                width=${5}
+                tone=${at.phase === "work" ? "arc" : "ion"}
+                label=${`${Math.ceil(at.remaining)} seconds left`}
+              />
+              <div class="timer__inner">
+                <div class="timer__clock num">
+                  ${at.phase === "done" ? "✓" : String(Math.ceil(at.remaining))}
+                </div>
+              </div>
+            </div>
             ${
               // the figure for whatever is being asked for NEXT: during the
               // lead-in and during a rest that is the move about to start, so
@@ -227,15 +251,12 @@ export function CoreWorkout({
               at.phase !== "done" &&
               html`<${CoreFigure} name=${(at.phase === "work" ? at.step : at.next)?.name ?? ""} />`
             }
-            <div class="tclock num">
-              ${at.phase === "done" ? "✓" : String(Math.ceil(at.remaining))}
-            </div>
             ${
               // the cue shows during the lead-in and the rest as well, which
               // is the actual fix: you read it BEFORE you are in position
               at.phase !== "done" &&
               (at.phase === "work" ? at.step : at.next) &&
-              html`<p class="corecue">
+              html`<p class="timer__cue">
                 ${/** @type {any} */ (at.phase === "work" ? at.step : at.next).cue}
               </p>`
             }
@@ -244,11 +265,11 @@ export function CoreWorkout({
               at.next &&
               at.step &&
               at.step.rest === 0 &&
-              html`<p class="hint">straight into ${titleOf(at.next)}, no rest</p>`
+              html`<p class="timer__cue">${`Straight into ${titleOf(at.next)}, no rest.`}</p>`
             }
             ${
               at.phase === "done" &&
-              html`<p class="hint">
+              html`<p class="timer__cue">
                 ${`${session.steps.length} moves done.${
                   rotate
                     ? ` Tomorrow's rotation: ${sessionForDay(localIsoDate(new Date(Date.now() + 86400000)), sessions).name}.`
@@ -257,12 +278,12 @@ export function CoreWorkout({
               </p>`
             }
           </div>
-          <div class="tactions">
+          <div class="timer__acts">
             ${
               at.phase !== "done" &&
               html`
                 <button
-                  class="secondary"
+                  class="ghost"
                   onClick=${() =>
                     running
                       ? setRun({ startedAt: null, elapsed })
@@ -270,10 +291,10 @@ export function CoreWorkout({
                 >
                   ${running ? "PAUSE" : "RESUME"}
                 </button>
-                <button class="secondary" onClick=${skip}>SKIP</button>
+                <button class="ghost" onClick=${skip}>SKIP</button>
               `
             }
-            <button class="secondary" onClick=${() => setRun(null)}>
+            <button class="ghost" onClick=${() => setRun(null)}>
               ${at.phase === "done" ? "BACK" : "STOP"}
             </button>
           </div>
@@ -282,24 +303,23 @@ export function CoreWorkout({
       ${
         run === null &&
         html`
+          <button class="startdial" onClick=${start}>
+            <span class="startdial__word">START</span>
+            <span class="startdial__len num">${dur(total)}</span>
+          </button>
           ${(() => {
             const p = pickForTraining(tune);
-            return html`<div class="row tunerow">
-              <a class="secondary linkbtn tunelink" href=${p.url} rel="noopener noreferrer">
-                🎧 ${p.label}
-              </a>
+            return html`<div class="act">
+              <a class="ghost" href=${p.url} rel="noopener noreferrer">${p.label}</a>
               <button
-                class="linktext"
+                class="linkish"
                 aria-label="Suggest something else"
                 onClick=${() => setTune(tune + 1)}
               >
-                something else ↻
+                ${"something else ↻"}
               </button>
             </div>`;
           })()}
-          <div class="tactions">
-            <button class="ask tstart" onClick=${start}>START · ${dur(total)}</button>
-          </div>
         `
       }
     </details>

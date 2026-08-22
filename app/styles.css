@@ -1,33 +1,110 @@
+/* ============================================================================
+   ANVIL — the guardian sheet
+   ----------------------------------------------------------------------------
+   Written from zero on 2026-08-22. Nothing in this file descends from any
+   other application's stylesheet, and that is the point of it: the sheet this
+   replaced was a sibling app's, carried over wholesale at the split, and it
+   still defined recipes, cook mode, food safety, portions and a tour that this
+   app has never had. About four hundred lines of it styled nothing at all, and
+   the two hundred that did style something made a lifting app look like a
+   kitchen.
 
+   The language here is instrument-panel, not card-feed:
+
+     PLATE     the surface primitive. A rectangle with the top-left and
+               bottom-right corners chamfered, the way a plate of armour is
+               cut so it does not catch. Never a rounded card.
+     RING      anything measured or timed is a circle being consumed. Rest,
+               core sessions, tiers, vitals. A number inside a ring reads at
+               arm's length, which is the distance this app is actually held
+               at during a set.
+     ARC       the colour. One blue, struck hot at the centre and cold at the
+               edges, on a blue-black ground. Cyan means live. Amber means
+               look. Red means stop. There is no green anywhere in this file
+               and there is not meant to be.
+
+   Type: Archivo for anything you read, JetBrains Mono for anything you count.
+   Both are vendored; the sheet this replaced declared the mono face and then
+   named Archivo in a token without ever loading it, so the sans stack silently
+   fell through to the system font for the life of the app.
+   ========================================================================= */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("../vendor/fonts/archivo-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "JetBrains Mono";
   src: url("../vendor/fonts/jetbrains-mono-var.woff2") format("woff2");
   font-weight: 100 800;
+  font-style: normal;
   font-display: swap;
 }
 
+/* ---------------------------------------------------------------- tokens -- */
+
 :root {
-  --bg: #0c0f11;
-  --panel: #14181b;
-  --panel-2: #1a2024;
-  --line: #262e33;
-  --text: #e8edef;
-  --dim: #7d8b92;
-  --signal: #3ddc84;
-  --signal-dark: #22b866;
-  --amber: #ffb224;
-  --warn: #e0a34a;
-  --recover: #4cc3ff;
-  --preact: #ff7849;
-  --satiety: #d2a8ff;
-  --red: #f85149;
-  --red-bg: #2d1216;
-  --on-signal: #06130b;
-  --signal-08: rgba(61, 220, 132, 0.08);
-  --line-strong: #3a454d;
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* ground, coldest to warmest */
+  --void: #04060d;
+  --deep: #070b16;
+  --plate: #0c1322;
+  --plate-hi: #111a2d;
+  --plate-lo: #080d19;
+
+  /* structure */
+  --edge: #1b2740;
+  --edge-hot: #2b3f66;
+  --edge-cold: #131d31;
+
+  /* ink */
+  --text: #e7eefc;
+  --dim: #8494b0;
+  --faint: #5b6a86;
+
+  /* the arc */
+  --arc: #2f6bff;
+  --arc-hi: #6398ff;
+  --arc-lo: #1d4bb8;
+  --arc-deep: #13306e;
+  --on-arc: #f4f8ff;
+  --arc-glow: rgba(47, 107, 255, 0.34);
+  --arc-film: rgba(47, 107, 255, 0.09);
+
+  /* states */
+  --ion: #24d3ee;
+  --ion-glow: rgba(36, 211, 238, 0.26);
+  --ember: #ffa23a;
+  --ember-film: rgba(255, 162, 58, 0.1);
+  --breach: #ff4d6d;
+  --breach-film: rgba(255, 77, 109, 0.11);
+
+  /* geometry */
+  --chamfer: 11px;
+  --chamfer-sm: 7px;
+  --plate-cut: polygon(
+    var(--chamfer) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%,
+    0 100%,
+    0 var(--chamfer)
+  );
+  --plate-cut-sm: polygon(
+    var(--chamfer-sm) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-sm)),
+    calc(100% - var(--chamfer-sm)) 100%,
+    0 100%,
+    0 var(--chamfer-sm)
+  );
+
+  /* type */
   --sans: "Archivo", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 * {
@@ -37,831 +114,1252 @@
 html,
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--void);
   color: var(--text);
   font-family: var(--sans);
+  font-synthesis-weight: none;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The forge light. A single cold arc thrown from above the fold, fixed so it
+   does not travel with the scroll — the ground stays put and the content moves
+   across it, which is what makes the app feel like a panel rather than a page. */
 body {
-  padding: calc(10px + env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom));
-  max-width: 640px;
+  position: relative;
+  min-height: 100dvh;
+  max-width: 660px;
   margin: 0 auto;
+  padding: calc(8px + env(safe-area-inset-top)) 16px calc(104px + env(safe-area-inset-bottom));
+  background-image:
+    radial-gradient(130% 52% at 50% -12%, #10214a 0%, rgba(16, 33, 74, 0) 62%),
+    radial-gradient(80% 40% at 92% 8%, rgba(36, 211, 238, 0.07) 0%, rgba(36, 211, 238, 0) 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 .num {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 1;
 }
 
-/* ---- statusline ---- */
+/* --------------------------------------------------------------- the HUD -- */
 
-.statusline {
+.hud {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--dim);
-  letter-spacing: 0.08em;
-  padding: 4px 4px 14px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 2px 16px;
 }
 
-.statusline .sync {
-  color: var(--signal);
-}
-
-.statusline .sync::before {
-  content: "●";
-  margin-right: 5px;
-  font-size: 8px;
-}
-
-.statusline .sync.off {
-  color: var(--amber);
-}
-
-.statusline .sync.off::before {
-  content: "○";
-}
-
-.statusline .sync.warn {
-  color: var(--amber);
-}
-
-.statusline .sync.warn::before {
-  content: "◐";
-}
-
-/* ---- hero + primary CTA ---- */
-
-.hero {
-  padding: 2px 4px 18px;
-}
-
-.hero h1 {
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
-  margin: 0;
-}
-
-.hero h1 span {
-  color: var(--dim);
-  font-weight: 600;
-}
-
-.hero .sub {
+.hud__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--dim);
-  margin-top: 6px;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  color: var(--text);
+  text-transform: uppercase;
 }
 
-.hero .sub b {
-  color: var(--amber);
-  font-weight: 600;
-}
-
-/* ---- tiles ---- */
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.tile {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 13px 14px;
-}
-
-a.tile {
-  text-decoration: none;
-  color: inherit;
+.hud__mark svg {
   display: block;
+  width: 18px;
+  height: 18px;
+  color: var(--arc-hi);
+  flex: none;
 }
 
-.view > .tile + .tile {
-  margin-top: 10px;
+.hud__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ion);
 }
 
-.ing .note {
+/* the state lamp is a ring, not a dot: a ring can be hollow (waiting), filled
+   (live) or broken (fault) without ever changing colour into green */
+.hud__lamp {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  border: 2px solid currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.hud__state.is-live .hud__lamp {
+  background: currentColor;
+}
+
+.hud__state.is-off {
+  color: var(--ember);
+}
+
+.hud__state.is-off .hud__lamp {
+  box-shadow: none;
+  border-style: dashed;
+}
+
+.hud__state.is-fault {
+  color: var(--breach);
+}
+
+.hud__state.is-fault .hud__lamp {
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* -------------------------------------------------------------- the crest -- */
+
+.crest {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 0 20px;
+}
+
+/* the emblem is a ring with a gap struck out of it and the section's own glyph
+   inside — the same ring the rest of the app uses to mean "this is measured" */
+.crest__ring {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  color: var(--arc-hi);
+  filter: drop-shadow(0 0 10px var(--arc-glow));
+}
+
+.crest__body {
+  min-width: 0;
+}
+
+.crest__title {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+}
+
+.crest__sub {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ------------------------------------------------------------- the band --- */
+/* section heading. A node, the name, and a rule that runs to the right edge —
+   the eye lands on the node and follows the rule, which is how an instrument
+   panel is read and not how a card feed is read. */
+
+.band {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: var(--dim);
-  font-size: 12px;
 }
 
-.tile .k {
+.band::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--arc);
+  box-shadow: 0 0 9px var(--arc-glow);
+  transform: rotate(45deg);
+}
+
+.band::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--edge) 0%, rgba(27, 39, 64, 0) 100%);
+}
+
+summary.band {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+summary.band::-webkit-details-marker {
+  display: none;
+}
+
+.band__sub {
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  text-transform: none;
+}
+
+/* -------------------------------------------------------------- plates ---- */
+
+.plates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plates--three {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* THE CHAMFERED SURFACE, and the one rule everything else here follows.
+ *
+ * A chamfered shape cannot take a border, so the edge and the fill are two
+ * clipped layers. The order matters and it is not the obvious one: `clip-path`
+ * establishes a stacking context, so a `z-index: -1` pseudo inside a clipped
+ * element is CLAMPED to that context — it paints above the element's own
+ * background and below its content, never behind it. Putting the fill on the
+ * element and the edge on the pseudo therefore floods the whole surface with
+ * the edge colour, which is exactly what the first cut of this sheet did to
+ * every plate, rack, lift, ghost button and dialog in the app.
+ *
+ * So: the ELEMENT carries the edge colour, and the pseudo carries the fill,
+ * inset by one pixel. The rim is what is left showing.
+ */
+.plate {
+  position: relative;
+  clip-path: var(--plate-cut);
+  background: var(--edge);
+  padding: 14px 14px 13px;
+  min-width: 0;
+}
+
+.plate::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut);
+  background: linear-gradient(160deg, var(--plate-hi) 0%, var(--plate-lo) 100%);
+  z-index: -1;
+}
+
+.plate__k {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.plate__v {
+  margin-top: 7px;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+/* The unit is its own element with its own margin rather than a space in the
+   markup: htm drops any whitespace run containing a newline where it touches a
+   tag, and prettier rewraps long lines straight back into that bug. A unit that
+   depends on a literal space is a unit that silently loses it on the next
+   format pass. */
+.plate__v small,
+.plate__u {
+  margin-left: 5px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.plate__d {
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--dim);
+}
+
+.plate--warn {
+  background: rgba(255, 162, 58, 0.45);
+}
+
+.plate--warn::before {
+  background: linear-gradient(160deg, #1d1608 0%, var(--plate-lo) 100%);
+}
+
+.plate--warn .plate__v,
+.plate--warn .plate__k {
+  color: var(--ember);
+}
+
+.plate--wide {
+  grid-column: 1 / -1;
+}
+
+/* ---------------------------------------------------------------- racks --- */
+/* A rack is a list of bars. The bars are separated by a hairline rather than by
+   a gap, because a stack of floating cards is exactly the shape this rebuild
+   was asked to get away from. */
+
+.rack {
+  clip-path: var(--plate-cut);
+  background: var(--edge);
+  border: 0;
+  position: relative;
+}
+
+.rack::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut);
+  background: linear-gradient(170deg, var(--plate) 0%, var(--plate-lo) 100%);
+  z-index: -1;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 15px;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--edge-cold);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.bar:first-child {
+  border-top: 0;
+}
+
+button.bar {
+  cursor: pointer;
+}
+
+button.bar:active {
+  background: var(--arc-film);
+}
+
+button.bar:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: -3px;
+}
+
+.bar__name {
+  min-width: 0;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
+}
+
+.bar__meta {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--dim);
+  text-align: right;
+}
+
+/* a bar that is a button says so with a chevron rather than with a shadow */
+button.bar .bar__meta::after {
+  content: " ›";
+  color: var(--arc-hi);
+}
+
+/* --------------------------------------------------------------- chips ---- */
+
+.chiprow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 10px 0;
+}
+
+.chip {
+  appearance: none;
+  border: 1px solid var(--edge-hot);
+  background: rgba(12, 19, 34, 0.7);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.chip.is-on {
+  border-color: var(--arc);
+  color: var(--on-arc);
+  background: linear-gradient(180deg, var(--arc-lo) 0%, var(--arc-deep) 100%);
+  box-shadow: 0 0 14px var(--arc-glow);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- actions ---- */
+
+.act {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 12px 0;
+}
+
+.act > * {
+  flex: 1 1 150px;
+}
+
+.cta,
+.ghost {
+  appearance: none;
+  cursor: pointer;
+  min-height: 48px;
+  padding: 13px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  clip-path: var(--plate-cut-sm);
+  border: 0;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cta {
+  background: linear-gradient(180deg, var(--arc) 0%, var(--arc-lo) 100%);
+  color: var(--on-arc);
+  box-shadow: 0 0 22px var(--arc-glow);
+}
+
+.cta:active {
+  background: linear-gradient(180deg, var(--arc-lo) 0%, var(--arc-deep) 100%);
+  box-shadow: none;
+}
+
+.cta:disabled,
+.ghost:disabled {
+  opacity: 0.32;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Same edge-then-fill sandwich as .plate, for the same reason. */
+.ghost {
+  background: var(--edge-hot);
+  color: var(--dim);
+  position: relative;
+}
+
+.ghost::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut-sm);
+  background: var(--plate-lo);
+  z-index: -1;
+}
+
+.ghost:active {
+  color: var(--text);
+}
+
+.ghost:active::before {
+  background: var(--plate-hi);
+}
+
+/* an armed second press (FILE asks twice) goes amber, never red: nothing in
+   this app is a failure, and red is reserved for a broken pipe */
+.ghost.is-armed {
+  background: var(--ember);
+  color: var(--ember);
+}
+
+.cta:focus-visible,
+.ghost:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 2px;
+}
+
+.linkish {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 6px 2px;
+  color: var(--arc-hi);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- rings --- */
+/* One ring component, four jobs: rest, the core timer, tiers and vitals. The
+   arc is drawn with stroke-dasharray from JS so it works with no gradient
+   support and no canvas, and the track behind it never disappears — an empty
+   ring still has to read as a ring or the number inside it is floating. */
+
+.ring {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.ring__track {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 6;
+}
+
+.ring__arc {
+  fill: none;
+  stroke: var(--arc);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s linear;
+  filter: drop-shadow(0 0 6px var(--arc-glow));
+}
+
+.ring--ion .ring__arc {
+  stroke: var(--ion);
+  filter: drop-shadow(0 0 7px var(--ion-glow));
+}
+
+.ring--ember .ring__arc {
+  stroke: var(--ember);
+  filter: none;
+}
+
+/* the floor tick: on the rest dial, the point below which a heart-rate reading
+   is not allowed to pull the timer. P8 says the floor always wins, so it is
+   drawn, not merely enforced. */
+.ring__tick {
+  stroke: var(--faint);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring__arc {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------ rest dial --- */
+/* Fixed, bottom-right, above the dock and clear of the thumb's logging path.
+   It used to be a text pill pinned to the top of the screen, which meant that
+   during a set — phone on the floor, glanced at from standing — the one number
+   that matters was six-point mono text. */
+
+.restdial {
+  position: fixed;
+  right: calc(14px + env(safe-area-inset-right));
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.restdial__face {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(9, 16, 32, 0.97) 62%,
+    rgba(4, 6, 13, 0.92) 100%
+  );
+  box-shadow:
+    0 0 0 1px var(--edge),
+    0 12px 34px rgba(0, 0, 0, 0.6);
+}
+
+.restdial__face .ring {
+  position: absolute;
+  inset: 0;
+}
+
+.restdial__num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.restdial__cap {
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* the last ten seconds go cyan and breathe, so it is readable from the floor */
+.restdial.is-closing .restdial__num {
+  color: var(--ion);
+}
+
+.restdial.is-closing .ring__arc {
+  stroke: var(--ion);
+}
+
+/* the one number a browser cannot read for itself: peak heart rate off the
+   watch. Kept tiny and optional — typing it is never required to end a rest. */
+.restdial__hr {
+  width: 84px;
+  padding: 6px 8px;
+  text-align: center;
+  background: rgba(12, 19, 34, 0.9);
+  border: 1px solid var(--edge-hot);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.restdial__hr:focus {
+  outline: none;
+  border-color: var(--arc);
+}
+
+/* --------------------------------------------------------------- tiers ---- */
+/* P3's control. Three concentric-feeling segments: FULL, TRIMMED, MINIMUM. It
+   is a row of ring buttons rather than a dropdown because it gets pressed while
+   tired, and because the whole point of the promise is that dropping a tier is
+   a button and not a judgement call. Nothing here can render a tier as failure:
+   the lower tiers are the same blue as the full one. */
+
+.tierpad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 4px 0 16px;
+}
+
+.tierbtn {
+  appearance: none;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 10px 4px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--dim);
+  position: relative;
+  clip-path: var(--plate-cut-sm);
+}
+
+.tierbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--plate-cut-sm);
+  background: var(--plate-lo);
+  z-index: -2;
+}
+
+.tierbtn__dial {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.tierbtn__dial .ring {
+  position: absolute;
+  inset: 0;
+}
+
+.tierbtn__min {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+}
+
+.tierbtn__unit {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  display: block;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.tierbtn__name {
   font-family: var(--mono);
   font-size: 9.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: 8px;
 }
 
-.tile .v {
-  font-family: var(--mono);
-  font-size: 22px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+.tierbtn.is-on {
+  color: var(--on-arc);
 }
 
-.tile .v small {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--dim);
+.tierbtn.is-on::before {
+  background: linear-gradient(180deg, rgba(29, 75, 184, 0.28) 0%, var(--plate-lo) 100%);
+  box-shadow: inset 0 0 0 1px var(--arc);
 }
 
-.tile .d {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  color: var(--dim);
-  margin-top: 7px;
+.tierbtn.is-on .ring__arc {
+  stroke: var(--arc-hi);
 }
 
-.tile .d b {
-  color: var(--signal);
-  font-weight: 600;
+.tierbtn:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 2px;
 }
 
-.tile.warn .d b {
-  color: var(--amber);
-}
+/* ---------------------------------------------------------------- lifts --- */
 
-/* status rows (system view) */
-
-.row {
+.lifts {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  font-size: 14px;
-}
-
-.row + .row {
-  border-top: 1px solid var(--line);
-}
-
-.row .k {
-  color: var(--dim);
-}
-
-.status.ok {
-  color: var(--signal);
-}
-
-.status.dim {
-  color: var(--dim);
-}
-
-/* ---- section titles ---- */
-
-.block-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400; /* also used on h2 elements for a11y heading structure */
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--dim);
-  margin: 20px 4px 10px;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
 }
 
-.block-title::after {
+.lift {
+  position: relative;
+  clip-path: var(--plate-cut);
+  background: var(--edge);
+  padding: 14px 15px 15px;
+}
+
+.lift::before {
   content: "";
-  flex: 1;
-  border-top: 1px solid var(--line);
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut);
+  background: linear-gradient(165deg, var(--plate-hi) 0%, var(--plate-lo) 78%);
+  z-index: -1;
 }
 
-/* Sunday batch-prep block: native <details> is the toggle, Sunday just
- * opens it by default (app/views/today.js) */
-summary.block-title {
-  cursor: pointer;
-  min-height: 44px;
+/* an accent rail down the leading edge: the app's only vertical line, and it
+   is what makes a stack of lifts read as a rack rather than as cards */
+.lift::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--chamfer);
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--arc) 0%, rgba(47, 107, 255, 0) 92%);
 }
 
-/* ---- recipe rows ---- */
-
-.slots {
+.lift__head {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.slot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 6px 6px 6px 13px;
-  min-height: 56px;
-}
-
-.slot .slotlink {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  padding: 7px 0;
-}
-
-.slot:active {
-  background: var(--panel-2);
-}
-
-.slot .plus {
-  min-width: 44px;
-  min-height: 44px;
-  flex-shrink: 0;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--panel-2);
-  color: var(--signal);
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.slot .plus.done {
-  border-color: var(--signal);
-}
-
-.slot .plus:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-.added-note {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--signal);
-  padding: 4px 2px 0;
-}
-
-.rowwrap {
-  display: flex;
-  flex-direction: column;
-}
-
-.slot .name {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.slot .m {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--dim);
-  text-align: right;
-  line-height: 1.5;
-  flex-shrink: 0;
-}
-
-.slot .m b {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.slot .why {
-  display: block;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  color: var(--dim);
-  font-weight: 400;
-  margin-top: 3px;
-}
-
-/* purpose tag pills */
-
-.tag {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 20px;
-  margin-left: 7px;
-  vertical-align: 2px;
-  background: var(--panel-2);
-  color: var(--dim);
-}
-
-/* ---- filter chips ---- */
-
-.chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 2px 4px 10px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  /* right-edge fade: cue that more chips are off-screen */
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-}
-
-.chips::-webkit-scrollbar {
-  display: none;
-}
-
-.chip {
-  flex-shrink: 0;
-  min-height: 44px;
-  padding: 10px 16px;
-  border-radius: 22px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--dim);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.chip.on {
-  border-color: var(--signal);
-  color: var(--signal);
-  background: var(--signal-08);
-}
-
-/* avoided-cuisine state (survey-v2 Q14: tap once = love/on, twice = avoid) */
-.chip.off {
-  border-color: var(--muted, #666);
-  color: var(--muted, #888);
-  opacity: 0.6;
-  text-decoration: line-through;
-}
-
-.macros4 .tile {
-  padding: 10px 8px;
-  text-align: center;
-}
-
-.ing .q {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--dim);
-  white-space: nowrap;
-}
-
-.steps {
-  margin: 0;
-  padding: 0 0 0 4px;
-  list-style: none;
-  counter-reset: step;
-}
-
-.steps li {
-  counter-increment: step;
-  display: flex;
-  gap: 12px;
-  padding: 10px 0;
-  font-size: 14px;
-  line-height: 1.55;
-  border-bottom: 1px solid var(--line);
-}
-
-.steps li::before {
-  content: counter(step, decimal-leading-zero);
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--signal);
-  padding-top: 3px;
-}
-
-/* ---- cook mode ---- */
-
-.cook {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  padding: calc(14px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
-}
-
-.cook .top {
-  display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  color: var(--dim);
+  gap: 12px;
 }
 
-.cook .top .exit {
-  color: var(--dim);
-  text-decoration: none;
-  padding: 12px;
-  margin: -12px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
+.lift__name {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
 }
 
-.cook .counter {
+.lift__pres {
+  flex: none;
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.14em;
-  color: var(--signal);
-  margin: 22px 0 10px;
+  letter-spacing: 0.04em;
+  color: var(--arc-hi);
 }
 
-.cook .steptext {
-  flex: 1;
-  font-size: 27px;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  overflow-y: auto;
-}
-
-/* The serve step (per-person-plates spec §7.3): four seats on one screen,
-   no scroll at phone height, one big COOKED tap below. Names lead, bare
-   noun phrases follow, no macros anywhere on this screen. */
-.cook .serve {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.cook .serve-title {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--dim);
-}
-.cook .serve-sub {
-  font-size: 15px;
-  color: var(--dim);
-  margin-bottom: 4px;
-}
-.cook .serve-seat {
-  border-left: 3px solid var(--line);
-  padding-left: 10px;
-}
-.cook .serve-seat.aside {
-  border-left-color: var(--warn);
-}
-.cook .serve-name {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-.cook .serve-line {
-  font-size: 21px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.cook .nav {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.cook .nav button {
-  flex: 1;
-  min-height: 62px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 14px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-}
-
-.cook .nav button.next {
-  background: linear-gradient(135deg, var(--signal) 0%, var(--signal-dark) 100%);
-  color: var(--on-signal);
-  border: none;
-  font-weight: 800;
-}
-
-.cook .nav button:disabled {
-  opacity: 0.35;
-}
-
-.chipbody {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.chipbody .n {
-  font-size: 12.5px;
-  font-weight: 600;
-  /* was nowrap + ellipsis, which is how a planned meal rendered as
-     "matcha gree…" (David, 2026-07-27). A recipe name is the single most
-     load-bearing string on this screen, so it gets two lines before it
-     truncates, and the row grows to fit rather than the name shrinking. */
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.chipbody .m {
-  font-size: 9.5px;
-  color: var(--dim);
-}
-
-.slotgrid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.slotrow {
-  display: flex;
-  align-items: center;
-  /* tightened 2026-07-27: the gap and padding here were sized for a drop
-     target with two trailing buttons. Both buttons and the drop target are
-     gone, so this space now belongs to the recipe name. */
-  gap: 6px;
-  min-height: 52px;
-  padding: 5px 6px 5px 8px;
-  background: var(--panel);
-  border: 1px dashed var(--line-strong);
-  border-radius: 12px;
-}
-
-.slotrow .t {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  color: var(--dim);
-  width: 26px;
-  flex-shrink: 0;
-}
-
-.slotrow .stack {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stackline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* the meal itself: a button, because tapping it opens the recipe */
-.slotrow .fill {
-  flex: 1;
-  min-width: 0;
-  max-width: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 6px 8px;
-  text-align: left;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel-2);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.slotrow .fill:disabled {
-  cursor: default;
-  opacity: 0.85;
-}
-
-.slotrow .fill:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-/* SWITCH: one tap swaps the meal for another that fits the slot */
-.slotrow .switchbtn {
-  min-width: 40px;
-  min-height: 44px;
-  flex-shrink: 0;
-  border: none;
-  background: none;
-  color: var(--dim);
-  font-size: 17px;
-  line-height: 1;
-  cursor: pointer;
-  border-radius: 10px;
-}
-
-.slotrow .switchbtn:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-.slotrow .emptyslot {
-  flex: 1;
-  color: var(--dim);
-  text-align: center;
-  font-family: var(--mono);
-}
-
-.slotrow .outbtn {
-  min-width: 40px;
-  min-height: 44px;
-  flex-shrink: 0;
-  border: none;
-  background: none;
-  color: var(--dim);
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  border-radius: 10px;
-}
-
-.slotrow .outbtn.on {
-  color: var(--signal);
-}
-
-.slotrow .outbtn:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-.slotrow.isout {
-  border-style: solid;
-  opacity: 0.75;
-}
-
-.slotrow .outslot {
-  flex: 1;
-  color: var(--dim);
+.lift__last {
+  margin-top: 5px;
   font-family: var(--mono);
   font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--faint);
 }
 
-/* ---- interval timer (F1) ---- */
-
-.coreblock {
-  margin-top: 18px;
+.lift.is-logged {
+  background: var(--arc-deep);
 }
 
-.coreblock summary {
-  cursor: pointer;
+.lift.is-logged::before {
+  background: linear-gradient(165deg, rgba(19, 48, 110, 0.55) 0%, var(--plate-lo) 78%);
 }
 
-.corelist {
+.lift.is-logged::after {
+  background: var(--arc-hi);
+  box-shadow: 0 0 12px var(--arc-glow);
+}
+
+.lift.is-logged .lift__last {
+  color: var(--arc-hi);
+}
+
+/* three sessions at the same load and reps. Amber, stated once, never red and
+   never a badge — P2 asks for a flag, not a scolding. */
+.lift__stall {
+  margin-top: 9px;
+  padding: 9px 11px;
+  clip-path: var(--plate-cut-sm);
+  background: var(--ember-film);
+  color: var(--ember);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lift__note {
   margin-top: 8px;
-}
-
-/* the exercise being called: it has to be readable from the floor, at arm's
-   length, upside down in a plank, which is why it is this big */
-.corename {
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.15;
-  margin: 6px 12px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-}
-
-.corecue {
-  margin: 8px 14px 0;
-  font-size: 13.5px;
+  font-size: 12px;
   line-height: 1.45;
   color: var(--dim);
 }
 
-.tactions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
+/* ---------------------------------------------------------------- setpad -- */
+/* The entry cluster. Two number wells with a round knob either side, and the
+   strike button under them. Every knob is 44px so a thumb finds it without
+   looking; the wells are wide because the keyboard is the failure case, not
+   the design. */
+
+.setpad {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px auto 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
 }
 
-.tactions button {
-  flex: 1;
-}
-
-/* ---- screen-awake indicator + music offer (2026-07-27) ----
-   The chip exists because the failure it reports used to be silent: he found
-   out the screen was not being held by looking at a locked phone with egg on
-   his hands. */
-.awakechip {
-  margin-left: 8px;
+.knob {
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--edge-hot);
+  background: radial-gradient(circle at 50% 30%, var(--plate-hi) 0%, var(--plate-lo) 100%);
+  color: var(--arc-hi);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.knob:active {
+  background: var(--arc-lo);
+  color: var(--on-arc);
+  border-color: var(--arc);
+}
+
+.knob:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 2px;
+}
+
+.well {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 6px;
+  text-align: center;
+  background: var(--plate-lo);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  appearance: textfield;
+}
+
+.well::-webkit-outer-spin-button,
+.well::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.well:focus {
+  outline: none;
+  border-color: var(--arc);
+  box-shadow: 0 0 0 3px var(--arc-film);
+}
+
+.well::placeholder {
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 400;
   letter-spacing: 0.1em;
-  color: var(--dim);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 1px 5px;
-  white-space: nowrap;
 }
 
-.awakechip.on {
-  color: var(--signal);
-  border-color: var(--signal);
+.setpad__x {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--faint);
+  text-align: center;
+  padding: 0 1px;
 }
 
-.tunetile {
-  margin-top: 10px;
+.setpad.is-bad .well {
+  border-color: var(--breach);
+  animation: shake 0.28s ease-in-out 2;
 }
 
-.tunerow {
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setpad.is-bad .well {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------- strike --- */
+/* The single most-pressed control in the application. P4 is the keystone
+   promise — logging must cost less than skipping it — so this is a 74px circle
+   with a live ring around it, not a text button in a row of text buttons. It
+   states the progression move it is about to record, because a prefill you
+   cannot see the reasoning for is a prefill you stop trusting. */
+
+.strikerow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 10px 0 4px;
-}
-
-.tunerow .tunelink {
-  margin-top: 0;
-}
-
-/* ---- recipe peek: the card a planned meal opens into (2026-07-27) ----
-   Registered in tests/overlays.test.js: a full-screen layer that takes taps
-   must always render its own way out. Here that is the ✕, plus a backdrop
-   tap and Escape, none of them behind a conditional. */
-.peek-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.62);
-  padding: 12px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-}
-
-.peek-card {
-  width: 100%;
-  max-width: 560px;
-  max-height: 86vh;
-  overflow-y: auto;
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  border-radius: 16px;
-  padding: 14px 14px 18px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.peekreceipt,
-.receiptnote {
-  border-left: 2px solid var(--line-strong);
-  padding-left: 8px;
-}
-
-.peekactions {
+  gap: 14px;
   margin-top: 14px;
 }
 
-.corerow {
-  gap: 10px;
+.strike {
+  appearance: none;
+  position: relative;
+  width: 74px;
+  height: 74px;
+  flex: none;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  background: radial-gradient(
+    circle at 50% 32%,
+    var(--arc-hi) 0%,
+    var(--arc) 45%,
+    var(--arc-lo) 100%
+  );
+  color: var(--on-arc);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  box-shadow:
+    0 0 0 1px var(--arc-hi),
+    0 0 26px var(--arc-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  display: grid;
+  place-items: center;
 }
 
-/* ---- core session figures (2026-07-27) ----
-   Schematic animated stick figures. They answer "which shape, which way does
-   it move" at a glance, because reading a paragraph of cue text while already
-   in a plank is exactly the moment you cannot read anything. */
+/* the halo: a second ring standing off the button, so the target reads bigger
+   than it is and the eye goes here first on the whole screen */
+.strike::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid rgba(47, 107, 255, 0.32);
+}
+
+.strike:active {
+  transform: scale(0.95);
+  box-shadow:
+    0 0 0 1px var(--arc),
+    inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.strike:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 6px;
+}
+
+.strike__why {
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dim);
+}
+
+.strike__why b {
+  display: block;
+  color: var(--arc-hi);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+/* ---------------------------------------------------------------- timer --- */
+/* The directed core / mobility / warm-up session. One big dial, the move's
+   name above it and its cue below, and the figure inside the dial. Everything
+   here is meant to be read from a floor mat at arm's length. */
+
+.timer {
+  position: relative;
+  margin: 14px 0 4px;
+  padding: 20px 14px 18px;
+  clip-path: var(--plate-cut);
+  background: var(--edge);
+  text-align: center;
+}
+
+.timer::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut);
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(29, 75, 184, 0.24) 0%, rgba(29, 75, 184, 0) 62%),
+    linear-gradient(170deg, var(--plate-hi) 0%, var(--plate-lo) 100%);
+  z-index: -1;
+}
+
+.timer__phase {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.timer__name {
+  margin: 8px 0 14px;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.timer__face {
+  position: relative;
+  width: 216px;
+  height: 216px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.timer__face .ring {
+  position: absolute;
+  inset: 0;
+}
+
+.timer__inner {
+  width: 168px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+}
+
+.timer__clock {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 52px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--text);
+}
+
+.timer__cue {
+  margin: 14px auto 0;
+  max-width: 34ch;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+/* rest previews the next move: cyan, so a glance tells you which of the two
+   states you are in without reading a word */
+.timer.rest .ring__arc,
+.timer.ready .ring__arc {
+  stroke: var(--ion);
+  filter: drop-shadow(0 0 7px var(--ion-glow));
+}
+
+.timer.rest .timer__phase,
+.timer.ready .timer__phase {
+  color: var(--ion);
+}
+
+.timer.done .timer__clock {
+  color: var(--arc-hi);
+}
+
+.timer__acts {
+  display: flex;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.timer__acts > * {
+  flex: 1;
+}
+
+/* the START control is itself a dial: press the middle of the ring */
+.startdial {
+  appearance: none;
+  display: block;
+  margin: 6px auto 2px;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: 1px solid var(--arc);
+  cursor: pointer;
+  background: radial-gradient(
+    circle at 50% 30%,
+    rgba(47, 107, 255, 0.3) 0%,
+    rgba(4, 6, 13, 0.9) 68%
+  );
+  color: var(--on-arc);
+  box-shadow: 0 0 30px var(--arc-glow);
+  display: grid;
+  place-items: center;
+  /* auto rows in a grid taller than its content stretch by default, which
+     pushed the duration to the bottom of the dial instead of under the word */
+  align-content: center;
+  gap: 4px;
+  padding: 0;
+}
+
+.startdial__word {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+}
+
+.startdial__len {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--arc-hi);
+}
+
+.startdial:active {
+  box-shadow: none;
+  background: radial-gradient(
+    circle at 50% 30%,
+    rgba(47, 107, 255, 0.5) 0%,
+    rgba(4, 6, 13, 0.95) 68%
+  );
+}
+
+.startdial:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 5px;
+}
+
+/* --------------------------------------------------------------- blocks --- */
+
+.block {
+  margin: 22px 0;
+}
+
+.block[open] > summary.band::before {
+  background: var(--ion);
+  box-shadow: 0 0 9px var(--ion-glow);
+}
+
+/* --------------------------------------------------------------- figures -- */
+/* Schematic stick figures for the floor work. Inline SVG with CSS keyframes:
+   the app ships under a strict CSP with no external hosts, every byte is
+   precached for a bedroom floor with no signal, and a line drawing reads
+   better at arm's length than a photograph of somebody else's body.
+   The keyframes below existed in the old sheet and were never attached to
+   anything, so every figure in the app has been standing still since it
+   shipped. They are wired now. */
+
 .corefig {
   display: block;
   width: 100%;
-  max-width: 320px;
-  margin: 4px auto 0;
+  max-width: 300px;
   height: auto;
+  margin: 0 auto;
+  color: var(--arc-hi);
 }
 
 .corefig.small {
-  max-width: 92px;
+  max-width: 76px;
   margin: 0;
+  flex: none;
+  color: var(--dim);
 }
 
 .corefig .f-limb,
@@ -880,19 +1378,67 @@ summary.block-title {
 }
 
 .corefig .f-floor {
-  stroke: var(--line-strong);
+  stroke: var(--edge-hot);
   stroke-width: 2;
   stroke-dasharray: 4 4;
 }
 
 .corefig .f-arrow {
+  stroke: var(--ion);
   stroke-width: 2;
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 .corefig .f-box {
-  stroke: var(--line-strong);
+  stroke: var(--edge-hot);
   stroke-width: 2;
+}
+
+/* which way each shape moves. transform-box/origin are set per group so a
+   rotation pivots at the joint it actually pivots at on a body. */
+.corefig g {
+  transform-box: fill-box;
+}
+
+.corefig .f-body {
+  animation: fig-breathe 3.4s ease-in-out infinite;
+}
+
+.corefig .f-hips {
+  transform-origin: 50% 50%;
+  animation: fig-dip 2.4s ease-in-out infinite;
+}
+
+.corefig .f-fold {
+  transform-origin: 100% 100%;
+  animation: fig-fold 2.6s ease-in-out infinite;
+}
+
+.corefig .f-roll {
+  transform-origin: 0% 100%;
+  animation: fig-roll 2.6s ease-in-out infinite;
+}
+
+.corefig .f-swing {
+  transform-origin: 0% 100%;
+  animation: fig-swing 3s ease-in-out infinite;
+}
+
+.corefig .f-rotate {
+  transform-origin: 100% 100%;
+  animation: fig-twist 2.2s ease-in-out infinite;
+}
+
+.corefig .f-shake {
+  animation: fig-breathe 2s ease-in-out infinite;
+}
+
+.corefig .f-alt-a {
+  animation: fig-alt 1.7s ease-in-out infinite;
+}
+
+.corefig .f-alt-b {
+  animation: fig-alt 1.7s ease-in-out infinite reverse;
 }
 
 @keyframes fig-breathe {
@@ -901,7 +1447,7 @@ summary.block-title {
     opacity: 1;
   }
   50% {
-    opacity: 0.62;
+    opacity: 0.6;
   }
 }
 
@@ -938,10 +1484,10 @@ summary.block-title {
 @keyframes fig-swing {
   0%,
   100% {
-    transform: rotate(-58deg);
+    transform: rotate(-30deg);
   }
   50% {
-    transform: rotate(-4deg);
+    transform: rotate(0deg);
   }
 }
 
@@ -972,1049 +1518,502 @@ summary.block-title {
   }
 }
 
-/* ---- food safety guide (D3) ---- */
-
-.foodsafety {
-  margin-top: 18px;
-}
-
-.foodsafety summary {
-  cursor: pointer;
-}
-
-.foodsafety .tablewrap {
-  overflow-x: auto;
-}
-
-.dangerlist {
-  margin: 6px 0 10px;
-  padding-left: 18px;
-  font-size: 12px;
-  color: var(--dim);
-}
-
-.dangerlist li {
-  margin-bottom: 4px;
-}
-
-.q.expiring {
-  color: var(--recover);
-}
-
-.usesoontile .d {
-  color: var(--recover);
-}
-
-/* ---- in-app confirm modal (A2: replaces window.confirm) ---- */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(0, 0, 0, 0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.modal {
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  border-radius: 14px;
-  padding: 18px;
-  max-width: 420px;
-  width: 100%;
-}
-
-.modal-msg {
-  margin: 0 0 14px;
-  line-height: 1.45;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.modal-btn {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 10px;
-  border: 1px solid var(--line-strong);
-  background: none;
-  color: var(--dim);
-  font-family: var(--mono);
-  letter-spacing: 0.1em;
-  cursor: pointer;
-}
-
-.modal-btn.ok {
-  color: var(--signal);
-  border-color: var(--signal);
-}
-
-.modal-btn:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-/* ---- weekly buffer snack ---- */
-
-.buffer .bufferrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-
-/* ---- weigh-in (PF.1: the weight write path) ---- */
-
-.weighin .bufferrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-
-/* ---- shopping list ---- */
-
-.checkrow {
+.figrow {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
-  min-height: 56px;
-  padding: 8px 13px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 14px;
-  text-align: left;
-  cursor: pointer;
 }
 
-.checkrow .tickarea {
+.figrow .bar__name {
   flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: none;
-  border: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  padding: 0;
-  cursor: pointer;
 }
 
-.checkrow .tickarea:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
+/* --------------------------------------------------------------- gauges --- */
+/* Vitals. A ring per metric with the value in the middle and a 14-day trace
+   under it. Read-only by construction: nothing on this screen is an input. */
 
-.checkrow .box {
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-signal);
-  font-size: 15px;
-}
-
-.checkrow.done .box {
-  background: var(--signal);
-  border-color: var(--signal);
-}
-
-.checkrow.done .food {
-  color: var(--dim);
-  text-decoration: line-through;
-}
-
-.checkrow .food {
-  flex: 1;
-  min-width: 0;
-  font-weight: 600;
-}
-
-.checkrow .q {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--dim);
-  flex-shrink: 1;
-  max-width: 38%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.checkrow.static {
-  cursor: default;
-}
-
-/* ---- fitness ---- */
-
-.lift {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 13px;
-}
-
-.liftrow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
   gap: 10px;
 }
 
-.liftrow .food {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.liftrow .q {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--dim);
-}
-
-.liftmeta {
-  font-family: var(--mono);
-  /* gym-glance size: the last-time numbers are the point of this screen */
-  font-size: 12.5px;
-  color: var(--dim);
-  margin-top: 4px;
-}
-
-.liftmeta b {
-  color: var(--signal);
-  font-weight: 600;
-}
-
-.setform {
+.gauge {
+  position: relative;
+  clip-path: var(--plate-cut);
+  background: var(--edge);
+  padding: 14px 12px 13px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  text-align: center;
+  min-width: 0;
 }
 
-.setform input {
-  width: 0;
-  flex: 1;
-  min-height: 44px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--text);
+.gauge::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut);
+  background: linear-gradient(165deg, var(--plate-hi) 0%, var(--plate-lo) 100%);
+  z-index: -1;
+}
+
+.gauge__k {
   font-family: var(--mono);
-  font-size: 16px;
-  padding: 8px 10px;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faint);
 }
 
-.setform input:focus {
-  outline: none;
-  border-color: var(--recover);
+.gauge__face {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
 }
+
+.gauge__face .ring {
+  position: absolute;
+  inset: 0;
+}
+
+.gauge__v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.gauge__u {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+}
+
+.gauge__trace {
+  width: 100%;
+  height: 26px;
+  color: var(--arc-hi);
+  opacity: 0.75;
+}
+
+.gauge__d {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------- sparks --- */
 
 .chartrow {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 13px;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 15px;
+  border-top: 1px solid var(--edge-cold);
+}
+
+.chartrow:first-child {
+  border-top: 0;
 }
 
 .spark {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
-  max-width: 60%;
+  flex: none;
 }
 
 .sparksvg {
-  flex: 1;
+  width: 104px;
   height: 30px;
-  min-width: 0;
+  overflow: visible;
 }
 
 .spark-line {
   fill: none;
-  stroke: var(--signal);
+  stroke: var(--arc-hi);
   stroke-width: 2;
-  stroke-linejoin: round;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .spark-base {
-  stroke: var(--line);
+  stroke: var(--edge);
   stroke-width: 1;
 }
 
 .spark-dot {
-  fill: var(--signal);
+  fill: var(--ion);
+  stroke: var(--void);
+  stroke-width: 1;
 }
 
 .spark-vals {
   font-family: var(--mono);
-  font-size: 12px;
-  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .spark-vals small {
-  color: var(--dim);
-  font-size: 9.5px;
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
 }
 
 .spark-empty {
-  margin: 0;
-}
-
-label.tile .k {
-  display: block;
-}
-
-.dailynum {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 18px;
-  font-weight: 700;
-  min-height: 44px;
-  padding: 6px 10px;
-}
-
-.dailynum:focus {
-  outline: none;
-  border-color: var(--recover);
-}
-
-/* ---- forms ---- */
-
-.token-form,
-.actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.actions.wrap {
-  flex-wrap: wrap;
-}
-
-.actions.wrap .primary {
-  min-width: 0;
-}
-
-button.primary {
-  min-height: 44px;
-  background: rgba(61, 220, 132, 0.1);
-  border: 1px solid var(--signal);
-  color: var(--signal);
   font-family: var(--mono);
-  font-size: 13px;
-  border-radius: 8px;
-  padding: 12px 16px;
-  cursor: pointer;
-}
-
-button.primary:active {
-  transform: scale(0.97);
-}
-
-button.primary:disabled,
-button.secondary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* secondary action: visually demoted next to .primary (e.g. FINISH SESSION
-   beside REST — ending a workout must not look like the routine tap).
-   Element-agnostic: anchors styled as buttons (FEELING OFF?) use it too. */
-a.secondary,
-button.secondary {
-  min-height: 44px;
-  background: var(--panel-2);
-  border: 1px solid var(--line-strong);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-  border-radius: 8px;
-  padding: 12px 16px;
-  cursor: pointer;
-}
-
-button.secondary.arm {
-  border-color: var(--amber);
-  color: var(--amber);
-}
-
-button.secondary:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-/* rest countdown stays visible while scrolling the lift list */
-.restpill {
-  position: fixed;
-  top: calc(8px + env(safe-area-inset-top));
-  right: 14px;
-  z-index: 45;
-  background: rgba(12, 15, 17, 0.92);
-  border: 1px solid var(--signal);
-  color: var(--signal);
-  border-radius: 20px;
-  padding: 8px 14px;
-  font-family: var(--mono);
-  font-size: 12px;
+  font-size: 10.5px;
   letter-spacing: 0.08em;
+  color: var(--faint);
+  flex: none;
 }
 
-.setform.inputerr input {
-  border-color: var(--amber);
-}
+/* ---------------------------------------------------------- notes, voids -- */
 
-/* daily counters: −/+ steppers flank the count (mis-tap recovery) */
-.checkrow .tickarea:active {
-  background: var(--panel-2);
-}
-
-.checkrow.counter {
-  cursor: default; /* only the flanking stepbtns are interactive */
-}
-
-.checkrow.counter .food {
-  text-align: left;
-}
-
-a.todayrow {
-  text-decoration: none;
-  color: var(--text);
-}
-
-.todayrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 52px;
-  padding: 8px 13px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-
-.todayrow .t {
-  flex-shrink: 0;
-  width: 34px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
+.note {
+  margin: 10px 2px;
+  font-size: 12.5px;
+  line-height: 1.55;
   color: var(--dim);
 }
 
-.todayrow .n {
+.note a {
+  color: var(--arc-hi);
+}
+
+.note b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.void {
+  padding: 26px 16px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* An alarm is for a broken pipe, never for a missed session. There is no state
+   in this application that can put a red mark against a person. */
+.alarm {
+  position: relative;
+  margin: 12px 0;
+  padding: 13px 15px;
+  clip-path: var(--plate-cut-sm);
+  background: var(--ember-film);
+  color: var(--ember);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.alarm::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--chamfer-sm);
+  bottom: 0;
+  width: 2px;
+  background: var(--ember);
+}
+
+.alarm--hot {
+  background: var(--breach-film);
+  color: var(--breach);
+}
+
+.alarm--hot::before {
+  background: var(--breach);
+}
+
+.alarm b {
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- fields --- */
+
+.field {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.input {
   flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px 13px;
+  background: var(--plate-lo);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
   font-size: 14px;
 }
 
-.todayrow .m {
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--dim);
+.input:focus {
+  outline: none;
+  border-color: var(--arc);
+  box-shadow: 0 0 0 3px var(--arc-film);
 }
 
-.scanerr {
-  color: var(--red);
+.input::placeholder {
+  color: var(--faint);
 }
 
-.scanreview {
-  margin-bottom: 14px;
+.field .cta,
+.field .ghost {
+  flex: none;
+  min-width: 92px;
 }
 
-.scanreview .checkrow {
-  min-height: 48px;
-}
+/* ---------------------------------------------------------------- sheet --- */
 
-.scanreview input[type="checkbox"] {
-  accent-color: var(--signal);
-  width: 20px;
-  height: 20px;
-}
-
-.scanreview .q {
-  color: var(--dim);
-  font-size: 12px;
-}
-
-.scanreview .actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.checkrow.counter .countnum {
-  margin-left: auto;
-}
-
-.countnum {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  flex-shrink: 0;
-}
-
-.countnum small {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--dim);
-}
-
-.streaktile .v {
-  font-family: var(--mono);
-  font-size: 26px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.streaktile .v small {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--dim);
-}
-
-.streaktile .d {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  color: var(--dim);
-  margin-top: 6px;
-}
-
-/* ---- remedies ---- */
-
-.wrapchips {
-  flex-wrap: wrap;
-  overflow-x: visible;
-  -webkit-mask-image: none;
-  mask-image: none;
-}
-
-a.secondary.linkbtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  flex: 1;
-}
-
-a.linkbtn.remedy {
-  border-color: var(--recover);
-  color: var(--recover);
-  background: rgba(76, 195, 255, 0.08);
-  font-weight: 600;
-}
-
-a.linkbtn.remedy:active {
-  transform: scale(0.98);
-}
-
-button.primary:focus-visible,
-.chip:focus-visible,
-.ask:focus-visible,
-.cook .nav button:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-}
-
-.hint {
-  color: var(--dim);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 8px 0 0;
-}
-
-.banner {
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  font-family: var(--mono);
-  font-size: 13px;
-  border: 1px solid var(--line);
-}
-
-.banner.red {
-  background: var(--red-bg);
-  border-color: var(--red);
-  color: var(--red);
-}
-
-.empty {
-  text-align: center;
-  color: var(--dim);
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.7;
-  padding: 40px 16px;
-}
-
-/* ---- tab bar ---- */
-
-.tabbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(12, 15, 17, 0.92);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--line);
-  display: flex;
-  padding: 10px 6px calc(10px + env(safe-area-inset-bottom));
-  z-index: 40;
-}
-
-.tabbar a {
-  flex: 1;
-  text-align: center;
-  text-decoration: none;
-  color: var(--dim);
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  min-height: 44px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.tabbar a .i {
-  display: block;
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-.tabbar a.active {
-  color: var(--signal);
-}
-
-/* staggered console boot for view content */
-
-@media (prefers-reduced-motion: no-preference) {
-  .view > * {
-    animation: rise 0.28s ease-out both;
-  }
-
-  .view > *:nth-child(2) {
-    animation-delay: 0.04s;
-  }
-
-  .view > *:nth-child(3) {
-    animation-delay: 0.08s;
-  }
-
-  .view > *:nth-child(4) {
-    animation-delay: 0.12s;
-  }
-
-  .view > *:nth-child(5) {
-    animation-delay: 0.16s;
-  }
-
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-}
-
-/* Vitals dashboard (Apple Watch mirror) */
-.vital-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.tile.vital {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.tile.vital .v {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-.tile.vital .unit {
-  font-size: 0.8rem;
-  opacity: 0.6;
-  font-weight: 400;
-}
-.vital-spark {
-  color: var(--accent, #6fcf7f);
-  opacity: 0.85;
-  margin: 2px 0;
-}
-.bubble.dim {
-  opacity: 0.5;
-}
-
-/* Portion-aware cooking banners */
-.tile.portion .d {
-  margin-top: 2px;
-  line-height: 1.35;
-}
-.tile.portion.batch {
-  border-left: 3px solid var(--warn, #e0a34a);
-}
-.tile.portion.single {
-  border-left: 3px solid var(--accent, #6fcf7f);
-}
-.cook-portion {
-  margin: 6px 0 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  font-size: 0.95rem;
-  line-height: 1.35;
-}
-
-/* List/pantry additions */
-.q.num.nopr {
-  opacity: 0.4;
-  font-style: italic;
-}
-
-/* uniform dim while a step's target is still being located: keeps the
-   backdrop steady so an invisible auto-skip never flashes the page bright */
-.tour-dim {
+.scrim {
   position: fixed;
   inset: 0;
-  background: rgba(4, 6, 7, 0.78);
-  pointer-events: none;
-}
-
-/* the spotlight: one element whose oversized shadow dims everything else */
-.tour-cutout {
-  position: fixed;
-  border-radius: 14px;
-  box-shadow: 0 0 0 9999px rgba(4, 6, 7, 0.78);
-  border: 1px solid var(--signal);
-  pointer-events: none;
-  transition:
-    top 0.25s ease,
-    left 0.25s ease,
-    width 0.25s ease,
-    height 0.25s ease;
-}
-
-.tour-card {
-  position: fixed;
-  left: 16px;
-  right: 16px;
-  max-width: 480px;
-  margin: 0 auto;
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  border-radius: 14px;
-  padding: 14px 16px 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  max-height: min(60vh, 420px);
-  overflow-y: auto;
-}
-
-/* tall target with no room above or below: card sits on the bottom edge
-   (the cutout is clipped in the component so they never intersect) */
-.tour-card.pinned {
-  bottom: calc(16px + env(safe-area-inset-bottom));
-}
-
-.tour-card:focus {
-  outline: none;
-}
-
-/* the flex block-title suppresses the native disclosure triangle, so the
-   summary needs its own open/closed cue or it reads as a dead header */
-.whatlist > summary::before {
-  content: "▸";
-  color: var(--signal);
-}
-
-/* ---- tables (shared meals, docs/tables-design.md) ---- */
-
-.tablecard.skipped {
-  opacity: 0.6;
-}
-
-.tableform .row {
-  gap: 8px;
-}
-
-.tableform .row select {
-  flex: 1;
-}
-
-.tableform .row {
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tableform .row .tickarea {
-  flex: 1 1 160px;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.tableform .row .tickarea:focus-within {
-  outline: 2px solid var(--recover);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-
-/* redflag was only styled inside .buildreport; table cards use it too
-   (conflicts, collisions, tailoring errors) */
-.tablecard .redflag {
-  color: var(--red);
-}
-
-/* Plan scoreboard (David's layout pick, 2026-07-23): the week as seven
-   one-line days, meters always visible, native <details> accordion */
-details.dayrow {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  margin-bottom: 8px;
-  overflow: hidden;
-}
-
-details.dayrow summary {
-  list-style: none;
+  z-index: 90;
   display: grid;
-  grid-template-columns: 46px 1fr 52px;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
-  min-height: 56px;
-  cursor: pointer;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 4, 9, 0.82);
+  backdrop-filter: blur(3px);
 }
 
-details.dayrow summary::-webkit-details-marker {
-  display: none;
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  clip-path: var(--plate-cut);
+  background: var(--edge-hot);
+  padding: 20px 18px 18px;
 }
 
-details.dayrow summary:focus-visible {
-  outline: 2px solid var(--recover);
-  outline-offset: -2px;
-  border-radius: 14px;
+.sheet::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  clip-path: var(--plate-cut);
+  background:
+    radial-gradient(76% 42% at 50% 0%, rgba(29, 75, 184, 0.22) 0%, rgba(29, 75, 184, 0) 100%),
+    linear-gradient(170deg, var(--plate) 0%, var(--plate-lo) 100%);
+  z-index: -1;
 }
 
-.dsum-status.ok {
-  color: var(--signal);
-}
-
-/* Receipt review states (David, 2026-07-26: "i am unable to check any of the
-   boxes ... i cannot tell"). The rows were toggling correctly, but a kept line
-   drew its ✓ in --on-signal on an UNFILLED box, i.e. dark on dark, and an
-   excluded line drew nothing: both states looked identical. A kept line now
-   fills its box like every other checked control in the app, and an excluded
-   line visibly drops out. */
-.checkrow.picked .box {
-  background: var(--signal);
-  border-color: var(--signal);
-}
-.checkrow.off {
-  opacity: 0.4;
-}
-.checkrow.off .food {
-  text-decoration: line-through;
-}
-
-/* The tour's unconditional way out. .tour is fixed inset:0 and eats every
-   tap, and its card only renders once a step's target is measured, so a step
-   that never resolves left an invisible full-screen blocker with nothing to
-   press (David, 2026-07-26: "none of the buttons work ... i can scroll"). */
-.tour-escape {
-  position: fixed;
-  top: calc(10px + env(safe-area-inset-top));
-  right: 12px;
-  z-index: 130;
-  padding: 10px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
-  background: var(--panel);
-  color: var(--fg);
-  font: 600 12px/1 var(--mono);
-}
-
-/* Occasions: a dated override the generator hands off to. The disclaimer box
-   is deliberately loud — a colonoscopy prep that gets half-read is a wasted
-   procedure, and the clinic's own letter always outranks this app. */
-.warnbox {
-  margin: 10px 0;
-  padding: 10px 12px;
-  border-left: 3px solid var(--warn, #e0a34a);
-  border-radius: 10px;
-  background: rgba(224, 163, 74, 0.09);
-  line-height: 1.4;
-}
-.slot.muted {
-  opacity: 0.55;
-}
-/* the running-occasion banner on Plan: it must be impossible to miss on the
-   day it matters, and invisible every other day */
-.occbanner {
-  margin: 8px 0 12px;
-  padding: 10px 12px;
-  border-left: 3px solid var(--warn, #e0a34a);
-  border-radius: 10px;
-  background: rgba(224, 163, 74, 0.12);
-  line-height: 1.4;
-}
-.occbanner b {
-  display: block;
-  font: 600 12px/1.4 var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.shotstrip .actions {
-  margin-top: 6px;
-}
-/* The once-a-day check-in dialog. Reuses .modal-overlay and .modal; only the
-   things a form needs on a phone are added here. Bottom-aligned on short
-   viewports because the top of a phone screen is the hardest place to reach
-   with one thumb, and this gets opened one-handed. */
-.modal.checkin {
-  max-height: 88vh;
-  overflow-y: auto;
-}
-
-.modal.checkin .block-title {
+.sheet .band {
   margin-top: 0;
 }
 
-.modal.checkin .slots {
-  margin-bottom: 14px;
+.sheet__msg {
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  line-height: 1.5;
 }
 
-@media (max-height: 700px) {
-  .modal-overlay {
-    align-items: flex-end;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+/* the check-in asks for three numbers, one under the next, each with its own
+   well. Typed on purpose: nudging a stepper to 196 lb is worse than typing it. */
+.askrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--edge-cold);
+}
+
+.askrow:first-child {
+  border-top: 0;
+}
+
+.askrow__k {
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.askrow__u {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  display: block;
+  margin-top: 2px;
+}
+
+.askrow .well {
+  width: 122px;
+  flex: none;
+}
+
+/* ----------------------------------------------------------------- dock --- */
+/* Five circular tabs on a floating rail. The active one lifts into a lit ring
+   and is the only one carrying a label, which keeps the rail quiet and makes
+   the current screen unmistakable at a glance. */
+
+.dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: rgba(8, 13, 25, 0.92);
+  box-shadow:
+    0 0 0 1px var(--edge),
+    0 14px 36px rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(12px);
+}
+
+.dock__tab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: var(--faint);
+  text-decoration: none;
+}
+
+.dock__tab svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.dock__name {
+  position: absolute;
+  bottom: 4px;
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.dock__tab.is-active {
+  color: var(--arc-hi);
+  background: radial-gradient(
+    circle at 50% 35%,
+    rgba(47, 107, 255, 0.28) 0%,
+    rgba(47, 107, 255, 0) 70%
+  );
+  box-shadow: inset 0 0 0 1px var(--arc);
+}
+
+.dock__tab.is-active svg {
+  transform: translateY(-5px);
+  filter: drop-shadow(0 0 6px var(--arc-glow));
+}
+
+.dock__tab.is-active .dock__name {
+  opacity: 1;
+}
+
+.dock__tab:active {
+  color: var(--arc-hi);
+}
+
+.dock__tab:focus-visible {
+  outline: 2px solid var(--arc-hi);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock__tab.is-active svg {
+    transform: none;
   }
 }
 
-/* Set entry, rebuilt 2026-08-18 for one-handed use between sets.
-   The row is weight, then a literal ×, then reps, each flanked by its own
-   stepper, so the numbers read as "185 × 6" rather than as two unrelated
-   boxes. Steppers are 44px minimum because that is the smallest thing a thumb
-   reliably hits, and the LOG button is full width underneath rather than
-   squeezed onto the same line: it is the one control pressed forty times a
-   session. */
-.setform.steppers {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr) auto;
-  gap: 6px;
-  align-items: center;
+/* --------------------------------------------------------------- motion --- */
+/* Content arrives from below, staggered over the first few children. Cheap,
+   and it is what tells you the screen changed on a tab press that otherwise
+   swaps one dark panel for another. */
+
+.deck > * {
+  animation: rise 0.34s cubic-bezier(0.22, 0.9, 0.3, 1) both;
 }
 
-.setform.steppers input {
-  /* the base rule sets width:0 with flex:1, a flexbox idiom that collapses the
-     input to nothing once this row became a grid */
-  width: 100%;
-  min-width: 0;
-  text-align: center;
-  font-family: var(--mono);
-  font-size: 17px;
+.deck > *:nth-child(2) {
+  animation-delay: 0.03s;
 }
 
-.setform.steppers .step {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
-  background: var(--panel-2);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 15px;
-  cursor: pointer;
+.deck > *:nth-child(3) {
+  animation-delay: 0.06s;
 }
 
-.setform.steppers .step:active {
-  background: var(--signal-08);
-  border-color: var(--signal-dark);
+.deck > *:nth-child(4) {
+  animation-delay: 0.09s;
 }
 
-.setform.steppers .by {
-  color: var(--dim);
-  padding: 0 2px;
+.deck > *:nth-child(n + 5) {
+  animation-delay: 0.12s;
 }
 
-button.primary.logbtn {
-  width: 100%;
-  margin-top: 8px;
-  min-height: 46px;
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-/* A logged lift steps back rather than shouting: the work is done, the row is
-   now a receipt. It still has to be correctable, so CHANGE stays. */
-.lift.islogged {
-  border-color: var(--signal-dark);
+@media (prefers-reduced-motion: reduce) {
+  .deck > * {
+    animation: none;
+  }
 }
 
-.lift.islogged .food {
-  color: var(--dim);
-}
+/* ------------------------------------------------------------ small phone -- */
 
-.lift.islogged .liftmeta {
-  color: var(--signal);
-}
+@media (max-width: 380px) {
+  .setpad {
+    grid-template-columns: 40px minmax(0, 1fr) 40px auto 40px minmax(0, 1fr) 40px;
+    gap: 5px;
+  }
 
-button.secondary.logagain {
-  margin-top: 6px;
-  min-height: 38px;
-  font-size: 12px;
-}
+  .knob {
+    width: 40px;
+    height: 40px;
+  }
 
-/* A stalled lift. Amber, not red: three sessions at the same numbers is
-   information, not a failure, and this app does not tell him he is behind. */
-.hint.stall {
-  color: var(--amber);
-}
+  .timer__face {
+    width: 190px;
+    height: 190px;
+  }
 
-/* Peak-HR entry, living inside the rest pill because that is the only moment
-   it is useful: he is resting, the watch is on his wrist, and the number is
-   already on its face. */
-.restpill .hrin {
-  width: 62px;
-  margin-left: 10px;
-  padding: 2px 6px;
-  background: var(--bg);
-  border: 1px solid var(--line-strong);
-  border-radius: 6px;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-  text-align: center;
+  .timer__clock {
+    font-size: 46px;
+  }
+
+  .dock__tab {
+    width: 48px;
+    height: 48px;
+  }
 }

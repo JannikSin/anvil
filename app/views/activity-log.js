@@ -5,13 +5,13 @@ import { TYPES, interferenceWarning, weeklyAerobic } from "../lib/activities.js"
 /**
  * Logging for everything that is not a barbell.
  *
- * Deliberately NOT a sixth tab. It sits under the lifts on Today, because the
- * moment he logs a run is the same moment he logs a session, and a tab he has
- * to remember to visit is a tab that stays empty. The app already proved that
- * with a Vitals screen nobody could fill.
+ * Deliberately NOT a sixth tab. It sits under the lifts on the Bar screen,
+ * because the moment a run is logged is the same moment a session is logged,
+ * and a tab you have to remember to visit is a tab that stays empty. This app
+ * already proved that with a Watch screen nobody could fill.
  *
- * Everything except type and minutes is optional. A run with only a duration
- * is a logged run; demanding distance and heart rate is how you get zero runs
+ * Everything except type and minutes is optional. A run with only a duration is
+ * a logged run; demanding distance and heart rate is how you get zero runs
  * logged instead of ten imprecise ones.
  *
  * @param {{
@@ -53,54 +53,59 @@ export function ActivityLog({ activities, today, onLog }) {
     setOpen(false);
   };
 
-  const num = (
+  const ask = (
     /** @type {string} */ label,
     /** @type {string} */ value,
     /** @type {(v: string) => void} */ set,
     /** @type {string} */ hint,
   ) => html`
-    <label class="lift" key=${label}>
-      <div class="liftrow">
-        <span class="food">${label}</span>
-        <span class="q num">${hint}</span>
-      </div>
-      <div class="setform">
-        <input
-          type="number"
-          inputmode="decimal"
-          aria-label=${label}
-          value=${value}
-          onInput=${(/** @type {any} */ e) => set(e.currentTarget.value)}
-        />
-      </div>
+    <label class="askrow" key=${label}>
+      <span>
+        <span class="askrow__k">${label}</span>
+        <span class="askrow__u">${hint}</span>
+      </span>
+      <input
+        class="well"
+        type="number"
+        inputmode="decimal"
+        placeholder="—"
+        aria-label=${label}
+        value=${value}
+        onInput=${(/** @type {any} */ e) => set(e.currentTarget.value)}
+      />
     </label>
   `;
 
   return html`
-    <h2 class="block-title">Aerobic</h2>
-    <div class="grid">
-      <div class="tile">
-        <div class="k">This week</div>
-        <div class="v num">${week.minutes}<small> min</small></div>
-        <div class="d num">${`${week.runs} run${week.runs === 1 ? "" : "s"} · target 120-150`}</div>
+    <h2 class="band">Everything else</h2>
+    <div class="plates">
+      <div class="plate">
+        <div class="plate__k">Aerobic this week</div>
+        <div class="plate__v">
+          ${week.minutes}
+          <small>MIN</small>
+        </div>
+        <div class="plate__d num">
+          ${`${week.runs} run${week.runs === 1 ? "" : "s"} · target 120-150`}
+        </div>
       </div>
-      <div class="tile ${warn ? "warn" : ""}">
-        <div class="k">Interference</div>
-        <div class="v">${warn ? "over" : "clear"}</div>
-        <div class="d">
-          ${warn ?? "Run count does not matter. Session length and replacing the calories do"}
+      <div class=${`plate ${warn ? "plate--warn" : ""}`}>
+        <div class="plate__k">Interference</div>
+        <div class="plate__v">${warn ? "OVER" : "CLEAR"}</div>
+        <div class="plate__d">
+          ${warn ?? "Run count does not matter. Session length and replacing the calories do."}
         </div>
       </div>
     </div>
 
     ${
       todays.length > 0 &&
-      html`<div class="slots">
+      html`<div class="rack">
         ${todays.map(
           (a) => html`
-            <div class="checkrow static" key=${a.id}>
-              <span class="food">${a.type}</span>
-              <span class="q num">
+            <div class="bar" key=${a.id}>
+              <span class="bar__name">${a.type}</span>
+              <span class="bar__meta num">
                 ${`${a.minutes} min${a.miles ? ` · ${a.miles} mi` : ""}${a.avgHr ? ` · ${a.avgHr} bpm` : ""}${a.hrDrop60 ? ` · −${a.hrDrop60} in 60s` : ""}`}
               </span>
             </div>
@@ -108,20 +113,21 @@ export function ActivityLog({ activities, today, onLog }) {
         )}
       </div>`
     }
-
     ${
       !open &&
-      html`<button class="secondary" onClick=${() => setOpen(true)}>+ LOG A RUN OR ACTIVITY</button>`
+      html`<div class="act">
+        <button class="ghost" onClick=${() => setOpen(true)}>+ LOG A RUN OR ACTIVITY</button>
+      </div>`
     }
     ${
       open &&
       html`
-        <div class="chips wrapchips" role="group" aria-label="Activity type">
+        <div class="chiprow" role="group" aria-label="Activity type">
           ${TYPES.map(
             (t) => html`
               <button
                 key=${t}
-                class=${type === t ? "chip on" : "chip"}
+                class=${type === t ? "chip is-on" : "chip"}
                 aria-pressed=${type === t}
                 onClick=${() => setType(t)}
               >
@@ -130,19 +136,18 @@ export function ActivityLog({ activities, today, onLog }) {
             `,
           )}
         </div>
-        <div class="slots">
-          ${num("Minutes", minutes, setMinutes, "required")}
-          ${num("Miles", miles, setMiles, "optional")}
-          ${num("Average HR", avgHr, setAvgHr, "optional")}
-          ${num("HR drop, 60s after", hrDrop, setHrDrop, "optional")}
+        <div>
+          ${ask("Minutes", minutes, setMinutes, "required")}
+          ${ask("Miles", miles, setMiles, "optional")}
+          ${ask("Average HR", avgHr, setAvgHr, "optional")}
+          ${ask("HR drop, 60s after", hrDrop, setHrDrop, "optional")}
         </div>
-        <p class="hint">
-          The 60-second drop is the one worth catching: more than 12 bpm is normal, and it is the
-          cheapest fitness signal you own. Everything except minutes can stay blank.
+        <p class="note">
+          ${"The 60-second drop is the one worth catching: more than 12 bpm is normal, and it is the cheapest fitness signal you own. Everything except minutes can stay blank."}
         </p>
-        <div class="actions wrap">
-          <button class="primary" onClick=${save} disabled=${!minutes.trim()}>LOG IT</button>
-          <button class="secondary" onClick=${() => setOpen(false)}>CANCEL</button>
+        <div class="act">
+          <button class="cta" onClick=${save} disabled=${!minutes.trim()}>LOG IT</button>
+          <button class="ghost" onClick=${() => setOpen(false)}>CANCEL</button>
         </div>
       `
     }

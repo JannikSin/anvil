@@ -61,6 +61,36 @@ on every write. `tests/daily.test.js` pins this.
 **5. Sessions carry an id.** It is the merge key. Two same-day sessions, or two
 devices, collapse into one without it.
 
+## The look is a rule, not a preference
+
+**Rebuilt from zero on 2026-08-22 (session stanton), on David's instruction:
+Anvil must not resemble Mise and must not be traceable to it.** The sheet it
+replaced was Mise's, carried over wholesale at the split, and roughly four
+hundred of its lines styled recipes, cook mode, food safety, portions and a
+tour that this app has never had. `tests/design.test.js` fails the build if any
+of that comes back.
+
+- **Blue and black. No green, anywhere, ever.** One accent (`--arc` #2f6bff),
+  cyan (`--ion`) for live, amber (`--ember`) for caution, red (`--breach`) for a
+  broken pipe. The test parses every colour in the sheet and rejects any whose
+  green channel leads both others.
+- **The plate.** Every surface is a rectangle with the top-left and bottom-right
+  corners chamfered, via `--plate-cut`. Never a rounded card.
+- **The ring.** Anything measured or timed is an arc eating a circle, and all of
+  it goes through `views/ring.js`. Rest, the floor timer, the tiers, the vitals.
+- **Layering, and this one bites.** `clip-path` establishes a stacking context,
+  so a `z-index: -1` pseudo inside a clipped element is clamped to it and paints
+  ABOVE the element's own background. The ELEMENT carries the edge colour and
+  the `::before` carries the fill, `inset: 1px`. Doing it the intuitive way
+  floods every plate, rack, lift and dialog with the edge colour, which is
+  exactly what the first cut of the rebuild did.
+- **Vocabulary.** `deck, crest, band, plate, rack, bar, lift, setpad, knob,
+  strike, tierpad, timer, gauge, dock, sheet, note, void, alarm`. If you find
+  yourself typing `.food`, `.checkrow`, `.slots`, `.tile` or `.hint`, you are
+  copying from the other app again.
+- **Nothing may render a person as behind.** P9 is a colour rule too: a lower
+  tier, a skipped day and a short session all use the same blue as a full one.
+
 ## Gates before any push
 
 ```

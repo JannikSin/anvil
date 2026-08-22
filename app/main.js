@@ -16,13 +16,7 @@ import { html } from "htm/preact";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { initRouter } from "./lib/router.js";
 import { initStore, read, write, getSyncStatus, onSyncChange } from "./lib/store.js";
-import {
-  checkDataRepo,
-  getToken,
-  SHARED_DAILY,
-  MISE_TARGETS,
-  MISE_VITALS,
-} from "./lib/github.js";
+import { checkDataRepo, getToken, SHARED_DAILY, MISE_TARGETS, MISE_VITALS } from "./lib/github.js";
 import { localIsoDate } from "./lib/dates.js";
 import { upsertDay } from "./lib/daily.js";
 import { addActivity } from "./lib/activities.js";
@@ -32,13 +26,16 @@ import { ProgressView } from "./views/progress.js";
 import { VitalsView } from "./views/vitals.js";
 import { SystemView } from "./views/system.js";
 import { CheckinModal } from "./views/checkin-modal.js";
+import { Glyph, Sigil } from "./views/glyphs.js";
 
+// Five screens on a circular rail. The names are the app's own nouns: what is
+// on the bar today, the floor work, the record, the watch, the machine.
 const TABS = [
-  { hash: "#/today", view: "today", icon: "▲", label: "Today" },
-  { hash: "#/core", view: "core", icon: "◇", label: "Core" },
-  { hash: "#/progress", view: "progress", icon: "◫", label: "Progress" },
-  { hash: "#/vitals", view: "vitals", icon: "◉", label: "Vitals" },
-  { hash: "#/system", view: "system", icon: "☰", label: "Settings" },
+  { hash: "#/today", view: "today", glyph: "today", label: "Bar" },
+  { hash: "#/core", view: "core", glyph: "floor", label: "Floor" },
+  { hash: "#/progress", view: "progress", glyph: "progress", label: "Record" },
+  { hash: "#/vitals", view: "vitals", glyph: "vitals", label: "Watch" },
+  { hash: "#/system", view: "system", glyph: "system", label: "Rig" },
 ];
 
 /** @param {string | null} at */
@@ -46,6 +43,22 @@ function formatSyncTime(at) {
   if (!at) return "";
   const d = new Date(at);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/**
+ * The status lamp. Three states and no more: live, waiting, faulted. It never
+ * goes green — this application has one accent colour and a lamp that changes
+ * hue to say "fine" is a fourth thing to learn for no information.
+ * @param {{ pending: number, flushing: boolean, lastError: string | null, lastSyncAt: string | null }} sync
+ * @param {boolean} hasToken
+ */
+function lampFor(sync, hasToken) {
+  if (!hasToken) return { cls: "is-off", text: "NO TOKEN" };
+  if (sync.lastError) return { cls: "is-fault", text: String(sync.lastError) };
+  if (sync.flushing && sync.pending > 0) return { cls: "is-off", text: `SAVING ${sync.pending}` };
+  if (sync.pending > 0) return { cls: "is-off", text: `${sync.pending} QUEUED` };
+  if (sync.lastSyncAt) return { cls: "is-live", text: `SYNCED ${formatSyncTime(sync.lastSyncAt)}` };
+  return { cls: "is-live", text: "ONLINE" };
 }
 
 function App() {
@@ -237,21 +250,14 @@ function App() {
         onClose=${closeCheckin}
       />`
     }
-    <div class="statusline">
-      <span>ANVIL</span>
-      <span class=${`sync ${sync.pending > 0 || !hasToken ? "off" : ""}`}>
-        ${
-          !hasToken
-            ? "NO TOKEN"
-            : sync.lastError
-              ? sync.lastError
-              : sync.flushing && sync.pending > 0
-                ? `SAVING ${sync.pending}…`
-                : sync.lastSyncAt
-                  ? `SYNCED ${formatSyncTime(sync.lastSyncAt)}`
-                  : "ONLINE"
-        }
-      </span>
+    <div class="hud">
+      <span class="hud__mark"><${Sigil} />Anvil</span>
+      ${(() => {
+        const lamp = lampFor(/** @type {any} */ (sync), hasToken);
+        return html`<span class=${`hud__state ${lamp.cls}`}>
+          <span class="hud__lamp"></span>${lamp.text}
+        </span>`;
+      })()}
     </div>
 
     ${
@@ -302,15 +308,17 @@ function App() {
       />`
     }
 
-    <nav class="tabbar">
+    <nav class="dock" aria-label="Sections">
       ${TABS.map(
         (t) => html`
           <a
-            class=${route.view === t.view ? "active" : ""}
+            class=${`dock__tab ${route.view === t.view ? "is-active" : ""}`}
             aria-current=${route.view === t.view ? "page" : undefined}
+            aria-label=${t.label}
             href=${t.hash}
           >
-            <span class="i" aria-hidden="true">${t.icon}</span>${t.label}
+            <${Glyph} name=${t.glyph} />
+            <span class="dock__name">${t.label}</span>
           </a>
         `,
       )}

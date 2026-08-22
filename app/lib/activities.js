@@ -200,10 +200,11 @@ export function hrRest(peakHr, restHr, maxHr, floorSeconds) {
   return {
     target,
     seconds: bounded,
-    capped: bounded === floorSeconds && estimate < floorSeconds
-      ? "floor"
-      : bounded === 240 && estimate > 240
-        ? "ceiling"
-        : null,
+    capped:
+      bounded === floorSeconds && estimate < floorSeconds
+        ? "floor"
+        : bounded === 240 && estimate > 240
+          ? "ceiling"
+          : null,
   };
 }
