@@ -2,7 +2,7 @@
 // last-time numbers beside each lift, PRs, and the progression series the
 // SVG sparklines draw. Ported from mise app/lib/fitness.js on 2026-08-18;
 // the calorie and allergen half of that file stayed in Mise as targets.js.
-import { parseLocalIso } from "./dates.js";
+import { parseLocalIso, shiftIsoDate } from "./dates.js";
 
 /**
  * @typedef {{ weight: number, reps: number }} SetEntry
@@ -385,6 +385,75 @@ export function primaryLifts(templates, sessions, n = 4) {
   for (const f of firsts) {
     if (out.length >= n) break;
     if (!out.includes(f)) out.push(f);
+  }
+  return out;
+}
+
+/**
+ * THE QUEUE, which is what "what am I doing Tuesday" actually resolves to in
+ * this programme, and the distinction matters enough to spell out.
+ *
+ * The rotation advances on COMPLETION, not on the weekday (see nextInRotation).
+ * So there is no honest calendar to show: a session is not "Tuesday's session",
+ * it is "the one after this one", and if Monday does not happen then Monday's
+ * session is what Tuesday gets. Rendering a fixed weekly calendar would put
+ * Lower A on a Monday he did not train and then quietly delete it, which is the
+ * exact bug the completion pointer was built to remove.
+ *
+ * What this returns instead is the QUEUE laid onto dates: the next `count`
+ * sessions in order, each landed on the next day the weekly shape trains,
+ * with the rest days included as markers so a person can see that the rest is
+ * real and where it falls. The dates are a projection, not a promise, and the
+ * caller is required to say so.
+ *
+ * A day already carrying a filed session pushes the queue to the next training
+ * day, so today does not show as still owing something already done (P9).
+ *
+ * @param {Record<string, string | null> | undefined} schedule
+ * @param {Record<string, any>[]} templates
+ * @param {Record<string, any>[]} sessions
+ * @param {string} fromDate today, as YYYY-MM-DD
+ * @param {number} [count] how many training sessions to project
+ * @returns {{ date: string, weekday: string, rest: boolean, template: Record<string, any> | null }[]}
+ */
+export function upcomingSessions(schedule, templates, sessions, fromDate, count = 5) {
+  const order = rotationOrder(schedule);
+  if (!schedule || !order.length || !fromDate) return [];
+  const next = nextInRotation(schedule, templates, sessions);
+  if (!next) return [];
+  let at = order.indexOf(String(next.id));
+  if (at === -1) at = 0;
+
+  // a session already filed today means today is spent; the queue starts
+  // tomorrow. Never renders as "you still owe today's session".
+  let cursor = sessionsOn(sessions, fromDate).length ? shiftIsoDate(fromDate, 1) : fromDate;
+
+  /** @type {{ date: string, weekday: string, rest: boolean, template: Record<string, any> | null }[]} */
+  const out = [];
+  let trained = 0;
+  // 21 days is three full weeks: enough to project six sessions past any
+  // arrangement of rest days, and a hard stop so a malformed schedule with no
+  // training day at all cannot spin.
+  for (let i = 0; i < 21 && trained < count; i++) {
+    const weekday = WEEKDAY_KEYS[parseLocalIso(cursor).getDay()] ?? "sun";
+    if (schedule[weekday]) {
+      const id = order[at % order.length];
+      out.push({
+        date: cursor,
+        weekday,
+        rest: false,
+        template: templates.find((t) => t.id === id) ?? null,
+      });
+      at++;
+      trained++;
+    } else {
+      // A rest day is a FEATURE of this programme and it is shown, because
+      // "is there a rest day or is it just different muscle groups" is a
+      // question the app should answer without being asked. It is not counted
+      // against `count`: five sessions means five sessions.
+      out.push({ date: cursor, weekday, rest: true, template: null });
+    }
+    cursor = shiftIsoDate(cursor, 1);
   }
   return out;
 }

@@ -79,7 +79,7 @@ function App() {
   // ---- data ---------------------------------------------------------------
 
   const [workouts, setWorkouts] = useState(
-    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, bundled?: boolean, baselines?: Record<string, any> }} */ ({
+    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, bundled?: boolean, baselines?: Record<string, any> }} */ ({
       templates: [],
       sessions: [],
     }),
@@ -108,9 +108,22 @@ function App() {
       .then((prog) => {
         if (!alive || !prog) return;
         setWorkouts((cur) =>
-          // never clobber the real thing, and never drop logged sessions
+          // never clobber the real thing, and never drop logged sessions.
+          // `conditioning` rides along: it was omitted here when the bundle was
+          // built on 2026-08-18 and it is not in the data repo either, so the
+          // two hard interval sessions a week written on 2026-08-19 have never
+          // once reached a screen. tests/conditioning.test.js passed the whole
+          // time because it asserts against program.json rather than against
+          // anything the app renders. Same shape as the unreachable token
+          // warning: covered by a test, invisible to the user.
           cur.schedule === undefined && cur.templates.length === 0
-            ? { ...cur, schedule: prog.schedule, templates: prog.templates, bundled: true }
+            ? {
+                ...cur,
+                schedule: prog.schedule,
+                templates: prog.templates,
+                conditioning: prog.conditioning,
+                bundled: true,
+              }
             : cur,
         );
         setLoaded(true);
@@ -126,7 +139,15 @@ function App() {
     const load = () => {
       read("workouts.json").then((w) => {
         if (!alive) return;
-        if (w) setWorkouts(/** @type {any} */ (w));
+        // the repo copy owns schedule, templates, sessions and baselines; it
+        // has never carried `conditioning`, so the bundled block survives the
+        // overwrite rather than being silently dropped on the first sync
+        if (w)
+          setWorkouts((cur) => ({
+            conditioning: cur.conditioning,
+            .../** @type {any} */ (w),
+            .../** @type {any} */ ((w).conditioning ? {} : { conditioning: cur.conditioning }),
+          }));
         setLoaded(true);
       });
       read(SHARED_DAILY).then((d) => {

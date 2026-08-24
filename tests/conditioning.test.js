@@ -94,3 +94,54 @@ test("an unknown day and a missing block are both just null, not a crash", () =>
   assert.equal(conditioningForDate({}, TUE), null);
   assert.equal(conditioningForDate({ tue: null }, TUE), null);
 });
+
+// ---------------------------------------------------------------------------
+// Reachability. Added 2026-08-24 (droplet) after finding that every test above
+// this line passed for five days while the conditioning programme rendered on
+// NO SCREEN AT ALL.
+//
+// The block was written on 2026-08-19 into program.json. The app shell's
+// bundled-programme loader copied `schedule` and `templates` and dropped
+// `conditioning`, and the data repo has never carried the key either, so
+// `conditioningForDate` was a function with test coverage, real data, and no
+// caller anywhere in the app. The tests could not see it because they assert
+// against the JSON file rather than against anything the app renders.
+//
+// This is the same failure shape as the "add a token" warning that went
+// unreachable on the same day and was found in the same session: covered by a
+// test, invisible to the user. Two in one week is a pattern, so it gets a
+// guard rather than a comment.
+const MAIN = readFileSync(new URL("../app/main.js", import.meta.url), "utf8");
+const TODAY_VIEW = readFileSync(new URL("../app/views/today.js", import.meta.url), "utf8");
+
+test("the bundled programme carries conditioning, not just the split", () => {
+  const bundle = MAIN.slice(MAIN.indexOf("prog.schedule"), MAIN.indexOf("prog.schedule") + 400);
+  assert.match(
+    bundle,
+    /conditioning:\s*prog\.conditioning/,
+    "the app shell's programme bundle drops `conditioning`, so the interval sessions " +
+      "reach no screen on any install that has not synced a data repo — which is every " +
+      "install, because the data repo has never carried the key either",
+  );
+});
+
+test("a repo sync cannot drop the conditioning block on the floor", () => {
+  // workouts.json owns schedule/templates/sessions/baselines and has never held
+  // `conditioning`. A naive `setWorkouts(w)` therefore deletes the bundled block
+  // the moment the first sync lands, which would make this feature work only
+  // until the token starts working.
+  assert.match(
+    MAIN,
+    /conditioning\).*\{\}.*conditioning: cur\.conditioning|conditioning: cur\.conditioning/s,
+    "the workouts.json read must preserve a bundled conditioning block",
+  );
+});
+
+test("some screen actually renders conditioning", () => {
+  assert.match(
+    TODAY_VIEW,
+    /conditioningForDate\(/,
+    "conditioningForDate has data and tests and no caller: it is decoration under P7 " +
+      "and invisible under P5 until a screen calls it",
+  );
+});

@@ -2014,6 +2014,18 @@ button.bar .bar__meta::after {
   }
 }
 
+/* A rest day in the queue. Dimmed, never struck through, never coloured as a
+   warning: P9 says nothing may render a person as behind, and a rest day is
+   the programme working, not a gap in it. */
+.bar--rest .bar__name,
+.bar--rest .bar__meta {
+  color: var(--faint);
+}
+
+.bar--rest .bar__name {
+  font-style: italic;
+}
+
 /* ---------------------------------------------------------------- filed --- */
 /* A filed session used to be one line reading "lower-a · 2026-08-24 · 7 sets":
    a template id and a count. It cannot answer "what did I actually lift on

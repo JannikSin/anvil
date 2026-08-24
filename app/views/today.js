@@ -2,6 +2,7 @@ import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { tokenBroken } from "../lib/github.js";
 import {
+  conditioningForDate,
   formatSets,
   lastSetsFor,
   nextInRotation,
@@ -10,9 +11,11 @@ import {
   sessionsOn,
   setTopSet,
   tierMinutes,
+  upcomingSessions,
 } from "../lib/workouts.js";
+import { CORE_SESSIONS, sessionForDay } from "../lib/core.js";
 import { warmupFor } from "../lib/routines.js";
-import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
+import { parseLocalIso, relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
 import { draftSetCount } from "../lib/draft.js";
 import { hrRest } from "../lib/activities.js";
 import { CoreWorkout } from "./core-workout.js";
@@ -47,7 +50,7 @@ const TIERS = /** @type {{ tier: 1 | 2 | 3, name: string, blurb: string }[]} */ 
  * outranks the others when they conflict.
  *
  * @param {{
- *   workouts: { templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, baselines?: Record<string, any> },
+ *   workouts: { templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, baselines?: Record<string, any> },
  *   daily: { days: Record<string, any>[] },
  *   targets: Record<string, any> | null,
  *   today: string,
@@ -152,6 +155,32 @@ export function TodayView({
   const baselines = /** @type {Record<string, any>} */ (workouts.baselines ?? {});
   const todayRow = (daily.days ?? []).find((d) => d.date === today) ?? {};
   const fullMinutes = full ? tierMinutes(full, 1) : 0;
+  // The two hard interval sessions a week. Written 2026-08-19, carried by
+  // program.json, tested since, and rendered NOWHERE until 2026-08-24 because
+  // the app shell's bundle dropped the key. It attaches to the weekday rather
+  // than to the session, because the reason it sits on an upper-body morning is
+  // that concurrent training costs explosive strength and it is worst in the
+  // same session as heavy lower work.
+  const cond = conditioningForDate(/** @type {any} */ (workouts.conditioning), logDate, tier === 3);
+  // The queue, laid onto dates. NOT a calendar: the rotation advances on
+  // completion, so these dates are a projection and the copy says so.
+  const queue = upcomingSessions(
+    workouts.schedule,
+    /** @type {any} */ (workouts.templates),
+    /** @type {any} */ (workouts.sessions),
+    today,
+    // seven, not six: six sessions from a Monday runs out on Saturday and the
+    // rest day never appears, and "is there a rest day or is it just different
+    // muscle groups" is a question the queue should answer without being asked
+    7,
+  );
+  const dayName = (/** @type {string} */ iso) =>
+    parseLocalIso(iso).toLocaleDateString([], { weekday: "short" }).toUpperCase();
+  // Saturday's prescription is named "Alternating: sprints one week, long run
+  // the next", which is the right sentence in the session and two wrapped lines
+  // in a queue row. Names that fit are shown; names that do not become the word
+  // that is still true, and the full prescription waits on the day it is due.
+  const condTag = (/** @type {string} */ name) => (name.length <= 22 ? name : "cardio");
 
   const logSet = (/** @type {string} */ name) => {
     const inp = inputs[name] ?? { w: "", r: "" };
@@ -546,6 +575,81 @@ export function TodayView({
               `;
             })}
           </div>
+        `
+      }
+      ${
+        // Conditioning, on the two upper-body mornings that carry it. Shown
+        // beside the lifting rather than on a tab of its own, because P5 says
+        // a screen you have to remember to visit is a screen that stays empty.
+        cond &&
+        html`
+          <h2 class="band">
+            Conditioning<span class="band__sub">${`${cond.minutes} min, after the lifting`}</span>
+          </h2>
+          <div class="rack">
+            <div class="bar">
+              <span class="bar__name">${cond.name}</span>
+              <span class="bar__meta num">${`${cond.minutes} MIN`}</span>
+            </div>
+            <div class="bar">
+              <span class="bar__name">${cond.work}</span>
+              <span class="bar__meta num">WORK</span>
+            </div>
+            <div class="bar">
+              <span class="bar__name">${cond.recovery}</span>
+              <span class="bar__meta num">BETWEEN</span>
+            </div>
+          </div>
+          <p class="note">
+            ${cond.reduced ? `Short version: ${cond.work}. Same intensity, fewer reps, and it counts.` : `Short on time: ${cond.fallback}. Same intensity, and it counts.`}
+          </p>
+          <p class="note">
+            ${"Apple Watch Cardio Fitness only moves from an Outdoor Run, Walk or Hike. A treadmill session never updates the number no matter how hard it was."}
+          </p>
+        `
+      }
+
+      <${CoreWorkout}
+        sessions=${CORE_SESSIONS}
+        title="Core"
+        subtitle=${`today: ${sessionForDay(today, CORE_SESSIONS)?.name ?? "floor work"}, 4 to 6 min`}
+        rotate=${true}
+      />
+      <p class="note">
+        ${"Core is a daily rotation, not part of any lifting day, so a session with no core in it is not a session you got wrong. The only barbell-day core work in the whole programme is the side plank on Push B."}
+      </p>
+
+      ${
+        // THE QUEUE. He asked to see what is coming: today, then Tuesday, then
+        // Wednesday. The honest answer is a queue rather than a calendar,
+        // because the rotation advances on completion, and the copy has to say
+        // so or the dates read as a commitment the programme never made.
+        queue.length > 0 &&
+        html`
+          <h2 class="band">What's coming<span class="band__sub">if you train every day</span></h2>
+          <div class="rack">
+            ${queue.map((q) => {
+              const label =
+                `${dayName(q.date)} ${relativeDayLabel(q.date, today) === "today" ? "· today" : ""}`.trim();
+              if (q.rest) {
+                return html`<div class="bar bar--rest" key=${q.date}>
+                  <span class="bar__name">Rest</span>
+                  <span class="bar__meta num">${label}</span>
+                </div>`;
+              }
+              const mins = tierMinutes(q.template, 1);
+              const c = conditioningForDate(/** @type {any} */ (workouts.conditioning), q.date);
+              return html`<div class="bar" key=${q.date}>
+                <span class="bar__name">
+                  ${`${q.template?.name ?? "session"}${c ? ` + ${condTag(String(c.name))}` : ""}`}
+                </span>
+                <span class="bar__meta num">${`${label} · ${mins} MIN`}</span>
+              </div>`;
+            })}
+          </div>
+          <p class="note">
+            ${"This is a queue, not a calendar. The rotation moves when you finish a session, never when the clock does, so a day you miss makes the next one later and never deletes it. The dates are only where the queue lands if you train on every training day."}
+          </p>
         `
       }
       ${
