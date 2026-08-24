@@ -79,7 +79,7 @@ function App() {
   // ---- data ---------------------------------------------------------------
 
   const [workouts, setWorkouts] = useState(
-    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, bundled?: boolean, baselines?: Record<string, any> }} */ ({
+    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, quality?: Record<string, any>, commute?: Record<string, any>, restDay?: Record<string, any>, bundled?: boolean, baselines?: Record<string, any> }} */ ({
       templates: [],
       sessions: [],
     }),
@@ -122,6 +122,13 @@ function App() {
                 schedule: prog.schedule,
                 templates: prog.templates,
                 conditioning: prog.conditioning,
+                // the rebuilt week, 2026-08-24: pre-lift quality work, the
+                // commute rule, and the seventh day's named job. Every one of
+                // these is bundle-only, exactly like conditioning was, so the
+                // guard below has to preserve them across a repo sync too.
+                quality: prog.quality,
+                commute: prog.commute,
+                restDay: prog.restDay,
                 bundled: true,
               }
             : cur,
@@ -139,15 +146,23 @@ function App() {
     const load = () => {
       read("workouts.json").then((w) => {
         if (!alive) return;
-        // the repo copy owns schedule, templates, sessions and baselines; it
-        // has never carried `conditioning`, so the bundled block survives the
-        // overwrite rather than being silently dropped on the first sync
+        // workouts.json owns schedule, templates, sessions and baselines. It
+        // has never carried conditioning, quality, commute or restDay, so a
+        // naive setWorkouts(w) deletes the bundled blocks the moment the first
+        // sync lands, and the feature would work only until the token started
+        // working. Each one falls back to the bundled copy.
         if (w)
-          setWorkouts((cur) => ({
-            conditioning: cur.conditioning,
-            .../** @type {any} */ (w),
-            .../** @type {any} */ ((w).conditioning ? {} : { conditioning: cur.conditioning }),
-          }));
+          setWorkouts((cur) => {
+            const repo = /** @type {any} */ (w);
+            return {
+              ...cur,
+              ...repo,
+              conditioning: repo.conditioning ?? cur.conditioning,
+              quality: repo.quality ?? cur.quality,
+              commute: repo.commute ?? cur.commute,
+              restDay: repo.restDay ?? cur.restDay,
+            };
+          });
         setLoaded(true);
       });
       read(SHARED_DAILY).then((d) => {
@@ -230,16 +245,20 @@ function App() {
     workoutsRef.current = next;
     setWorkouts(next);
     void write("workouts.json", /** @type {any} */ (next));
-    // the draft is spent the moment it becomes a session; a stale copy on
-    // disk would raise the unfiled-session banner over work already filed
-    clearDraft();
-    setDraft({
+    // The draft is spent the moment it becomes a session. Memory and disk are
+    // set together, in that order, because `clearDraft()` plus a bare
+    // `setDraft()` left the two able to disagree, and on 2026-08-24 they did:
+    // a filed session's keypad values stayed on disk and overrode the next
+    // session's progression. The long version is in lib/draft.js.
+    const fresh = {
       date: localIsoDate(new Date()),
       templateId: null,
-      tier: 1,
+      tier: /** @type {1} */ (1),
       session: null,
       inputs: {},
-    });
+    };
+    setDraft(fresh);
+    clearDraft();
   }, []);
 
   /**

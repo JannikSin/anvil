@@ -88,6 +88,23 @@ export function normalizeDraft(raw, fallbackDate) {
       ? d.session
       : null;
   return {
+    // INPUTS ONLY MEAN SOMETHING WHILE A SESSION IS IN PROGRESS, and this line
+    // is a bug fix, found by audit on 2026-08-24 and introduced by this very
+    // file earlier the same day.
+    //
+    // `inputs` is the keypad state: what is typed into the weight and rep
+    // boxes but not yet logged. Before the draft persisted, it died with the
+    // page, so it could never outlive the session it belonged to. Now that it
+    // survives, a value left in the pad from a FILED session was still there
+    // on the next one, and because the view reads `inputs[name] ?? seed`, that
+    // stale number silently overrode the progression the app had just
+    // computed. Observed live: Back Squat logged at 60x8 (the top of a 5-8
+    // range) should propose 70x5 and "+10 lb, back to 5"; it proposed 60x9
+    // instead, which is not even inside the prescription.
+    //
+    // That is the exact anti-progression default the double-progression work
+    // existed to remove, coming back through a door that did not exist until
+    // this morning. So: no session, no keypad.
     // the session's own date wins: it is the one the sets were filed against
     date:
       typeof session?.date === "string"
@@ -98,7 +115,7 @@ export function normalizeDraft(raw, fallbackDate) {
     templateId: typeof d.templateId === "string" ? d.templateId : null,
     tier,
     session,
-    inputs: d.inputs && typeof d.inputs === "object" ? d.inputs : {},
+    inputs: session && d.inputs && typeof d.inputs === "object" ? d.inputs : {},
   };
 }
 

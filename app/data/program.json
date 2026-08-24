@@ -2,11 +2,11 @@
   "_note": "The programme, bundled into the app shell so anvil is usable on first open with no token and no network. Structure and coaching cues only: this repo is public and never carries real logged data, loads, or personal health details. The live copy lives in the private data repo and wins whenever it loads.",
   "schedule": {
     "mon": "lower-a",
-    "tue": "pull-a",
-    "wed": "push-a",
-    "thu": "pull-b",
-    "fri": "lower-b",
-    "sat": "push-b",
+    "tue": "push-a",
+    "wed": "pull-a",
+    "thu": "lower-b",
+    "fri": "push-b",
+    "sat": "pull-b",
     "sun": null
   },
   "templates": [
@@ -14,15 +14,6 @@
       "id": "lower-a",
       "name": "Lower A (Squat focus)",
       "exercises": [
-        {
-          "name": "Med Ball Slam",
-          "targetSets": 3,
-          "targetReps": "8",
-          "increment": 5,
-          "rest": 90,
-          "note": "Power, first, while fresh. Throw it hard, do not grind it. The only rate-of-force work in the week.",
-          "tier": 2
-        },
         {
           "name": "Back Squat",
           "targetSets": 4,
@@ -180,15 +171,6 @@
           "tier": 2
         },
         {
-          "name": "Straight-arm Pulldown",
-          "targetSets": 2,
-          "targetReps": "12-15",
-          "increment": 5,
-          "rest": 90,
-          "note": "Lat stretch.",
-          "tier": 1
-        },
-        {
           "name": "Rear Delt Fly",
           "targetSets": 2,
           "targetReps": "15",
@@ -211,15 +193,6 @@
       "id": "lower-b",
       "name": "Lower B (Hinge focus)",
       "exercises": [
-        {
-          "name": "Med Ball Side Toss",
-          "targetSets": 3,
-          "targetReps": "6 each",
-          "increment": 5,
-          "rest": 90,
-          "note": "Rotational power, first, while fresh. The transverse plane nothing else trains.",
-          "tier": 2
-        },
         {
           "name": "Romanian Deadlift",
           "targetSets": 4,
@@ -287,28 +260,11 @@
           "tier": 1
         },
         {
-          "name": "Incline DB Curl",
-          "targetSets": 2,
-          "targetReps": "10-15",
-          "increment": 5,
-          "rest": 90,
-          "tier": 1
-        },
-        {
           "name": "Triceps Pushdown",
           "targetSets": 2,
           "targetReps": "12-15",
           "increment": 5,
           "rest": 90,
-          "tier": 1
-        },
-        {
-          "name": "Side Plank with Hip Hike",
-          "targetSets": 3,
-          "targetReps": "10 each",
-          "increment": 5,
-          "rest": 90,
-          "note": "From Ben's sheet, and it upgrades the bodyweight version in Core. Anti-lateral-flexion, loaded.",
           "tier": 1
         }
       ]
@@ -316,49 +272,116 @@
   ],
   "_tiers": "P3. Every session has three versions and all of them advance the rotation. An exercise's `tier` is the LOWEST tier it survives to: 3 = the one movement that still counts as having trained, 2 = the main work, 1 = accessory. Tier N shows every exercise with tier >= N. A tier 3 day is a completed day; the alternative to tier 3 is not tier 1, it is nothing.",
   "conditioning": {
-    "_note": "Replaces the inspiratory-muscle trainer, cancelled 2026-08-19: its one mechanism is available free from running, and the device's effect sizes shrink toward zero in trained people. Two hard sessions a week is the dose where the VO2max curve flattens (Rosenblat 2020/2022); a third buys fatigue rather than adaptation. They sit on upper-body mornings because explosive strength is the one thing concurrent training genuinely costs (Schumann 2022, SMD -0.28) and it is worst same-session with heavy lower work.",
-    "watchRule": "Apple Watch Cardio Fitness updates ONLY from Outdoor Walk, Outdoor Run and Outdoor Hike. Treadmill, gym and indoor interval work never move the number no matter how hard it was. Log at least one session a week OUTDOORS under open sky, started as an Outdoor Run, or a whole training block reads as a flat line.",
     "tue": {
-      "id": "4x4",
-      "name": "Norwegian 4x4",
-      "after": "pull-a",
-      "minutes": 19,
-      "fallbackMinutes": 10,
-      "work": "4 x 4 min at 90-95% max HR",
-      "recovery": "3 min jog at ~70% max HR",
-      "fallback": "2 x 4 min, same intensity, one recovery between",
-      "why": "The most replicated interval protocol there is: ~7% VO2max in 8 weeks at 3 sessions a week, beating long slow distance, threshold work and 15/15 on the same time budget (Helgerud 2007). Long intervals are the powerful tool.",
-      "progression": "Weeks 4-6: 5 x 4 min if resting HR trend and lifting numbers are both holding. Weeks 10-12: back to 4 reps as the long run takes over."
-    },
-    "thu": {
-      "id": "10-20-30",
-      "name": "10-20-30",
-      "after": "pull-b",
-      "minutes": 16,
-      "fallbackMinutes": 10,
-      "work": "5 x (30 s easy, 20 s moderate, 10 s near-maximal), 2-3 blocks",
-      "recovery": "1-2 min between blocks",
-      "fallback": "2 blocks instead of 3",
-      "why": "Best adaptation per minute in the literature: ~4% VO2max, 1500 m down 21 s and 5 km down 48 s in 7 weeks, on about 12-18 min of actual work, in runners who were already training (Gunnarsson and Bangsbo 2012). Short intervals are the efficient tool.",
-      "outdoor": true,
-      "progression": "Hold the volume, sharpen the 10 s reps toward true sprint effort."
-    },
-    "sat": {
-      "id": "alternating",
-      "name": "Alternating: sprints one week, long run the next",
-      "after": "push-b",
-      "minutes": 33,
+      "id": "z2a",
+      "name": "Zone 2 run",
+      "after": "push-a",
+      "minutes": 28,
       "fallbackMinutes": 15,
-      "work": "Week A: 10 x 20 s near-maximal, 40 s easy. Week B: continuous easy run at 60-70% max HR",
-      "recovery": "Week A: 40 s between reps. Week B: none, it is the easy session",
-      "fallback": "Week A: 6 reps. Week B: 15 min easy",
-      "why": "The one session serving the half marathon rather than VO2max. Week B grows from week 7 as race specificity starts outweighing marginal VO2max, which is flattening by then anyway.",
+      "work": "25 to 30 min conversational, 65 to 75 percent of max HR",
+      "fallback": "15 min, same easy pace",
+      "recovery": "None, it is one continuous easy effort.",
+      "when": "Later in the day, at least 6 hours after the lift.",
+      "why": "The bulk of the resting heart rate work. Expect 3 to 5 bpm by week 6 and 6 to 9 by week 12 to 16. Conversational means you could speak a full sentence.",
       "outdoor": true
     },
-    "mon": null,
-    "wed": null,
-    "fri": null,
-    "sun": null
+    "fri": {
+      "id": "z2b",
+      "name": "Zone 2 run",
+      "after": "push-b",
+      "minutes": 30,
+      "fallbackMinutes": 15,
+      "work": "30 min conversational, 65 to 75 percent of max HR",
+      "fallback": "15 min, same easy pace",
+      "recovery": "None, it is one continuous easy effort.",
+      "when": "Later in the day, at least 6 hours after the lift.",
+      "why": "The second Zone 2 session. These two plus Saturday clear the 120 to 150 minute band.",
+      "outdoor": true
+    },
+    "sat": {
+      "id": "int",
+      "name": "Intervals, or tennis",
+      "after": "pull-b",
+      "minutes": 12,
+      "fallbackMinutes": 6,
+      "work": "6 x 1 min hard / 1 min easy. Tennis counts instead, and beats it.",
+      "fallback": "3 x 1 min hard / 1 min easy",
+      "recovery": "1 min easy jog between reps",
+      "when": "Later in the day. Skip it entirely if you played tennis.",
+      "why": "The one hard aerobic block in the week. Two days clear of Thursday lower and two days before Monday lower, which is the interference rule the schedule was reordered around.",
+      "outdoor": false
+    },
+    "watchRule": "Apple Watch Cardio Fitness updates ONLY from Outdoor Walk, Outdoor Run and Outdoor Hike. Treadmill, gym and indoor interval work never move the number no matter how hard it was. Both Zone 2 sessions are marked outdoor for exactly this reason: a whole training block reads as a flat line otherwise, which looks like a stalled programme when the opposite is true."
   },
-  "_conditioningRest": "Monday and Wednesday are the heavy and technical lower days and carry no conditioning on purpose. Friday is left clear so a missed Tuesday or Thursday has somewhere to go without stacking two hard sessions back to back."
+  "_conditioningRest": "Rebuilt 2026-08-24 to the Training-Rebuild prescription: 120 to 150 minutes of aerobic work a week, of which 100 to 120 is true Zone 2 across 2 to 3 runs, plus ONE 10 to 12 minute interval block. The old Tuesday Norwegian 4x4 moved to Saturday and the Thursday 10-20-30 came out, because hard running belongs at least 24 hours from a lower-body lift and ideally 48, and Monday and Thursday are now the lower days. Every session here is LATER IN THE DAY, at least 6 hours after the lift, because the explosive-strength cost of concurrent training is concentrated when cardio and lifting share a session.",
+  "_scheduleNote": "Lower, push, pull, twice. Ratified 2026-08-24 from the owner's Training-Rebuild plan. The ordering is not cosmetic: it puts the two lower-body days on Monday and Thursday, three days apart, which is where the plyometric and sprint blocks belong, because explosive work is prescribed fresh on a lower day. The rotation still advances on COMPLETION, so this map sets the order and which days train, never a calendar.",
+  "_quality": "Pre-lift quality work, from the owner's Training-Rebuild plan, ratified 2026-08-24. It runs AFTER the warm-up and BEFORE the lifting, fresh, because explosive qualities are the first thing fatigue erases. It is NOT counted as working sets and never enters the double progression: this is rate of force development, not volume. Plyometric doses are NSCA coaching convention rather than meta-analytic, and are labelled as such.",
+  "quality": {
+    "mon": {
+      "id": "plyo",
+      "name": "Plyometrics",
+      "minutes": 8,
+      "work": "Pogo hops, low box jumps, broad jumps. 40 to 60 foot contacts total.",
+      "fallback": "Pogo hops and broad jumps only, 30 contacts.",
+      "cue": "Step DOWN off the box, never jump down. Quality over count, and stop the moment ground contact starts getting slow.",
+      "why": "Novice dose is 50 to 80 contacts, 1 to 2 sessions a week, 48 to 72 hours apart. Weeks 1 to 3 start at 40 to 60 and progress no more than 10 to 20 percent a week. NSCA coaching convention, not meta-analytic."
+    },
+    "tue": {
+      "id": "rope",
+      "name": "Jump rope",
+      "minutes": 3,
+      "work": "3 minutes, easy, unbroken if you can.",
+      "fallback": "90 seconds.",
+      "cue": "Stiff ankles, quiet feet, minimal knee bend.",
+      "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+    },
+    "wed": {
+      "id": "rope",
+      "name": "Jump rope",
+      "minutes": 3,
+      "work": "3 minutes, easy, unbroken if you can.",
+      "fallback": "90 seconds.",
+      "cue": "Stiff ankles, quiet feet, minimal knee bend.",
+      "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+    },
+    "thu": {
+      "id": "sprint",
+      "name": "Sprints and change of direction",
+      "minutes": 12,
+      "work": "6 to 8 x 25 m at 90 to 95 percent, walk back, 60 to 90 s. Then 5-10-5 shuttle x 6.",
+      "fallback": "4 x 25 m, no shuttle.",
+      "cue": "Short reps keep the fatigue cost near zero. If the times fall off, you are done.",
+      "why": "The purest fast-twitch stimulus and the cheapest in fatigue, as long as the reps stay short. Skip the shuttle on a tennis day, tennis already supplies plenty of change of direction."
+    },
+    "fri": {
+      "id": "medball",
+      "name": "Med ball",
+      "minutes": 6,
+      "work": "Rotational scoop throws 3 x 5 each side, overhead slams 3 x 5.",
+      "fallback": "Slams only, 2 x 5.",
+      "cue": "Throw it hard. Do not grind it, this is speed work.",
+      "why": "Low load, high speed, which is exactly why it suits a cranky shoulder. It is also the transverse plane that nothing else in the week trains."
+    },
+    "sat": {
+      "id": "rope",
+      "name": "Jump rope",
+      "minutes": 3,
+      "work": "3 minutes, easy, unbroken if you can.",
+      "fallback": "90 seconds.",
+      "cue": "Stiff ankles, quiet feet, minimal knee bend.",
+      "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+    }
+  },
+  "restDay": {
+    "name": "Rest",
+    "job": "One easy 20 to 30 minute walk or jog, OR 20 minutes of mobility on ankle dorsiflexion and the shoulder. Pick one, or neither.",
+    "why": "No alarm. This day exists to pay the sleep debt: you get 6 to 7 hours against a 7.5 to 8 target while waking early six mornings, and restricted sleep measurably cuts myofibrillar protein synthesis. The tiny job is an adherence device, not training. An unscheduled day is where a six-day habit breaks, so day seven gets a named job precisely to protect the other six.",
+    "notRest": "Tennis and bouldering are not rest, and they belong on lifting days."
+  },
+  "commute": {
+    "push": "Jog to the gym, easy, capped at about 10 minutes.",
+    "pull": "Jog to the gym, easy, capped at about 10 minutes.",
+    "lower": "Walk or bike. Never jog in before squats or deadlifts.",
+    "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
+  }
 }

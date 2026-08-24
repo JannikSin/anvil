@@ -151,3 +151,60 @@ test("normalizeDraft never returns a shape the view has to guard against", () =>
     assert.equal(typeof d.inputs, "object");
   }
 });
+
+test("a filed session's keypad cannot survive into the next session (P2 regression)", () => {
+  // THE BUG THIS PINS, found by browser audit on 2026-08-24 and introduced by
+  // draft persistence earlier the same day.
+  //
+  // `inputs` is the keypad: typed but not yet logged. Before the draft was
+  // persisted it died with the page, so it could not outlive its session. Once
+  // it survived, a value left over from a FILED session was still on disk for
+  // the next one, and the view reads `inputs[name] ?? seed`, so the stale
+  // number silently beat the progression the app had just computed.
+  //
+  // Observed live: Back Squat logged at 60x8, the top of a 5-8 range, must
+  // propose 70x5 and "+10 lb, back to 5". It proposed 60x9, which is not even
+  // inside the prescription, and the reason line fell back to "your call". That
+  // is precisely the anti-progression default the double-progression work
+  // existed to remove, returning through a door that did not exist that
+  // morning.
+  //
+  // The invariant, and it is one line: NO SESSION, NO KEYPAD.
+  store.clear();
+  store.set(
+    "anvil.draft",
+    JSON.stringify({
+      date: "2026-08-24",
+      templateId: null,
+      tier: 1,
+      session: null,
+      inputs: { "Back Squat": { w: "60", r: "9" } },
+    }),
+  );
+  const back = readDraft("2026-08-24");
+  assert.deepEqual(
+    back.inputs,
+    {},
+    "keypad values outlived the session they belonged to, so the next session's " +
+      "prefill will be a stale number instead of the computed progression",
+  );
+
+  // and the same rule applied directly, because normalizeDraft is the one door
+  assert.deepEqual(
+    normalizeDraft({ session: null, inputs: { Bench: { w: "1", r: "1" } } }, "2026-08-24").inputs,
+    {},
+  );
+  // while a LIVE session keeps its keypad, because that is the whole point of
+  // persisting the draft in the first place
+  assert.deepEqual(
+    normalizeDraft(
+      {
+        session: { date: "2026-08-24", exercises: [{ name: "Bench", sets: [] }] },
+        inputs: { Bench: { w: "185", r: "8" } },
+      },
+      "2026-08-24",
+    ).inputs,
+    { Bench: { w: "185", r: "8" } },
+    "a half-typed number during a live session must still survive a killed page",
+  );
+});

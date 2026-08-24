@@ -2,7 +2,10 @@ import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { tokenBroken } from "../lib/github.js";
 import {
+  commuteFor,
   conditioningForDate,
+  isRestDay,
+  qualityForDate,
   formatSets,
   lastSetsFor,
   nextInRotation,
@@ -50,7 +53,7 @@ const TIERS = /** @type {{ tier: 1 | 2 | 3, name: string, blurb: string }[]} */ 
  * outranks the others when they conflict.
  *
  * @param {{
- *   workouts: { templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, baselines?: Record<string, any> },
+ *   workouts: { templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, quality?: Record<string, any>, commute?: Record<string, any>, restDay?: Record<string, any>, baselines?: Record<string, any> },
  *   daily: { days: Record<string, any>[] },
  *   targets: Record<string, any> | null,
  *   today: string,
@@ -161,6 +164,13 @@ export function TodayView({
   // than to the session, because the reason it sits on an upper-body morning is
   // that concurrent training costs explosive strength and it is worst in the
   // same session as heavy lower work.
+  // Pre-lift quality: plyos Monday, sprints Thursday, rope on the upper days,
+  // med ball Friday. Shipped with the rebuilt week 2026-08-24. It is rendered
+  // ABOVE the lifts on purpose, because the whole prescription is "fresh".
+  const qual = qualityForDate(/** @type {any} */ (workouts.quality), logDate, tier === 3);
+  const commute = commuteFor(/** @type {any} */ (workouts.commute), full?.id);
+  const resting = isRestDay(workouts.schedule, logDate);
+  const restPlan = /** @type {Record<string, any> | undefined} */ (workouts.restDay);
   const cond = conditioningForDate(/** @type {any} */ (workouts.conditioning), logDate, tier === 3);
   // The queue, laid onto dates. NOT a calendar: the rotation advances on
   // completion, so these dates are a projection and the copy says so.
@@ -291,6 +301,31 @@ export function TodayView({
         </div>
       </div>
 
+      ${
+        // THE SEVENTH DAY, and it is the one place in this app where the
+        // weekday genuinely matters. The rotation never asks what day it is,
+        // because it advances on completion. The rest day does ask, because
+        // the sleep debt it exists to pay accrues on a calendar.
+        //
+        // It does not hide the session: P1 says opening the app resolves
+        // something to do with zero taps, and a person who wants to train on a
+        // Sunday is not doing anything wrong. It says what the day is FOR, and
+        // leaves the session below it.
+        resting &&
+        restPlan &&
+        doneToday.length === 0 &&
+        html`
+          <h2 class="band">Rest<span class="band__sub">no alarm</span></h2>
+          <div class="rack">
+            <div class="bar">
+              <span class="bar__name">${restPlan.job}</span>
+              <span class="bar__meta num">OPTIONAL</span>
+            </div>
+          </div>
+          <p class="note">${restPlan.why}</p>
+          <p class="note">${restPlan.notRest}</p>
+        `
+      }
       ${
         // The draft survives a killed page now (lib/draft.js), so a session
         // logged and never filed comes back instead of vanishing. It has to
@@ -424,6 +459,37 @@ export function TodayView({
             rotate=${false}
           />
 
+          ${commute && html`<p class="note"><b>${"Getting there"}</b> ${commute}</p>`}
+          ${
+            // FRESH, and that word is the whole prescription: explosive
+            // qualities are the first thing fatigue erases, so this sits
+            // between the warm-up and the first working set and nowhere else.
+            // It is not logged as sets and never enters the progression,
+            // because rate of force development is not volume.
+            qual &&
+            html`
+              <h2 class="band">
+                Before you lift<span class="band__sub"
+                  >${`${qual.name}, ${qual.minutes} min, fresh`}</span
+                >
+              </h2>
+              <div class="rack">
+                <div class="bar">
+                  <span class="bar__name">${qual.work}</span>
+                  <span class="bar__meta num">${`${qual.minutes} MIN`}</span>
+                </div>
+                <div class="bar">
+                  <span class="bar__name">${qual.cue}</span>
+                  <span class="bar__meta num">HOW</span>
+                </div>
+              </div>
+              <p class="note">
+                ${qual.reduced ? `Short version: ${qual.work}` : `Short on time: ${qual.fallback}`}
+              </p>
+              <p class="note">${qual.why}</p>
+            `
+          }
+
           <h2 class="band">On the bar</h2>
           <div class="lifts">
             ${(template?.exercises ?? []).map((/** @type {Record<string, any>} */ ex) => {
@@ -452,10 +518,18 @@ export function TodayView({
                 inc,
               );
               const seed = prog ?? last?.[last.length - 1] ?? baseline ?? null;
-              const inp = inputs[ex.name] ?? {
-                w: seed ? String(seed.weight) : "",
-                r: seed ? String(seed.reps) : "",
-              };
+              // Precedence, and the order is the 2026-08-24 fix: what is typed
+              // right now, else what was just LOGGED this session (so CHANGE IT
+              // opens on the number being corrected rather than on a fresh
+              // proposal), else the progression, else nothing. `inputs` is
+              // scrubbed along with the session in lib/draft.js, so it can no
+              // longer carry a filed session's numbers into the next one.
+              const loggedSet = logged?.sets?.[logged.sets.length - 1];
+              const inp =
+                inputs[ex.name] ??
+                (loggedSet
+                  ? { w: String(loggedSet.weight), r: String(loggedSet.reps) }
+                  : { w: seed ? String(seed.weight) : "", r: seed ? String(seed.reps) : "" });
               const onTarget = seed && inp.w === String(seed.weight) && inp.r === String(seed.reps);
               // no history and no baseline means the pad is empty, and the line
               // beside the strike button has to say so rather than promising to
@@ -603,6 +677,7 @@ export function TodayView({
           <p class="note">
             ${cond.reduced ? `Short version: ${cond.work}. Same intensity, fewer reps, and it counts.` : `Short on time: ${cond.fallback}. Same intensity, and it counts.`}
           </p>
+          ${cond.when && html`<p class="note"><b>${"When"}</b> ${cond.when}</p>`}
           <p class="note">
             ${"Apple Watch Cardio Fitness only moves from an Outdoor Run, Walk or Hike. A treadmill session never updates the number no matter how hard it was."}
           </p>

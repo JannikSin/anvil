@@ -490,3 +490,63 @@ export function upcomingSessions(schedule, templates, sessions, fromDate, count 
   }
   return out;
 }
+
+/**
+ * Pre-lift quality work for a day: plyometrics, sprints, jump rope, med ball.
+ *
+ * Shipped 2026-08-24 with the rebuilt week (Crystal Life/Training-Rebuild,
+ * ratified by David the same day). It runs AFTER the warm-up and BEFORE the
+ * lifting, fresh, because explosive qualities are the first thing fatigue
+ * erases, and it is deliberately NOT modelled as working sets: it never enters
+ * the double progression, because rate of force development is not volume.
+ *
+ * Keyed by weekday rather than by session, for the same reason conditioning is:
+ * the plyo and sprint blocks belong on lower-body days and the schedule was
+ * reordered to put those on Monday and Thursday.
+ *
+ * @param {Record<string, any> | undefined} quality
+ * @param {string} dateIso
+ * @param {boolean} [short] true when the day has collapsed to a tier 3
+ * @returns {Record<string, any> | null}
+ */
+export function qualityForDate(quality, dateIso, short = false) {
+  if (!quality) return null;
+  const weekday = WEEKDAY_KEYS[parseLocalIso(dateIso).getDay()] ?? "sun";
+  const plan = quality[weekday];
+  if (!plan || typeof plan !== "object") return null;
+  if (!short) return { ...plan, reduced: false };
+  return { ...plan, reduced: true, work: plan.fallback ?? plan.work };
+}
+
+/**
+ * Is this date a rest day in the weekly shape? Note the deliberate asymmetry
+ * with the rest of this file: the ROTATION never asks what day it is, because
+ * it advances on completion. The rest day is the one place the weekday
+ * genuinely matters, because the seventh day exists to pay a sleep debt that
+ * accrues on a calendar.
+ * @param {Record<string, string | null> | undefined} schedule
+ * @param {string} dateIso
+ * @returns {boolean}
+ */
+export function isRestDay(schedule, dateIso) {
+  if (!schedule) return false;
+  const weekday = WEEKDAY_KEYS[parseLocalIso(dateIso).getDay()] ?? "sun";
+  return !schedule[weekday];
+}
+
+/**
+ * How to get to the gym, by what today's session is. Push and pull days jog in,
+ * lower days walk, and the cap is the whole point: prior aerobic work degrades
+ * the lifting that follows, the impairment is localised to the muscles just
+ * used, and it scales with volume. Ten easy minutes is a warm-up. Half an hour
+ * before squats is a leg pre-fatigue protocol wearing a warm-up costume.
+ * @param {Record<string, any> | undefined} commute
+ * @param {string | null | undefined} templateId
+ * @returns {string | null}
+ */
+export function commuteFor(commute, templateId) {
+  if (!commute || !templateId) return null;
+  const id = String(templateId);
+  const kind = id.startsWith("lower") ? "lower" : id.startsWith("push") ? "push" : "pull";
+  return typeof commute[kind] === "string" ? commute[kind] : null;
+}

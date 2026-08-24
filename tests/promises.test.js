@@ -742,15 +742,23 @@ test("a session's minute estimate is not a fiction", () => {
   }
 });
 
-test("the programme is honest about costing more than half an hour a session", () => {
-  // The specific claim David acted on. Every session in this programme is a
-  // 35-to-45 minute lift before the warm-up, and the app must say so, because
-  // the whole argument for going at all is that the fixed costs are already
-  // being paid.
+test("the programme is honest about what a session costs", () => {
+  // The claim David acted on, restated against the rebuilt week. The absolute
+  // floor moved when the programme legitimately shrank (85 weekly sets to 72,
+  // to buy room for the plyos and sprints), so pinning "no session under 33
+  // min" would now fight a change he ratified. What must not move is the thing
+  // that was actually broken: the app selling a 40-minute morning as a
+  // half-hour one. So the guard is on the AVERAGE and on the top end.
   const minutes = program.templates.map((/** @type {any} */ t) => tierMinutes(t, 1));
+  const mean = minutes.reduce((/** @type {number} */ a, b) => a + b, 0) / minutes.length;
   assert.ok(
-    Math.min(...minutes) >= 33,
-    `the shortest session prices at ${Math.min(...minutes)} min; if that is real the ` +
-      `programme changed, and if it is not the estimator regressed`,
+    mean >= 33,
+    `the average session prices at ${mean.toFixed(1)} min; if that is real the programme ` +
+      "changed, and if it is not the estimator regressed the way it did before 2026-08-24",
+  );
+  assert.ok(
+    Math.max(...minutes) >= 38,
+    "the longest session in the programme prices under 38 min, which no 12-set lower-body " +
+      "day with 180 s rests can honestly do",
   );
 });
