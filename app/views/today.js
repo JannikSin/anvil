@@ -59,6 +59,7 @@ const TIERS = /** @type {{ tier: 1 | 2 | 3, name: string, blurb: string }[]} */ 
  *   today: string,
  *   hasToken: boolean,
  *   repo: Record<string, any> | null,
+ *   sync: Record<string, any>,
  *   loading: boolean,
  *   draft: import("../lib/draft.js").Draft,
  *   onDraft: (d: import("../lib/draft.js").Draft) => void,
@@ -76,6 +77,7 @@ export function TodayView({
   today,
   hasToken,
   repo,
+  sync,
   loading,
   draft,
   onDraft,
@@ -155,6 +157,15 @@ export function TodayView({
   // tier 3 day logs against the same template and advances the same rotation.
   const template = full ? sessionAtTier(full, tier) : null;
   const tokenBad = tokenBroken(repo?.auth);
+  // The reason from the last FAILED PUSH beats the reason from a probe: one is
+  // what actually happened to his data, the other is a guess about the token.
+  const syncError = sync?.needsYou ? sync.lastError : null;
+  const repoReason =
+    repo?.auth === "norepo"
+      ? 'The token works but cannot see the data repo. On the token page, Repository access defaults to "Public repositories" and silently fails on a private one: switch it to "Only select repositories" and tick both data repos. Do not mint a new token.'
+      : repo?.auth === "ratelimited"
+        ? "GitHub is rate-limiting this token. It clears within the hour on its own."
+        : "GitHub rejected the token itself. Paste a fresh one in Rig.";
   const baselines = /** @type {Record<string, any>} */ (workouts.baselines ?? {});
   const todayRow = (daily.days ?? []).find((d) => d.date === today) ?? {};
   const fullMinutes = full ? tierMinutes(full, 1) : 0;
@@ -341,9 +352,21 @@ export function TodayView({
         </p>`
       }
       ${
-        tokenBad &&
+        // ONE STORY, AND IT NAMES THE FIX. Until 2026-08-24 this line said
+        // "the token needs fixing in Rig" while the status lamp, reading a
+        // different code path, said "can't reach GitHub right now
+        // (auto-retrying)". Both were on screen at once, they contradicted
+        // each other, and the one that was actually true was the one you had
+        // to leave the screen to find. David: "The token was accepted, but,
+        // like, GitHub rejected it. I don't understand what this means."
+        //
+        // `syncError` is the real reason from the last failed push, already
+        // written as the remedy (github.js describeSyncError). It wins,
+        // because it comes from the write that actually failed rather than
+        // from a probe.
+        (syncError || tokenBad) &&
         html`<p class="alarm">
-          Not syncing. The token needs fixing in Rig; sets still save on this device.
+          ${`Not syncing, and nothing you log is leaving this phone until it is fixed. ${syncError ?? repoReason}`}
         </p>`
       }
       ${

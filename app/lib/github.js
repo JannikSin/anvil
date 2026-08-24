@@ -9,6 +9,90 @@
 
 import { ConflictError } from "./sync.js";
 
+/**
+ * An HTTP failure from the GitHub API, carrying the STATUS as a field rather
+ * than only as words inside a message.
+ *
+ * Why this exists, 2026-08-24: the sync layer classified failures by running a
+ * regex over the message text, `/HTTP 40[13]/`. A fine-grained PAT that is not
+ * scoped to a repository gets **404** on a write, because GitHub 404s rather
+ * than 403s to avoid confirming that a private repo exists. 404 did not match
+ * that regex, so the single most common real-world setup mistake was reported
+ * to David as "can't reach GitHub right now (auto-retrying)".
+ *
+ * That message was wrong twice over. It is not a reachability problem, and
+ * retrying cannot fix it, so the app sat in a loop telling him to wait for a
+ * network that was never down. Meanwhile the Rig screen, reading a different
+ * code path, correctly said the token could not see the repo. Two surfaces,
+ * two contradictory stories, and the true one was the one he had to go looking
+ * for.
+ */
+export class ApiError extends Error {
+  /**
+   * @param {string} path
+   * @param {number} status
+   * @param {string} [verb]
+   * @param {boolean} [rateLimited]
+   */
+  constructor(path, status, verb = "read", rateLimited = false) {
+    super(`${verb} ${path}: HTTP ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.path = path;
+    this.verb = verb;
+    this.rateLimited = rateLimited;
+  }
+}
+
+/** GitHub answers a hard rate limit with 403 and a zeroed remaining header,
+ *  which is a completely different problem from a token that lacks a
+ *  permission, and used to be indistinguishable from one. */
+function isRateLimited(/** @type {Response} */ res) {
+  return res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0";
+}
+
+/**
+ * Turn a failure into the sentence that names the actual fix. This is the one
+ * place that decides what the app says about a broken pipe, so both the day
+ * screen and Rig can say the same thing.
+ * @param {unknown} e
+ * @returns {{ text: string, fixable: boolean }} fixable = waiting will not help
+ */
+export function describeSyncError(e) {
+  if (e instanceof ApiError) {
+    if (e.rateLimited)
+      return {
+        text: "GitHub is rate-limiting this token. It clears within the hour on its own.",
+        fixable: false,
+      };
+    switch (e.status) {
+      case 401:
+        return {
+          text: "GitHub rejected the token itself: it is expired, revoked or mistyped. Paste a new one in Rig.",
+          fixable: true,
+        };
+      case 403:
+        return {
+          text: "The token reaches GitHub but is not allowed to write. In its permissions, Repository permissions > Contents must be Read and write, not Read-only.",
+          fixable: true,
+        };
+      case 404:
+        return {
+          text: `The token works, but it cannot see ${repoFor(e.path).owner}/${repoFor(e.path).repo}. On the token page, Repository access defaults to "Public repositories" and silently fails on a private repo: switch it to "Only select repositories" and tick BOTH data repos. Do not mint a new token, this one is fine.`,
+          fixable: true,
+        };
+      case 422:
+        return { text: `GitHub refused the contents of ${e.path}.`, fixable: true };
+      default:
+        return { text: `GitHub answered ${e.status} on ${e.path}.`, fixable: true };
+    }
+  }
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/no token set/.test(msg))
+    return { text: "No token saved on this device. Add one in Rig.", fixable: true };
+  return { text: "Can't reach GitHub right now. Retrying on its own.", fixable: false };
+}
+
 const API = "https://api.github.com";
 // B4 (friend groups): each install can point at its OWN private data repo.
 // "owner/repo" in localStorage; absent = the family default. Getters keep
@@ -134,7 +218,7 @@ export const TOKEN_WARN_AGE_DAYS = 351;
  *
  * @returns {Promise<{
  *   privacy: "private" | "PUBLIC" | "unknown",
- *   auth: "ok" | "invalid" | "norepo" | "missing" | "unknown",
+ *   auth: "ok" | "invalid" | "norepo" | "ratelimited" | "missing" | "unknown",
  *   reachable: boolean
  * }>}
  */
@@ -153,7 +237,7 @@ export async function checkDataRepo() {
   }
 
   const token = getToken();
-  /** @type {"ok" | "invalid" | "norepo" | "missing" | "unknown"} */
+  /** @type {"ok" | "invalid" | "norepo" | "ratelimited" | "missing" | "unknown"} */
   let auth = "missing";
   if (token) {
     try {
@@ -168,7 +252,7 @@ export async function checkDataRepo() {
         // selected-repositories list — a scope mistake, NOT a dead token.
         // Telling him "invalid" sends him off minting new tokens with the same
         // default ("Public repositories") and the same 404 forever.
-        auth = authed.status === 404 ? "norepo" : "invalid";
+        auth = authed.status === 404 ? "norepo" : isRateLimited(authed) ? "ratelimited" : "invalid";
       }
     } catch {
       auth = "unknown"; // offline
@@ -198,7 +282,7 @@ export function tokenBroken(auth) {
 export async function readFile(path) {
   const res = await fetch(contentsUrl(path), { headers: authedHeaders() });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`read ${path}: HTTP ${res.status}`);
+  if (!res.ok) throw new ApiError(path, res.status, "read", isRateLimited(res));
   const json = await res.json();
   // directories come back as arrays; >1MB files omit content — neither is
   // a valid data file (small per-domain JSON only)
@@ -236,7 +320,7 @@ export async function writeFile(path, data, sha) {
   // for sha-less creates racing an existing file; with a sha it's a real
   // validation error that must surface, not be retried forever as a merge.
   if (res.status === 409 || (res.status === 422 && !sha)) throw new ConflictError(path);
-  if (!res.ok) throw new Error(`write ${path}: HTTP ${res.status}`);
+  if (!res.ok) throw new ApiError(path, res.status, "write", isRateLimited(res));
   const json = await res.json();
   return { sha: json.content.sha };
 }
@@ -249,7 +333,7 @@ export async function writeFile(path, data, sha) {
 export async function listDir(dir) {
   const res = await fetch(contentsUrl(dir), { headers: authedHeaders() });
   if (res.status === 404) return [];
-  if (!res.ok) throw new Error(`list ${dir}: HTTP ${res.status}`);
+  if (!res.ok) throw new ApiError(dir, res.status, "list", isRateLimited(res));
   const json = await res.json();
   if (!Array.isArray(json)) throw new Error(`list ${dir}: not a directory`);
   return json

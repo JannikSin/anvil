@@ -13,7 +13,7 @@
 //          whenever we're online. Offline writes simply stay queued.
 
 import { dbGet, dbGetAll, dbUpdate } from "./db.js";
-import { readFile, writeFile } from "./github.js";
+import { readFile, writeFile, describeSyncError } from "./github.js";
 import { pushFile, afterPushRecord, ConflictError } from "./sync.js";
 
 const io = { read: readFile, write: writeFile };
@@ -21,7 +21,7 @@ const io = { read: readFile, write: writeFile };
 /** @type {Set<() => void>} */
 const listeners = new Set();
 
-/** @type {{ loading: boolean, pending: number, conflicts: number, lastSyncAt: string | null, flushing: boolean, lastError: string | null }} */
+/** @type {{ loading: boolean, pending: number, conflicts: number, lastSyncAt: string | null, flushing: boolean, lastError: string | null, needsYou: boolean }} */
 const status = {
   loading: true,
   pending: 0,
@@ -32,6 +32,10 @@ const status = {
   // last pass pushed clean. Queued-but-failing writes used to be invisible
   // unless you opened SYS and read the pending count.
   lastError: null,
+  // true when the failure is one only David can clear (a token scope, a
+  // permission, an expiry). Retrying will not fix those, and an app that says
+  // "auto-retrying" about them is lying in a way that costs days.
+  needsYou: false,
 };
 
 export function getSyncStatus() {
@@ -187,18 +191,27 @@ async function flush() {
         await dbUpdate(rec.path, (cur) => afterPushRecord(cur ?? rec, pushed, rec.rev));
         status.lastSyncAt = new Date().toISOString();
         status.lastError = null;
+        status.needsYou = false;
       } catch (e) {
         if (e instanceof ConflictError) {
           status.conflicts++;
           continue; // stays dirty; next flush retries the merge
         }
-        // network/auth failure — stop, everything stays queued, and SAY WHY
-        // (A5): a 401/403 means the token is the problem and waiting won't
-        // fix it; anything else is reachability and the heartbeat retries.
-        const msg = e instanceof Error ? e.message : String(e);
-        status.lastError = /HTTP 40[13]/.test(msg)
-          ? "GitHub rejected the token (renew it in SYS)"
-          : "can't reach GitHub right now (auto-retrying)";
+        // Network or auth failure: stop, everything stays queued, and SAY WHY
+        // in words that name the fix.
+        //
+        // This used to classify by running /HTTP 40[13]/ over the message
+        // text, which mapped the single most common real setup mistake, a
+        // token not scoped to the repo, onto "can't reach GitHub right now
+        // (auto-retrying)". GitHub answers that case with 404, deliberately,
+        // so as not to confirm a private repo exists. The app therefore told
+        // David to wait for a network that was never down, forever, while the
+        // Rig screen said the opposite. See describeSyncError in github.js.
+        const why = describeSyncError(e);
+        status.lastError = why.text;
+        // `fixable` means waiting will not help, so the heartbeat should stop
+        // pretending it might.
+        status.needsYou = why.fixable;
         break;
       }
     }

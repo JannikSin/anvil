@@ -89,8 +89,10 @@ export function SystemView({ sync, repo, hasToken, onToken }) {
         html`<p class="alarm">
           ${
             repo?.auth === "norepo"
-              ? "The token authenticated but cannot see the repo. Check its selected repositories; do not mint a new one."
-              : "GitHub rejected this token."
+              ? 'The token authenticated but cannot see the repo, which is a SCOPE problem and not a bad token. On the token page, "Repository access" defaults to "Public repositories" and silently 404s on a private repo. Switch it to "Only select repositories" and tick BOTH data repos. Do not mint a new one.'
+              : repo?.auth === "ratelimited"
+                ? "GitHub is rate-limiting this token. Nothing is wrong with it and it clears within the hour on its own."
+                : "GitHub rejected this token itself: expired, revoked, or mistyped. Paste a fresh one above."
           }
         </p>`
       }
@@ -135,9 +137,22 @@ export function SystemView({ sync, repo, hasToken, onToken }) {
         <div class=${`plate ${sync.conflicts > 0 ? "plate--warn" : ""}`}>
           <div class="plate__k">Conflicts</div>
           <div class="plate__v">${sync.conflicts ?? 0}</div>
-          <div class="plate__d">${sync.lastError ?? "none"}</div>
+          <div class="plate__d">${sync.needsYou ? "see below" : (sync.lastError ?? "none")}</div>
         </div>
       </div>
+
+      ${
+        // The reason the LAST PUSH failed, in full, on the screen a person
+        // opens to fix things. The Sync plate is too small to hold a sentence
+        // and the day screen's alarm scrolls away.
+        sync.lastError && html`<p class="alarm">${`Last push failed. ${sync.lastError}`}</p>`
+      }
+      ${
+        (sync.pending ?? 0) > 0 &&
+        html`<p class="note">
+          ${`${sync.pending} file${sync.pending === 1 ? "" : "s"} queued on this device. Nothing is lost: they push the moment the reason above is cleared.`}
+        </p>`
+      }
 
       <h2 class="band">Apple Watch</h2>
       <p class="note">

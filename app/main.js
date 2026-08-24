@@ -50,12 +50,17 @@ function formatSyncTime(at) {
  * The status lamp. Three states and no more: live, waiting, faulted. It never
  * goes green — this application has one accent colour and a lamp that changes
  * hue to say "fine" is a fourth thing to learn for no information.
- * @param {{ pending: number, flushing: boolean, lastError: string | null, lastSyncAt: string | null }} sync
+ * @param {{ pending: number, flushing: boolean, lastError: string | null, lastSyncAt: string | null, needsYou?: boolean }} sync
  * @param {boolean} hasToken
  */
 function lampFor(sync, hasToken) {
   if (!hasToken) return { cls: "is-off", text: "NO TOKEN" };
-  if (sync.lastError) return { cls: "is-fault", text: String(sync.lastError) };
+  // The lamp is 7px of text in a corner, so it says the SHAPE of the problem
+  // and the alarm on the day screen carries the sentence. It used to paste the
+  // whole error in here, which is how "can't reach GitHub right now
+  // (auto-retrying)" became the thing David read while the real cause, a token
+  // that could not see the repo, was two screens away.
+  if (sync.lastError) return { cls: "is-fault", text: sync.needsYou ? "NEEDS YOU" : "OFFLINE" };
   if (sync.flushing && sync.pending > 0) return { cls: "is-off", text: `SAVING ${sync.pending}` };
   if (sync.pending > 0) return { cls: "is-off", text: `${sync.pending} QUEUED` };
   if (sync.lastSyncAt) return { cls: "is-live", text: `SYNCED ${formatSyncTime(sync.lastSyncAt)}` };
@@ -336,6 +341,7 @@ function App() {
         today=${today}
         hasToken=${hasToken}
         repo=${repo}
+        sync=${sync}
         loading=${!loaded}
         draft=${draft}
         onDraft=${onDraft}
