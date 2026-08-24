@@ -97,10 +97,40 @@ export function sessionAtTier(template, tier = 1) {
   return { ...template, tier: want, exercises };
 }
 
+/** Seconds a working set actually occupies: unrack or set up, the reps under
+ *  control, rack it. Thirty was the old figure and it is wrong for everything
+ *  in this programme: five to eight back squats with the prescribed controlled
+ *  eccentric does not fit in half a minute, and neither does getting under and
+ *  out from under the bar. Forty-five is the honest floor for a compound and it
+ *  is generous for a lateral raise, which is the right direction to err. */
+const SECONDS_PER_SET = 45;
+
 /**
- * Minutes the three tiers are honestly worth, from the sets and rests actually
- * prescribed rather than from a guess. Used to label the tier buttons, because
- * "Tier 2" means nothing at 6am and "18 min" means everything.
+ * Minutes a session honestly costs, from the sets and rests actually
+ * prescribed. Used to label the tier buttons, because "Tier 2" means nothing at
+ * 6am and "33 min" means everything.
+ *
+ * CORRECTED 2026-08-24, and the old version was not slightly wrong, it was
+ * wrong by about a third. David asked why his sessions read as 30 minutes when
+ * he is paying a fixed cost in travel and a shower to get there. The answer was
+ * that they do not take 30 minutes and never did. Two errors compounded:
+ *
+ *   1. It counted `sets - 1` rests per exercise, on the reasoning that "the last
+ *      set's rest is not spent in the gym." That is true of exactly ONE set in
+ *      the whole session, the final one. You absolutely rest after the last set
+ *      of Back Squat, because the next thing is Leg Press. So the rest count is
+ *      one per set, and a single final rest comes off the total.
+ *   2. It priced a working set at 30 seconds. See SECONDS_PER_SET.
+ *
+ * Lower A read 30 minutes and costs about 44 before the warm-up. The tier
+ * buttons were therefore selling a 45-minute session as a half-hour one, which
+ * is the opposite of what P3 is for: the tiers exist so a person can pick
+ * honestly against the time they actually have.
+ *
+ * Still EXCLUDED, deliberately, because both are shown separately and adding
+ * them here would double-count: the warm-up block (4 to 5 min, priced on its
+ * own on the day screen) and any conditioning attached to the day.
+ *
  * @param {Record<string, any> | null} template
  * @param {1 | 2 | 3} [tier]
  * @returns {number} whole minutes, 0 for a rest day
@@ -108,16 +138,19 @@ export function sessionAtTier(template, tier = 1) {
 export function tierMinutes(template, tier = 1) {
   const session = sessionAtTier(template, tier);
   if (!session) return 0;
-  const seconds = (session.exercises ?? []).reduce(
+  const exercises = session.exercises ?? [];
+  const seconds = exercises.reduce(
     (/** @type {number} */ total, /** @type {Record<string, any>} */ e) => {
       const sets = Number(e.targetSets) || 0;
       const rest = Number(e.rest) || 90;
-      // work is roughly 30 s a set; the last set's rest is not spent in the gym
-      return total + sets * 30 + Math.max(0, sets - 1) * rest;
+      return total + sets * SECONDS_PER_SET + sets * rest;
     },
     0,
   );
-  return Math.round(seconds / 60);
+  // the one rest that genuinely is not spent in the gym: after the final set
+  const last = exercises[exercises.length - 1];
+  const tail = last ? Number(last.rest) || 90 : 0;
+  return Math.round(Math.max(0, seconds - tail) / 60);
 }
 
 /**

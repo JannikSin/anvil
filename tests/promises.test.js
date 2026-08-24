@@ -698,3 +698,59 @@ test("META: no test claims a promise the document does not list", () => {
     );
   }
 });
+
+// ---------------------------------------------------------------------------
+// The minute estimate. Added 2026-08-24 (droplet), because it was wrong by
+// about a third and the tier buttons are the one place in the app where a
+// number gets acted on directly: David picks Full, Trim or Core against the
+// time he has, at 6am, without checking anything.
+//
+// He asked why his sessions read as 30 minutes when travel and a shower are a
+// fixed cost he is already paying. They did not take 30 minutes. The estimate
+// counted `sets - 1` rests per exercise, which is true of exactly one set in
+// the whole session, and priced a working set of heavy squats at 30 seconds.
+
+test("a session's minute estimate is not a fiction", () => {
+  for (const t of program.templates) {
+    const mins = tierMinutes(t, 1);
+    const sets = t.exercises.reduce(
+      (/** @type {number} */ n, /** @type {any} */ e) => n + (Number(e.targetSets) || 0),
+      0,
+    );
+
+    // THE FLOOR THAT CATCHES THE OLD BUG. Rest alone, at the programme's own
+    // prescribed intervals, for every set but the last, is a hard lower bound:
+    // you cannot do the session faster than you can rest through it, and work
+    // time is strictly additional. The old formula produced numbers BELOW this
+    // for every template in the programme.
+    const restOnly = t.exercises.reduce(
+      (/** @type {number} */ n, /** @type {any} */ e) =>
+        n + (Number(e.targetSets) || 0) * (Number(e.rest) || 90),
+      0,
+    );
+    const floor = Math.floor((restOnly - 180) / 60); // minus a generous final rest
+    assert.ok(
+      mins >= floor,
+      `${t.id} is estimated at ${mins} min, below the ${floor} min its own prescribed ` +
+        `rest intervals alone require. An estimate under the rest time is not an estimate.`,
+    );
+
+    // and a sanity ceiling, so a future change cannot swing the other way.
+    // Four minutes a set is generous: the longest rest in the programme is
+    // 180 s and a working set is 45 s, so nothing honest can exceed it.
+    assert.ok(mins <= sets * 4, `${t.id} at ${mins} min for ${sets} sets is implausibly long`);
+  }
+});
+
+test("the programme is honest about costing more than half an hour a session", () => {
+  // The specific claim David acted on. Every session in this programme is a
+  // 35-to-45 minute lift before the warm-up, and the app must say so, because
+  // the whole argument for going at all is that the fixed costs are already
+  // being paid.
+  const minutes = program.templates.map((/** @type {any} */ t) => tierMinutes(t, 1));
+  assert.ok(
+    Math.min(...minutes) >= 33,
+    `the shortest session prices at ${Math.min(...minutes)} min; if that is real the ` +
+      `programme changed, and if it is not the estimator regressed`,
+  );
+});
