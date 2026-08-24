@@ -18,6 +18,8 @@ import {
   weeklyAerobic,
 } from "../app/lib/activities.js";
 import { upsertDay, ANVIL_FIELDS } from "../app/lib/daily.js";
+import { shiftIsoDate } from "../app/lib/dates.js";
+import { draftSetCount, emptyDraft, normalizeDraft } from "../app/lib/draft.js";
 
 // Read rather than `import ... with { type: "json" }`: Node 24 accepts the
 // import attribute but the eslint parser does not, and the rest of the suite
@@ -56,8 +58,7 @@ const program = JSON.parse(
  * A silent skip is the rot mode.
  */
 
-const DOC =
-  "C:\\Users\\DATar\\Sanity\\Obsidian\\Crystal\\Lanes\\Anvil-Core-Purpose.md";
+const DOC = "C:\\Users\\DATar\\Sanity\\Obsidian\\Crystal\\Lanes\\Anvil-Core-Purpose.md";
 
 // ---------------------------------------------------------------------------
 // The behaviour tests. One entry per promise the document claims is proven.
@@ -124,59 +125,79 @@ const PROMISES = [
     id: "P3",
     name: "P3 every session has three tiers and all of them advance the rotation",
     fn: () => {
-    for (const t of program.templates) {
-      const one = sessionAtTier(t, 1);
-      const two = sessionAtTier(t, 2);
-      const three = sessionAtTier(t, 3);
+      for (const t of program.templates) {
+        const one = sessionAtTier(t, 1);
+        const two = sessionAtTier(t, 2);
+        const three = sessionAtTier(t, 3);
 
-      // all three exist and are genuinely different sizes
-      assert.ok(one && two && three, `${t.id} is missing a tier`);
-      assert.equal(one.exercises.length, t.exercises.length, `${t.id} tier 1 is not the full session`);
-      assert.ok(two.exercises.length < one.exercises.length, `${t.id} tier 2 cuts nothing`);
-      assert.equal(three.exercises.length, 1, `${t.id} tier 3 must be exactly one movement`);
+        // all three exist and are genuinely different sizes
+        assert.ok(one && two && three, `${t.id} is missing a tier`);
+        assert.equal(
+          one.exercises.length,
+          t.exercises.length,
+          `${t.id} tier 1 is not the full session`,
+        );
+        assert.ok(two.exercises.length < one.exercises.length, `${t.id} tier 2 cuts nothing`);
+        assert.equal(three.exercises.length, 1, `${t.id} tier 3 must be exactly one movement`);
 
-      // nesting: the smaller tier is always a subset of the larger one, so
-      // dropping a tier never introduces a lift the person has not warmed up for
-      const names = (s) => s.exercises.map((e) => e.name);
-      for (const n of names(three)) assert.ok(names(two).includes(n), `${t.id} tier 3 lift absent from tier 2`);
-      for (const n of names(two)) assert.ok(names(one).includes(n), `${t.id} tier 2 lift absent from tier 1`);
+        // nesting: the smaller tier is always a subset of the larger one, so
+        // dropping a tier never introduces a lift the person has not warmed up for
+        const names = (s) => s.exercises.map((e) => e.name);
+        for (const n of names(three))
+          assert.ok(names(two).includes(n), `${t.id} tier 3 lift absent from tier 2`);
+        for (const n of names(two))
+          assert.ok(names(one).includes(n), `${t.id} tier 2 lift absent from tier 1`);
 
-      // the tier 3 movement is the one that matters, not whatever sorted first
-      assert.ok(
-        t.exercises.find((e) => e.name === names(three)[0]).tier === 3,
-        `${t.id} tier 3 picked an exercise not marked tier 3`,
+        // the tier 3 movement is the one that matters, not whatever sorted first
+        assert.ok(
+          t.exercises.find((e) => e.name === names(three)[0]).tier === 3,
+          `${t.id} tier 3 picked an exercise not marked tier 3`,
+        );
+
+        // and it is honestly shorter, which is the only reason anyone picks it
+        assert.ok(
+          tierMinutes(t, 3) < tierMinutes(t, 2) && tierMinutes(t, 2) < tierMinutes(t, 1),
+          `${t.id} tiers do not actually save time (${tierMinutes(t, 1)}/${tierMinutes(t, 2)}/${tierMinutes(t, 3)} min)`,
+        );
+      }
+
+      // A tier 3 completion advances the rotation exactly as a tier 1 does. This is
+      // the half of the promise that is easy to get wrong: nextInRotation must key
+      // off the session having HAPPENED, never off how much of it happened.
+      const done = [{ date: "2026-08-19", templateId: "lower-a", exercises: [] }];
+      const full = nextInRotation(program.schedule, program.templates, done);
+      const reduced = nextInRotation(program.schedule, program.templates, [
+        {
+          ...done[0],
+          tier: 3,
+          exercises: [{ name: "Back Squat", sets: [{ weight: 225, reps: 5 }] }],
+        },
+      ]);
+      assert.equal(
+        reduced?.id,
+        full?.id,
+        "a tier 3 day did not advance the rotation like a tier 1 day",
       );
 
-      // and it is honestly shorter, which is the only reason anyone picks it
-      assert.ok(
-        tierMinutes(t, 3) < tierMinutes(t, 2) && tierMinutes(t, 2) < tierMinutes(t, 1),
-        `${t.id} tiers do not actually save time (${tierMinutes(t, 1)}/${tierMinutes(t, 2)}/${tierMinutes(t, 3)} min)`,
+      // a template with no tier data must not collapse to an empty session
+      const untiered = {
+        id: "x",
+        name: "X",
+        exercises: [{ name: "A", targetSets: 3, targetReps: "5" }],
+      };
+      assert.equal(
+        sessionAtTier(untiered, 3).exercises.length,
+        1,
+        "untiered template offered an empty fallback",
       );
-    }
-
-    // A tier 3 completion advances the rotation exactly as a tier 1 does. This is
-    // the half of the promise that is easy to get wrong: nextInRotation must key
-    // off the session having HAPPENED, never off how much of it happened.
-    const done = [{ date: "2026-08-19", templateId: "lower-a", exercises: [] }];
-    const full = nextInRotation(program.schedule, program.templates, done);
-    const reduced = nextInRotation(program.schedule, program.templates, [
-      { ...done[0], tier: 3, exercises: [{ name: "Back Squat", sets: [{ weight: 225, reps: 5 }] }] },
-    ]);
-    assert.equal(reduced?.id, full?.id, "a tier 3 day did not advance the rotation like a tier 1 day");
-
-    // a template with no tier data must not collapse to an empty session
-    const untiered = { id: "x", name: "X", exercises: [{ name: "A", targetSets: 3, targetReps: "5" }] };
-    assert.equal(sessionAtTier(untiered, 3).exercises.length, 1, "untiered template offered an empty fallback");
     },
   },
   {
     id: "P4",
-    name: "P4 a set logs from the prefill without a keyboard",
+    name: "P4 a set logs from the prefill, a late session files against its own date, and nothing logged is ever lost",
     fn: () => {
-      // The keystone promise, in its testable half: the app proposes a COMPLETE
-      // set, so the common case is one press and no typing. Back-dating is the
-      // other half and is NOT built; the document says so and Fix-List job 1
-      // owns it.
+      // ---- one press, no keyboard ---------------------------------------
+      // The app proposes a COMPLETE set, so the common case is a single press.
       const hist = [
         { date: "2026-08-01", exercises: [{ name: "Bench", sets: [{ weight: 185, reps: 8 }] }] },
       ];
@@ -184,6 +205,57 @@ const PROMISES = [
       assert.ok(Number.isFinite(next.weight), "the weight is supplied, not typed");
       assert.ok(Number.isFinite(next.reps), "the reps are supplied, not typed");
       assert.ok(next.weight > 0 && next.reps > 0, "and both are usable as-is");
+
+      // ---- a late entry is a first-class entry ---------------------------
+      // Closed 2026-08-24, fix-list job 1. Every session used to be stamped
+      // with the current date with no way to say otherwise, so a session
+      // trained on Tuesday and remembered on Thursday could not be recorded
+      // at all. David's own words, 2026-08-19: "the audit said three sessions
+      // for four weeks. That wasn't true. I'm just not logging it."
+      const today = "2026-08-24";
+      const threeDaysBack = shiftIsoDate(today, -3);
+      assert.equal(threeDaysBack, "2026-08-21", "the date control steps whole local days");
+
+      const late = {
+        id: "late1",
+        date: threeDaysBack,
+        templateId: temps[0].id,
+        exercises: [{ name: "Bench", sets: [{ weight: 195, reps: 8 }] }],
+      };
+      const log = [...hist, late];
+
+      // it lands on the day it was TRAINED, not the day it was typed
+      assert.equal(
+        sessionsOn(log, threeDaysBack).length,
+        1,
+        "the late session files against its own date",
+      );
+      assert.equal(sessionsOn(log, today).length, 0, "and not against today");
+
+      // it advances the rotation exactly as a live one would
+      assert.equal(
+        nextInRotation(sched, temps, log)?.id,
+        nextInRotation(sched, temps, [{ ...late, date: today }])?.id,
+        "a back-dated session moves the rotation exactly as a same-day one does",
+      );
+
+      // and it feeds the progression, which is what makes the log worth having
+      const after = progressionFor(log, "Bench", "8-10", 5);
+      assert.equal(after.weight, 195, "the late session is what the next prefill reads from");
+
+      // ---- and nothing logged is ever lost -------------------------------
+      // The draft is written to disk on every change, so a page discarded
+      // mid-session (a phone locking on a rest set) comes back with the sets
+      // in it. Before 2026-08-24 the draft lived only in a preact useState and
+      // a discarded page took a whole morning's lifting with it, silently.
+      const held = {
+        ...emptyDraft(today),
+        session: { date: threeDaysBack, templateId: temps[0].id, exercises: late.exercises },
+      };
+      const back = normalizeDraft(JSON.parse(JSON.stringify(held)), today);
+      assert.deepEqual(back.session, held.session, "a killed page gives the sets back");
+      assert.equal(back.date, threeDaysBack, "still filed against the day it was trained");
+      assert.equal(draftSetCount(back), 1, "and the app can say how much is being held");
     },
   },
   {
@@ -198,8 +270,16 @@ const PROMISES = [
       assert.equal(book.activities.length, TYPES.length, "every modality is loggable");
 
       // Nothing but minutes is required.
-      const bare = addActivity({ activities: [] }, { date: "2026-08-19", type: "run", minutes: 20 }, "x");
-      assert.equal(bare.activities[0].miles, undefined, "a run with only a duration is a logged run");
+      const bare = addActivity(
+        { activities: [] },
+        { date: "2026-08-19", type: "run", minutes: 20 },
+        "x",
+      );
+      assert.equal(
+        bare.activities[0].miles,
+        undefined,
+        "a run with only a duration is a logged run",
+      );
 
       // And each counts toward the metric it genuinely serves, and no other.
       const w = weeklyAerobic(
@@ -259,7 +339,8 @@ const PROMISES = [
       };
       // Known decoration. Listed, not hidden. Fix-List owns it.
       const UNCONSUMED = {
-        hrDrop60: "collected, read by nothing. Should feed a trend: a rising 60s drop is the direct measurement of the goal he actually stated.",
+        hrDrop60:
+          "collected, read by nothing. Should feed a trend: a rising 60s drop is the direct measurement of the goal he actually stated.",
       };
       const NOTE_ONLY = ["note"];
 
@@ -276,7 +357,11 @@ const PROMISES = [
             `P7 says a field must feed a decision or be deleted. Decide now, in this file.`,
         );
       }
-      assert.equal(Object.keys(UNCONSUMED).length, 1, "exactly one known piece of decoration remains");
+      assert.equal(
+        Object.keys(UNCONSUMED).length,
+        1,
+        "exactly one known piece of decoration remains",
+      );
     },
   },
   {
@@ -316,11 +401,19 @@ const PROMISES = [
       // If the app could represent being behind, these would differ.
       const afterGap = nextInRotation(sched, temps, done);
       const afterOneDay = nextInRotation(sched, temps, done);
-      assert.equal(afterGap.id, afterOneDay.id, "the rotation advances on completion, not the calendar");
+      assert.equal(
+        afterGap.id,
+        afterOneDay.id,
+        "the rotation advances on completion, not the calendar",
+      );
       assert.ok(afterGap.id !== "lower-a", "and it advanced past what was completed");
 
       // Nothing anywhere counts a miss.
-      assert.equal(sessionsOn(done, "2026-08-19").length, 0, "a day with no session is simply empty");
+      assert.equal(
+        sessionsOn(done, "2026-08-19").length,
+        0,
+        "a day with no session is simply empty",
+      );
       const shape = Object.keys(afterGap).join(" ") + Object.keys(done[0]).join(" ");
       for (const banned of ["streak", "percent", "missed", "behind", "completion"]) {
         assert.ok(!shape.toLowerCase().includes(banned), `the model has no "${banned}" field`);
@@ -344,7 +437,10 @@ const PROMISES = [
       assert.equal(interferenceWarning(five, "2026-08-19"), null);
 
       // Duration is watched, because it is the moderator with real evidence.
-      assert.match(String(interferenceWarning([a("2026-08-19", "run", 135)], "2026-08-19")), /135 min session/);
+      assert.match(
+        String(interferenceWarning([a("2026-08-19", "run", 135)], "2026-08-19")),
+        /135 min session/,
+      );
 
       // And the weekly warning is stated in calories, because that is the
       // variable that can actually end a gain phase.
@@ -410,9 +506,7 @@ for (const u of UNBUILT) test(u.name, { todo: u.why }, () => {});
 
 /** Strip line comments, block comments and JSDoc, leaving executable text. */
 function stripComments(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 }
 
 // Given names and surnames only. The GitHub ACCOUNT handle "JannikSin" is
@@ -443,8 +537,7 @@ test("no person is named in the design, only in the margins", () => {
     const code = stripComments(readFileSync(file, "utf8")).toLowerCase();
     for (const name of NAMES) {
       if (code.includes(name)) {
-        const line =
-          code.slice(0, code.indexOf(name)).split("\n").length;
+        const line = code.slice(0, code.indexOf(name)).split("\n").length;
         offences.push(
           `${file.pathname.split("/app/")[1]}:${line} has "${name}" in executable code`,
         );

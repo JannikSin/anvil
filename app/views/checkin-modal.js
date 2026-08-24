@@ -1,5 +1,6 @@
 import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
 
 /**
  * The once-a-day check-in.
@@ -18,19 +19,41 @@ import { useEffect, useRef, useState } from "preact/hooks";
  * NEVER to the weigh-in, because the weigh-in's whole value is that it is
  * frictionless. So this dialog stays at three fields and does not grow.
  *
+ * The date steps back, for the same reason the session's does: P4 says a late
+ * entry is a first-class entry, and a weigh-in missed on Saturday is exactly
+ * the gap the gain phase's 7-day average keeps failing to fill. It opens on
+ * today and needs no interaction to stay there.
+ *
  * @param {{
  *   today: string,
- *   row: Record<string, any>,
- *   onSave: (patch: Record<string, any>) => void,
+ *   days: Record<string, any>[],
+ *   onSave: (patch: Record<string, any>, date: string) => void,
  *   onClose: () => void
  * }} props
  * @returns {import("preact").VNode}
  */
-export function CheckinModal({ today, row, onSave, onClose }) {
+export function CheckinModal({ today, days, onSave, onClose }) {
+  const [date, setDate] = useState(today);
+  const row = (days ?? []).find((d) => d.date === date) ?? {};
   const [weight, setWeight] = useState(row.weight != null ? String(row.weight) : "");
   const [sleep, setSleep] = useState(row.sleepHours != null ? String(row.sleepHours) : "");
   const [pushups, setPushups] = useState(row.pushups != null ? String(row.pushups) : "");
   const firstRef = useRef(/** @type {any} */ (null));
+  // one interpolation, one line: htm eats any whitespace run containing a
+  // newline where it touches a tag, and prettier rewraps a long line straight
+  // back into that bug (CLAUDE.md, "htm whitespace, learned the hard way")
+  const dayLabel = relativeDayLabel(date, today);
+
+  /** Stepping the date reloads the fields from that day's row, so the dialog
+   *  never shows Saturday's weight under Thursday's heading. */
+  const moveTo = (/** @type {string} */ next) => {
+    if (!next || next > today) return;
+    const r = (days ?? []).find((d) => d.date === next) ?? {};
+    setDate(next);
+    setWeight(r.weight != null ? String(r.weight) : "");
+    setSleep(r.sleepHours != null ? String(r.sleepHours) : "");
+    setPushups(r.pushups != null ? String(r.pushups) : "");
+  };
 
   // focus the weight field: it is the one number the gain phase is steered by,
   // and the only one whose absence has actually cost him anything
@@ -60,7 +83,7 @@ export function CheckinModal({ today, row, onSave, onClose }) {
     put("weight", weight);
     put("sleepHours", sleep);
     put("pushups", pushups);
-    if (Object.keys(patch).length) onSave(patch);
+    if (Object.keys(patch).length) onSave(patch, date);
     onClose();
   };
 
@@ -103,7 +126,34 @@ export function CheckinModal({ today, row, onSave, onClose }) {
         aria-label="Daily check-in"
         onClick=${(/** @type {any} */ e) => e.stopPropagation()}
       >
-        <h2 class="band">Check-in<span class="band__sub">${today}</span></h2>
+        <h2 class="band">Check-in<span class="band__sub">${dayLabel}</span></h2>
+        <div class="datepad">
+          <button
+            class="knob"
+            type="button"
+            aria-label="Check in for a day earlier"
+            onClick=${() => moveTo(shiftIsoDate(date, -1))}
+          >
+            ‹
+          </button>
+          <input
+            class="datepad__well"
+            type="date"
+            max=${today}
+            value=${date}
+            aria-label="Date these numbers are for"
+            onInput=${(/** @type {any} */ e) => moveTo(e.currentTarget.value)}
+          />
+          <button
+            class="knob"
+            type="button"
+            aria-label="Check in for a day later"
+            disabled=${date >= today}
+            onClick=${() => moveTo(shiftIsoDate(date, 1))}
+          >
+            ›
+          </button>
+        </div>
         <p class="note">Once a day, here only. Blank means skip that one.</p>
         <div>
           ${field("Weight", "lb", weight, setWeight, "0.1", true)}

@@ -18,6 +18,7 @@ import { initRouter } from "./lib/router.js";
 import { initStore, read, write, getSyncStatus, onSyncChange } from "./lib/store.js";
 import { checkDataRepo, getToken, SHARED_DAILY, MISE_TARGETS, MISE_VITALS } from "./lib/github.js";
 import { localIsoDate } from "./lib/dates.js";
+import { clearDraft, readDraft, writeDraft } from "./lib/draft.js";
 import { upsertDay } from "./lib/daily.js";
 import { addActivity } from "./lib/activities.js";
 import { TodayView } from "./views/today.js";
@@ -180,16 +181,24 @@ function App() {
     void write("activities.json", /** @type {any} */ (next));
   }, []);
 
-  // The in-progress workout lives at App level, not inside the view:
-  // navigating tabs mid-session must never discard logged sets. This was a
-  // reviewer-flagged data-loss bug in Mise and the fix comes across with it.
-  const [draft, setDraft] = useState(
-    /** @type {{ templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> }} */ ({
-      templateId: null,
-      session: null,
-      inputs: {},
-    }),
-  );
+  // The in-progress workout lives at App level AND on disk.
+  //
+  // At App level so navigating tabs mid-session cannot discard logged sets
+  // (a reviewer-flagged data-loss bug inherited from Mise). On disk because
+  // App level was never enough: a preact useState dies with the page, and a
+  // phone that backgrounds a PWA on a rest set gets that page discarded. That
+  // is how David lost a whole morning's session on 2026-08-24, which is the
+  // sharpest possible violation of P4 — he paid the logging tax and the app
+  // ate the record. lib/draft.js explains why the store is localStorage and
+  // not IndexedDB. Every change round-trips through here, keystrokes included.
+  const [draft, setDraft] = useState(() => readDraft(localIsoDate(new Date())));
+
+  const onDraft = useCallback((/** @type {import("./lib/draft.js").Draft} */ next) => {
+    setDraft(next);
+    writeDraft(next);
+  }, []);
+
+  const today = localIsoDate(new Date());
 
   const handleSaveSession = useCallback((/** @type {Record<string, any>} */ session) => {
     const w = workoutsRef.current;
@@ -200,21 +209,39 @@ function App() {
     workoutsRef.current = next;
     setWorkouts(next);
     void write("workouts.json", /** @type {any} */ (next));
+    // the draft is spent the moment it becomes a session; a stale copy on
+    // disk would raise the unfiled-session banner over work already filed
+    clearDraft();
+    setDraft({
+      date: localIsoDate(new Date()),
+      templateId: null,
+      tier: 1,
+      session: null,
+      inputs: {},
+    });
   }, []);
 
-  const handlePatchDay = useCallback((/** @type {Record<string, any>} */ patch) => {
-    const next = upsertDay(/** @type {any} */ (dailyRef.current), localIsoDate(new Date()), patch);
-    dailyRef.current = next;
-    setDaily(next);
-    // writes into MISE's repo: this row is shared and merge.js resolves it
-    // field-wise, so anvil touching sleep/weight/pushups cannot clobber
-    // Mise's water/supplements/dailyDozen on the same day
-    void write(SHARED_DAILY, /** @type {any} */ (next));
-  }, []);
-
-  const today = localIsoDate(new Date());
-  const todayRow = (daily.days ?? []).find((d) => d.date === today) ?? {};
-
+  /**
+   * Patch one day of the shared row. `date` defaults to today and is passed
+   * explicitly when a check-in is being back-filled — P4 says a late entry is
+   * a first-class entry, and that applies to the weigh-in as much as the bar.
+   */
+  const handlePatchDay = useCallback(
+    (/** @type {Record<string, any>} */ patch, /** @type {string} */ date) => {
+      const next = upsertDay(
+        /** @type {any} */ (dailyRef.current),
+        date || localIsoDate(new Date()),
+        patch,
+      );
+      dailyRef.current = next;
+      setDaily(next);
+      // writes into MISE's repo: this row is shared and merge.js resolves it
+      // field-wise, so anvil touching sleep/weight/pushups cannot clobber
+      // Mise's water/supplements/dailyDozen on the same day
+      void write(SHARED_DAILY, /** @type {any} */ (next));
+    },
+    [],
+  );
   // The once-a-day check-in. Fires on the FIRST open of a local day and then
   // not again, whether he filled it in or saved nothing: a prompt that returns
   // on every navigation is a prompt that teaches him to dismiss it. The stamp
@@ -245,7 +272,7 @@ function App() {
       checkinOpen &&
       html`<${CheckinModal}
         today=${today}
-        row=${todayRow}
+        days=${daily.days ?? []}
         onSave=${handlePatchDay}
         onClose=${closeCheckin}
       />`
@@ -271,7 +298,7 @@ function App() {
         repo=${repo}
         loading=${!loaded}
         draft=${draft}
-        onDraft=${setDraft}
+        onDraft=${onDraft}
         onSaveSession=${handleSaveSession}
         onOpenCheckin=${() => setCheckinOpen(true)}
         activities=${activities.activities ?? []}

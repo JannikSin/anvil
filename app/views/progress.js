@@ -1,5 +1,7 @@
 import { html } from "htm/preact";
-import { personalRecords, primaryLifts, seriesFor } from "../lib/workouts.js";
+import { useState } from "preact/hooks";
+import { formatSets, personalRecords, primaryLifts, seriesFor } from "../lib/workouts.js";
+import { relativeDayLabel } from "../lib/dates.js";
 import { weightTrend } from "../lib/weight.js";
 import { Sparkline } from "./spark.js";
 import { Crest } from "./glyphs.js";
@@ -32,6 +34,16 @@ const VERDICT_COPY = {
  * @returns {import("preact").VNode}
  */
 export function ProgressView({ workouts, daily, targets, today, loading }) {
+  // Which filed session is open. A session used to be one line reading
+  // "lower-a · 2026-08-24 · 7 sets", which is the id of a template and a
+  // count: it cannot answer "what did I actually lift on Saturday", which is
+  // the only question anyone opens this screen to ask. One tap opens the
+  // lifts. Nothing is expanded by default — the list is the index, not the
+  // record — and the state is per-view because it is a reading position, not
+  // data.
+  const [openId, setOpenId] = useState(/** @type {string | null} */ (null));
+  const nameFor = (/** @type {string | null | undefined} */ id) =>
+    workouts.templates.find((t) => t.id === id)?.name ?? id ?? "freeform";
   const prs = personalRecords(/** @type {any} */ (workouts.sessions));
   const phase = targets?.phase === "loss" ? "loss" : "gain";
   const trend = weightTrend(daily.days ?? [], today, phase);
@@ -119,24 +131,65 @@ export function ProgressView({ workouts, daily, targets, today, loading }) {
         }
       </div>
 
-      <h2 class="band">Filed</h2>
+      <h2 class="band">Filed<span class="band__sub">tap one to see the lifts</span></h2>
       <div class="rack">
         ${[...workouts.sessions]
           .sort((a, b) => b.date.localeCompare(a.date))
-          .slice(0, 14)
-          .map(
-            (s) => html`
-              <div class="bar" key=${s.id ?? s.date + (s.templateId ?? "")}>
-                <span class="bar__name">${s.templateId ?? "freeform"}</span>
-                <span class="bar__meta num">
-                  ${`${s.date} · ${s.exercises.reduce(
-                    (/** @type {number} */ n, /** @type {any} */ e) => n + e.sets.length,
-                    0,
-                  )} sets`}
-                </span>
+          .slice(0, 20)
+          .map((s) => {
+            const key = String(s.id ?? s.date + (s.templateId ?? ""));
+            const open = openId === key;
+            const sets = s.exercises.reduce(
+              (/** @type {number} */ n, /** @type {any} */ e) => n + e.sets.length,
+              0,
+            );
+            // Tonnage, because it is the one number that separates two sessions
+            // with the same set count, and it is arithmetic the app already has
+            // every input for. Bodyweight sets contribute nothing to it, which
+            // is honest rather than clever: the app does not know what he weighs
+            // on a given day and will not guess.
+            const volume = s.exercises.reduce(
+              (/** @type {number} */ n, /** @type {any} */ e) =>
+                n +
+                e.sets.reduce(
+                  (/** @type {number} */ m, /** @type {any} */ x) =>
+                    m + Math.max(0, x.weight) * Math.max(0, x.reps),
+                  0,
+                ),
+              0,
+            );
+            return html`
+              <div class=${`filed ${open ? "is-open" : ""}`} key=${key}>
+                <button
+                  class="bar"
+                  aria-expanded=${open}
+                  onClick=${() => setOpenId(open ? null : key)}
+                >
+                  <span class="bar__name">${nameFor(s.templateId)}</span>
+                  <span class="bar__meta num">
+                    ${`${relativeDayLabel(s.date, today)} · ${sets} ${sets === 1 ? "set" : "sets"}`}
+                  </span>
+                </button>
+                ${
+                  open &&
+                  html`<div class="filed__body">
+                    <div class="filed__meta num">
+                      ${`${s.date}${volume > 0 ? ` · ${volume.toLocaleString()} lb moved` : ""}`}
+                    </div>
+                    ${s.exercises.map(
+                      (/** @type {any} */ e) => html`
+                        <div class="filed__lift" key=${e.name}>
+                          <span class="filed__liftname">${e.name}</span>
+                          <span class="filed__sets num">${formatSets(e.sets)}</span>
+                        </div>
+                      `,
+                    )}
+                    ${s.notes && html`<div class="filed__note">${s.notes}</div>`}
+                  </div>`
+                }
               </div>
-            `,
-          )}
+            `;
+          })}
         ${
           workouts.sessions.length === 0 &&
           html`<div class="void">${loading ? "loading" : "nothing filed yet"}</div>`

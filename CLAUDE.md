@@ -61,6 +61,22 @@ on every write. `tests/daily.test.js` pins this.
 **5. Sessions carry an id.** It is the merge key. Two same-day sessions, or two
 devices, collapse into one without it.
 
+**6. Nothing logged may live only in memory.** The in-progress session is
+written to `localStorage` through `lib/draft.js` on every change, keystrokes
+included. It was a `useState` and nothing else until 2026-08-24, and a phone
+that backgrounded the PWA long enough for iOS to discard the page deleted a
+whole morning's lifting with no error and no trace. `localStorage` rather than
+IndexedDB **on purpose**: it is synchronous, so the write lands before the page
+can be killed; an IDB transaction opened in a page's last moments is exactly
+the write that does not commit. `tests/draft.test.js` guards it. If you ever
+add another kind of in-progress state, it goes through the same door.
+
+**7. A session's date is data, not the clock.** Every session used to be
+stamped `localIsoDate(new Date())` at the point of writing. P4 says a late
+entry is a first-class entry, so the date lives in the draft, the session
+screen carries a control for it, and `handleSaveSession` files whatever date
+the draft holds. Never reintroduce `new Date()` on a write path.
+
 ## The look is a rule, not a preference
 
 **Rebuilt from zero on 2026-08-22 (session stanton), on David's instruction:

@@ -65,3 +65,30 @@ export function statusDate(d) {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${DAYS[d.getDay()]} ${mm}·${dd}`;
 }
+
+/**
+ * Step a YYYY-MM-DD date by whole days, staying in local time. Noon anchoring
+ * (parseLocalIso) is what makes this safe across a DST boundary.
+ * @param {string} iso
+ * @param {number} days
+ * @returns {string}
+ */
+export function shiftIsoDate(iso, days) {
+  const d = parseLocalIso(iso);
+  d.setDate(d.getDate() + days);
+  return localIsoDate(d);
+}
+
+/**
+ * How a date reads to a person filing a session for it: "today",
+ * "yesterday", then the weekday and the day of the month.
+ * @param {string} iso
+ * @param {string} today
+ * @returns {string}
+ */
+export function relativeDayLabel(iso, today) {
+  if (iso === today) return "today";
+  if (iso === shiftIsoDate(today, -1)) return "yesterday";
+  const d = parseLocalIso(iso);
+  return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+}

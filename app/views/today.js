@@ -12,6 +12,8 @@ import {
   tierMinutes,
 } from "../lib/workouts.js";
 import { warmupFor } from "../lib/routines.js";
+import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
+import { draftSetCount } from "../lib/draft.js";
 import { hrRest } from "../lib/activities.js";
 import { CoreWorkout } from "./core-workout.js";
 import { ActivityLog } from "./activity-log.js";
@@ -52,8 +54,8 @@ const TIERS = /** @type {{ tier: 1 | 2 | 3, name: string, blurb: string }[]} */ 
  *   hasToken: boolean,
  *   repo: Record<string, any> | null,
  *   loading: boolean,
- *   draft: { templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> },
- *   onDraft: (d: { templateId: string | null, session: Record<string, any> | null, inputs: Record<string, { w: string, r: string }> }) => void,
+ *   draft: import("../lib/draft.js").Draft,
+ *   onDraft: (d: import("../lib/draft.js").Draft) => void,
  *   onSaveSession: (session: Record<string, any>) => void,
  *   onOpenCheckin: () => void,
  *   activities: Record<string, any>[],
@@ -83,7 +85,6 @@ export function TodayView({
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [invalid, setInvalid] = useState(/** @type {string | null} */ (null));
   const [showPicker, setShowPicker] = useState(false);
-  const [tier, setTier] = useState(/** @type {1 | 2 | 3} */ (1));
   const restRef = useRef(/** @type {ReturnType<typeof setInterval> | null} */ (null));
   // the floor for the lift currently resting, so an HR entry cannot undercut it
   const restFloorRef = useRef(REST_FALLBACK);
@@ -111,6 +112,21 @@ export function TodayView({
   };
 
   const { session, inputs } = draft;
+  // The tier and the DATE both live in the draft rather than in view state,
+  // for the same reason the sets do: view state dies with the page. A session
+  // half-logged at tier 2 that comes back as tier 1 has silently changed what
+  // is on the bar.
+  const tier = /** @type {1 | 2 | 3} */ (draft.tier ?? 1);
+  const setTier = (/** @type {1 | 2 | 3} */ t) => onDraft({ ...draft, tier: t });
+  // P4, job 1 on the fix list: "a late entry is a first-class entry". Every
+  // session used to be stamped with today and there was no way to say
+  // otherwise, so a session trained on Tuesday and remembered on Thursday
+  // could not be recorded at all — and the log's job is to be complete, not
+  // to be live. logDate defaults to today and steps back a day at a tap.
+  const logDate = typeof draft.date === "string" ? draft.date : today;
+  const backdated = logDate !== today;
+  // one interpolation, one line, for the htm whitespace reason above
+  const whenSub = backdated ? "a late entry counts the same" : "logging live";
   // Today's session comes from the fixed rotation — nothing to pick.
   // draft.templateId is only set on an explicit override through the escape
   // hatch, and that pick wins over the schedule for this draft.
@@ -124,7 +140,7 @@ export function TodayView({
     /** @type {any} */ (workouts.templates),
     /** @type {any} */ (workouts.sessions),
   );
-  const doneToday = sessionsOn(/** @type {any} */ (workouts.sessions), today);
+  const doneToday = sessionsOn(/** @type {any} */ (workouts.sessions), logDate);
   const pickedTemplate = draft.templateId
     ? workouts.templates.find((t) => t.id === draft.templateId)
     : null;
@@ -154,7 +170,7 @@ export function TodayView({
       setTimeout(() => setInvalid(null), 1200);
       return;
     }
-    const base = session ?? { date: today, templateId: template?.id ?? null, exercises: [] };
+    const base = session ?? { date: logDate, templateId: template?.id ?? null, exercises: [] };
     onDraft({
       ...draft,
       session: setTopSet(/** @type {any} */ (base), name, { weight, reps }),
@@ -170,11 +186,23 @@ export function TodayView({
       setTimeout(() => setConfirmFinish(false), 4000);
       return;
     }
-    onSaveSession(session);
-    onDraft({ templateId: null, session: null, inputs: {} });
+    // stamp the date at the moment of filing, not at the moment the first set
+    // was logged: stepping the date control after logging must move the whole
+    // session, which is what a person back-dating one expects it to do
+    onSaveSession({ ...session, date: logDate });
+    // App clears the persisted draft; nothing to do here but reset the view
     setConfirmFinish(false);
     setShowPicker(false);
-    setTier(1);
+  };
+
+  /** Move the whole in-progress session to another date. */
+  const setLogDate = (/** @type {string} */ next) => {
+    if (!next || next > today) return; // no logging into the future
+    onDraft({
+      ...draft,
+      date: next,
+      session: session ? { ...session, date: next } : null,
+    });
   };
 
   return html`
@@ -235,21 +263,43 @@ export function TodayView({
       </div>
 
       ${
+        // The draft survives a killed page now (lib/draft.js), so a session
+        // logged and never filed comes back instead of vanishing. It has to
+        // ANNOUNCE itself: sets sitting in a draft are not in the record, do
+        // not feed progression, and do not advance the rotation. Worded as a
+        // held session rather than a missed one — P9 forbids the app rendering
+        // anyone as behind, and this is a recovery, not a failure.
+        session &&
+        session.exercises.length > 0 &&
+        backdated &&
+        html`<p class="alarm">
+          ${`Held: ${draftSetCount(draft)} ${draftSetCount(draft) === 1 ? "set" : "sets"} logged for ${relativeDayLabel(logDate, today)}, still unfiled. They are saved on this device but they are not in your record until you file the session.`}
+        </p>`
+      }
+      ${
         tokenBad &&
         html`<p class="alarm">
           Not syncing. The token needs fixing in Rig; sets still save on this device.
         </p>`
       }
       ${
-        // Cold start. A fresh install has no schedule because it has no TOKEN,
-        // not because the schedule is missing: the split has been sitting in
-        // the data repo the whole time. Telling anyone to go and edit a JSON
-        // file is both wrong and the kind of dead end that gets an app deleted
-        // on first open.
-        !hasSchedule &&
+        // THIS WARNING WAS UNREACHABLE FROM 2026-08-18 TO 2026-08-24 and the
+        // cost was a month of training that never left one phone.
+        //
+        // It used to be gated on `!hasSchedule && !hasToken`: a cold-start
+        // note for an install that had no split. Then the split was bundled
+        // into the app shell so first open would work offline — a good change
+        // — and `hasSchedule` became permanently true. The condition could
+        // never fire again, so the only remaining sign that nothing was being
+        // saved anywhere was a 7px lamp in the corner reading NO TOKEN.
+        //
+        // A person cannot act on a state the app will not name. It is now
+        // gated on the token alone, it says what is actually at risk, and it
+        // is an alarm rather than a note because an un-backed-up training log
+        // is a broken pipe, not a preference.
         !hasToken &&
-        html`<p class="note">
-          ${"Nothing here yet, because Anvil cannot reach your data. Add a GitHub token in Rig and your split appears."}
+        html`<p class="alarm">
+          ${"Nothing is leaving this phone. Sets save here and only here — no backup, no second device, and clearing the browser takes them with it. Add a GitHub token in Rig to start syncing."}
         </p>`
       }
       ${
@@ -263,7 +313,7 @@ export function TodayView({
         doneToday.length > 0 &&
         !session &&
         html`<p class="note">
-          ${`${doneToday.length === 1 ? "One session" : `${doneToday.length} sessions`} logged today. ${full ? `${full.name} is next whenever you train again.` : ""}`}
+          ${`${doneToday.length === 1 ? "One session" : `${doneToday.length} sessions`} already filed for ${relativeDayLabel(logDate, today)}. ${full ? `${full.name} is next whenever you train again.` : ""}`}
         </p>`
       }
       ${
@@ -294,6 +344,38 @@ export function TodayView({
             })}
           </div>
           <p class="note">${TIERS.find((t) => t.tier === tier)?.blurb}</p>
+
+          <h2 class="band">When<span class="band__sub">${whenSub}</span></h2>
+          <div class=${`datepad ${backdated ? "is-back" : ""}`}>
+            <button
+              class="knob"
+              type="button"
+              aria-label="File this session a day earlier"
+              onClick=${() => setLogDate(shiftIsoDate(logDate, -1))}
+            >
+              ‹
+            </button>
+            <input
+              class="datepad__well"
+              type="date"
+              max=${today}
+              value=${logDate}
+              aria-label="Date this session was trained"
+              onInput=${(/** @type {any} */ e) => setLogDate(e.currentTarget.value)}
+            />
+            <button
+              class="knob"
+              type="button"
+              aria-label="File this session a day later"
+              disabled=${logDate >= today}
+              onClick=${() => setLogDate(shiftIsoDate(logDate, 1))}
+            >
+              ›
+            </button>
+          </div>
+          <p class="note">
+            ${backdated ? `Filing for ${relativeDayLabel(logDate, today)}. It enters the record, the progression and the rotation exactly as a live one does.` : "Trained this on another day? Step the date back. A session you remember on Thursday is worth as much as one you logged on Tuesday."}
+          </p>
 
           <div class="act">
             <button class="ghost" onClick=${() => startRest()}>${`REST ${REST_FALLBACK}s`}</button>

@@ -1082,6 +1082,72 @@ button.bar .bar__meta::after {
   }
 }
 
+/* -------------------------------------------------------------- datepad --- */
+/* P4: "a late entry is a first-class entry". Until 2026-08-24 every session
+   was stamped with the current date and there was no control to say otherwise,
+   so a session trained on Tuesday and remembered on Thursday could not be
+   entered at all — and the log's job is to be complete, not to be live.
+
+   Two knobs and a native date field: one tap is yesterday, the field itself is
+   any day. Blue in every state, never amber. Back-dating is not a fault and
+   P9 forbids the app rendering a person as behind; a session filed three days
+   late is a session, full stop. */
+
+.datepad {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.datepad__well {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 8px;
+  text-align: center;
+  background: var(--plate-lo);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  appearance: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.datepad__well::-webkit-calendar-picker-indicator {
+  filter: invert(62%) sepia(38%) saturate(1600%) hue-rotate(196deg);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.datepad__well:focus {
+  outline: none;
+  border-color: var(--arc);
+  box-shadow: 0 0 0 3px var(--arc-film);
+}
+
+/* Filing for another day is a MODE, so it is stated by the field rather than
+   by a line of text that scrolls off. */
+.datepad.is-back .datepad__well {
+  border-color: var(--arc);
+  color: var(--arc-hi);
+  box-shadow: 0 0 0 1px var(--arc-lo);
+}
+
+.datepad .knob:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
 /* --------------------------------------------------------------- strike --- */
 /* The single most-pressed control in the application. P4 is the keystone
    promise — logging must cost less than skipping it — so this is a 74px circle
@@ -1948,6 +2014,107 @@ button.bar .bar__meta::after {
   }
 }
 
+/* ---------------------------------------------------------------- filed --- */
+/* A filed session used to be one line reading "lower-a · 2026-08-24 · 7 sets":
+   a template id and a count. It cannot answer "what did I actually lift on
+   Saturday", which is the only question this screen is opened to ask. The row
+   is now a disclosure: the template's real name and how long ago, and one tap
+   below it the lifts and the sets exactly as they were logged. */
+
+.filed {
+  position: relative;
+}
+
+.filed .bar {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The disclosure marker is the chevron `button.bar` ALREADY draws; adding a
+   second one here shipped two of them side by side in the first cut. It turns
+   instead of duplicating. */
+.filed button.bar .bar__meta::after {
+  display: inline-block;
+  transition: transform 0.22s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+.filed.is-open button.bar .bar__meta::after {
+  transform: rotate(90deg);
+  color: var(--arc-hi);
+}
+
+.filed.is-open .bar .bar__name {
+  color: var(--arc-hi);
+}
+
+.filed__body {
+  padding: 4px 15px 15px;
+  background: linear-gradient(180deg, rgba(47, 107, 255, 0.05) 0%, rgba(47, 107, 255, 0) 100%);
+  animation: unfold 0.24s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+  overflow: hidden;
+}
+
+.filed__meta {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 6px 0 8px;
+}
+
+.filed__lift {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-top: 1px solid var(--edge-cold);
+}
+
+.filed__liftname {
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+}
+
+.filed__sets {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--arc-hi);
+  white-space: nowrap;
+}
+
+.filed__note {
+  margin-top: 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    max-height: 900px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filed__body {
+    animation: none;
+  }
+
+  .filed .bar::after {
+    transition: none;
+  }
+}
+
 /* --------------------------------------------------------------- motion --- */
 /* Content arrives from below, staggered over the first few children. Cheap,
    and it is what tells you the screen changed on a tab press that otherwise
@@ -1987,6 +2154,163 @@ button.bar .bar__meta::after {
 @media (prefers-reduced-motion: reduce) {
   .deck > * {
     animation: none;
+  }
+}
+
+/* The screen itself arrives, not just its children. Each view mounts a fresh
+   .deck (the route swaps one component for another), so this plays once per
+   tab press and never on a re-render inside a screen. */
+.deck {
+  animation: arrive 0.26s ease-out both;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.988);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* THE STRIKE. A logged set is the one moment in this application worth
+   marking, and the mark is the arc sweeping across the lift that was just
+   filed — the same blue, moving, for about a third of a second. It fires from
+   a class change on an element that is already in the DOM, which is why it is
+   an animation on .is-logged rather than a transition on anything. */
+.lift.is-logged {
+  animation: struck 0.42s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+@keyframes struck {
+  0% {
+    box-shadow:
+      0 0 0 1px var(--arc),
+      0 0 0 0 var(--arc-glow);
+  }
+  40% {
+    box-shadow:
+      0 0 0 1px var(--arc-hi),
+      0 0 26px 4px var(--arc-glow);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+/* The LOG button dips under the thumb and the halo closes with it. A 74px
+   circle that does not move on press reads as unresponsive on a phone held at
+   arm's length between sets. */
+.strike {
+  transition:
+    transform 0.11s ease-out,
+    box-shadow 0.11s ease-out;
+}
+
+.strike:active {
+  transform: scale(0.93);
+  box-shadow:
+    0 0 0 1px var(--arc-hi),
+    0 0 10px var(--arc-glow),
+    inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* The rest dial is thrown, not faded: it appears the instant a set is filed
+   and it has to be findable in peripheral vision. */
+.restdial {
+  animation: throw-in 0.3s cubic-bezier(0.2, 1.25, 0.4, 1) both;
+}
+
+@keyframes throw-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Rows in a rack land in sequence rather than all at once. Capped at six so a
+   long record list does not spend a second and a half assembling itself. */
+.rack > *:nth-child(-n + 6) {
+  animation: rise 0.3s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+.rack > *:nth-child(2) {
+  animation-delay: 0.035s;
+}
+
+.rack > *:nth-child(3) {
+  animation-delay: 0.07s;
+}
+
+.rack > *:nth-child(4) {
+  animation-delay: 0.105s;
+}
+
+.rack > *:nth-child(5) {
+  animation-delay: 0.14s;
+}
+
+.rack > *:nth-child(6) {
+  animation-delay: 0.175s;
+}
+
+/* The tier buttons take the press before the state lands. */
+.tierbtn {
+  transition:
+    transform 0.13s ease-out,
+    box-shadow 0.2s ease;
+}
+
+.tierbtn:active {
+  transform: scale(0.96);
+}
+
+.tierbtn.is-on {
+  box-shadow: 0 0 18px var(--arc-glow);
+}
+
+/* An alarm slides down rather than appearing: a message that is simply THERE
+   on the next paint is a message the eye skips, and the two that use this
+   class say the record is not being saved. */
+.alarm {
+  animation: drop-in 0.32s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck,
+  .lift.is-logged,
+  .restdial,
+  .rack > *,
+  .alarm {
+    animation: none;
+  }
+
+  .strike,
+  .tierbtn {
+    transition: none;
+  }
+
+  .strike:active,
+  .tierbtn:active {
+    transform: none;
   }
 }
 
