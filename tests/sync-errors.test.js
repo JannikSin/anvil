@@ -75,3 +75,48 @@ test("every classified failure gives him something to do or tells him to wait", 
     assert.equal(typeof d.fixable, "boolean", `${status} does not say whether waiting helps`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// ONE UNREACHABLE REPO MUST NOT BLOCK THE OTHER.
+//
+// Added 2026-08-25. David minted a fine-grained token scoped to `anvil-data`,
+// which is the repo his SESSIONS live in, and still nothing synced at all. His
+// question was exactly the right one: "does the token need to be able to access
+// mise-data? I assume the anvil app only needs to access the anvil repo."
+//
+// Anvil writes to two repositories: its own, and mise-data for the shared daily
+// check-in row. The flush loop pushed oldest-first and `break`ed on any
+// non-conflict error. So a check-in saved in the morning queued
+// fitness/daily.json AHEAD of the day's session, 404'd against a repo the token
+// could not see, broke the pass, and workouts.json was never even attempted
+// despite anvil-data being perfectly reachable.
+//
+// Rig's own copy claimed a half-scoped token "syncs half the app". It synced
+// none of it.
+import { stopsTheWholePass } from "../app/lib/store.js";
+
+test("a scope or permission failure is per-FILE and never stops the queue", () => {
+  for (const status of [401, 403, 404, 422]) {
+    assert.equal(
+      stopsTheWholePass(at(status)),
+      false,
+      `HTTP ${status} stopped the whole pass. It is a property of one file, and the ` +
+        "files behind it may be in a repo the token can reach perfectly well.",
+    );
+  }
+});
+
+test("a genuine reachability failure DOES stop the pass, because nothing else will push", () => {
+  assert.equal(stopsTheWholePass(describeSyncError(new TypeError("Failed to fetch"))), true);
+  assert.equal(stopsTheWholePass(at(403, true)), true, "a rate limit blocks every file equally");
+});
+
+test("the two repos are genuinely both needed, so the copy cannot go back to 'half'", async () => {
+  // repoFor is the authority. If this ever routes everything to one repo the
+  // scope advice changes, and this test should be the thing that notices.
+  const { repoFor, SHARED_DAILY, MISE_TARGETS } = await import("../app/lib/github.js");
+  assert.equal(repoFor("workouts.json").repo, "anvil-data", "sessions live in anvil's own repo");
+  assert.equal(repoFor("activities.json").repo, "anvil-data");
+  assert.equal(repoFor(SHARED_DAILY).repo, "mise-data", "the daily check-in row is SHARED");
+  assert.equal(repoFor(MISE_TARGETS).repo, "mise-data", "and the targets are read from there");
+});

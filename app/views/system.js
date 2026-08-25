@@ -62,7 +62,7 @@ export function SystemView({ sync, repo, hasToken, onToken }) {
         // <b>repo</b> renders as "scoped toowner/repo" — and prettier rewraps
         // the line straight back into the bug. Verified in the browser, twice.
         html`<p class="note">
-          ${`Fine-grained PAT, 1-year expiry. It must be scoped to ${DATA_REPO.owner}/${DATA_REPO.repo} (contents: read and write) AND ${DATA_REPO.owner}/mise-data, because the daily check-in row (${SHARED_DAILY}) is shared with the food app and the calorie targets (${MISE_TARGETS}) are read from there. A token scoped to only one of the two syncs half the app and reports no error.`}
+          ${`Fine-grained PAT, 1-year expiry. It must be scoped to ${DATA_REPO.owner}/${DATA_REPO.repo} (contents: read and write) AND ${DATA_REPO.owner}/mise-data, because the daily check-in row (${SHARED_DAILY}) is shared with the food app and the calorie targets (${MISE_TARGETS}) are read from there. A token scoped to only ONE of the two does not sync half the app, it blocks the queue behind the first file it cannot write, so scope it to both.`}
         </p>`
       }
       <div class="field">
@@ -150,7 +150,7 @@ export function SystemView({ sync, repo, hasToken, onToken }) {
       ${
         (sync.pending ?? 0) > 0 &&
         html`<p class="note">
-          ${`${sync.pending} file${sync.pending === 1 ? "" : "s"} queued on this device. Nothing is lost: they push the moment the reason above is cleared.`}
+          ${`${sync.pending} file${sync.pending === 1 ? "" : "s"} still on this device${(sync.blocked ?? 0) > 0 ? `, ${sync.blocked} of them blocked by the reason above` : ""}. Nothing is lost: they push the moment it is cleared.`}
         </p>`
       }
 

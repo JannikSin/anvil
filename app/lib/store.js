@@ -18,14 +18,38 @@ import { pushFile, afterPushRecord, ConflictError } from "./sync.js";
 
 const io = { read: readFile, write: writeFile };
 
+/**
+ * Does this failure stop the whole pass, or only this one file?
+ *
+ * The rule, extracted so it can be tested and so it is stated once: a failure
+ * that only DAVID can clear is a property of that FILE, and the files behind it
+ * may be perfectly pushable. A failure of reachability is a property of the
+ * network, and nothing behind it will push either.
+ *
+ * This is a rule and not an implementation detail, because getting it wrong the
+ * other way meant a token scoped to one of his two data repos synced NOTHING
+ * rather than half. See the long note at the catch site.
+ *
+ * @param {{ fixable: boolean }} why from describeSyncError
+ * @returns {boolean} true = stop the pass
+ */
+export function stopsTheWholePass(why) {
+  return !why.fixable;
+}
+
 /** @type {Set<() => void>} */
 const listeners = new Set();
 
-/** @type {{ loading: boolean, pending: number, conflicts: number, lastSyncAt: string | null, flushing: boolean, lastError: string | null, needsYou: boolean }} */
+/** @type {{ loading: boolean, pending: number, conflicts: number, blocked: number, lastSyncAt: string | null, flushing: boolean, lastError: string | null, needsYou: boolean }} */
 const status = {
   loading: true,
   pending: 0,
   conflicts: 0,
+  // files that failed on something only David can clear (a scope, a permission,
+  // an expiry) rather than on reachability. Counted separately because they do
+  // NOT stop the rest of the queue, and because "3 queued" reads as patience
+  // while "3 blocked" reads as an instruction.
+  blocked: 0,
   lastSyncAt: null,
   flushing: false,
   // A5: why the last flush stopped, in words a user can act on. null = the
@@ -173,6 +197,11 @@ async function flush() {
   if (status.flushing || !navigator.onLine) return;
   status.flushing = true;
   status.conflicts = 0;
+  status.blocked = 0;
+  // cleared per pass: a reason that has been fixed must stop being displayed,
+  // and the first failure of THIS pass is the one worth showing
+  status.lastError = null;
+  status.needsYou = false;
   emit();
   try {
     const queued = (await dbGetAll())
@@ -190,12 +219,37 @@ async function flush() {
         // dirty; only base/sha advance (afterPushRecord decides)
         await dbUpdate(rec.path, (cur) => afterPushRecord(cur ?? rec, pushed, rec.rev));
         status.lastSyncAt = new Date().toISOString();
-        status.lastError = null;
-        status.needsYou = false;
       } catch (e) {
         if (e instanceof ConflictError) {
           status.conflicts++;
           continue; // stays dirty; next flush retries the merge
+        }
+        const why = describeSyncError(e);
+        // ONE UNREACHABLE REPO MUST NOT BLOCK THE OTHER, and until 2026-08-25
+        // it did. This loop used to `break` on any non-conflict error, which is
+        // right for a network failure (nothing else will push either) and
+        // catastrophic for a per-file one.
+        //
+        // Anvil writes to TWO repositories. A token scoped to anvil-data but
+        // not mise-data 404s on fitness/daily.json and nothing else. The queue
+        // is pushed oldest first, so a check-in saved in the morning sat ahead
+        // of the day's session, failed, broke the pass, and workouts.json was
+        // never attempted even though its repo was perfectly reachable.
+        //
+        // The result: David minted a token scoped to anvil-data, which is the
+        // repo his sessions live in, and STILL nothing synced. Rig's own copy
+        // told him a half-scoped token "syncs half the app", and that was false.
+        // It synced none of it.
+        //
+        // So: a fixable error is per-file, skip it and keep going. Only a
+        // genuine reachability failure stops the pass.
+        if (!stopsTheWholePass(why)) {
+          status.blocked++;
+          if (!status.lastError) {
+            status.lastError = why.text;
+            status.needsYou = true;
+          }
+          continue;
         }
         // Network or auth failure: stop, everything stays queued, and SAY WHY
         // in words that name the fix.
@@ -207,11 +261,8 @@ async function flush() {
         // so as not to confirm a private repo exists. The app therefore told
         // David to wait for a network that was never down, forever, while the
         // Rig screen said the opposite. See describeSyncError in github.js.
-        const why = describeSyncError(e);
         status.lastError = why.text;
-        // `fixable` means waiting will not help, so the heartbeat should stop
-        // pretending it might.
-        status.needsYou = why.fixable;
+        status.needsYou = false; // it is reachability; the heartbeat will retry
         break;
       }
     }
