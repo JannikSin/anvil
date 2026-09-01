@@ -1,387 +1,282 @@
 {
-  "_note": "The programme, bundled into the app shell so anvil is usable on first open with no token and no network. Structure and coaching cues only: this repo is public and never carries real logged data, loads, or personal health details. The live copy lives in the private data repo and wins whenever it loads.",
-  "schedule": {
-    "mon": "lower-a",
-    "tue": "push-a",
-    "wed": "pull-a",
-    "thu": "lower-b",
-    "fri": "push-b",
-    "sat": "pull-b",
-    "sun": null
-  },
-  "templates": [
+ "_note": "The programme, bundled into the app shell so anvil is usable on first open with no token and no network. Structure and coaching cues only: this repo is public and never carries real logged data, loads, or personal health details. The live copy lives in the private data repo and wins whenever it loads.",
+ "schedule": {
+  "mon": "push",
+  "tue": "pull",
+  "wed": "lower",
+  "thu": "push",
+  "fri": "pull",
+  "sat": "lower",
+  "sun": null
+ },
+ "templates": [
+  {
+   "id": "push",
+   "name": "Push",
+   "exercises": [
     {
-      "id": "lower-a",
-      "name": "Lower A (Squat focus)",
-      "exercises": [
-        {
-          "name": "Back Squat",
-          "targetSets": 4,
-          "targetReps": "5-8",
-          "increment": 10,
-          "rest": 180,
-          "note": "Primary. Leave 1-2 in reserve. Depth + control.",
-          "tier": 3
-        },
-        {
-          "name": "Leg Press",
-          "targetSets": 3,
-          "targetReps": "10-12",
-          "increment": 10,
-          "rest": 180,
-          "tier": 2
-        },
-        {
-          "name": "Seated Leg Curl",
-          "targetSets": 3,
-          "targetReps": "10-12",
-          "increment": 10,
-          "rest": 90,
-          "tier": 1
-        },
-        {
-          "name": "Standing Calf Raise",
-          "targetSets": 2,
-          "targetReps": "12-15",
-          "increment": 10,
-          "rest": 90,
-          "note": "Pause + full stretch at the bottom.",
-          "tier": 1
-        }
-      ]
+     "name": "Incline DB Press",
+     "targetSets": 4,
+     "targetReps": "6-10",
+     "increment": 5,
+     "rest": 15,
+     "tier": 3,
+     "note": "Main press. Straight into the lateral raises, rest after the pair."
     },
     {
-      "id": "pull-a",
-      "name": "Pull A (Back/Biceps, heavy)",
-      "exercises": [
-        {
-          "name": "Weighted Pull-up or Lat Pulldown",
-          "targetSets": 4,
-          "targetReps": "6-10",
-          "increment": 5,
-          "rest": 180,
-          "note": "Builds the muscle-up. Full dead-hang stretch, chest to bar.",
-          "tier": 3
-        },
-        {
-          "name": "Chest-Supported Row (or DB Row)",
-          "targetSets": 3,
-          "targetReps": "8-12",
-          "increment": 5,
-          "rest": 180,
-          "note": "Strict, pad stops cheating. Squeeze + pause.",
-          "tier": 2
-        },
-        {
-          "name": "Face Pull",
-          "targetSets": 2,
-          "targetReps": "15-20",
-          "increment": 5,
-          "rest": 90,
-          "note": "Shoulder health. Do not skip.",
-          "tier": 1
-        },
-        {
-          "name": "Incline DB Curl",
-          "targetSets": 3,
-          "targetReps": "8-12",
-          "increment": 5,
-          "rest": 90,
-          "note": "Arms behind torso = deep biceps stretch. Last set to failure.",
-          "tier": 1
-        }
-      ]
+     "name": "Lateral Raise",
+     "targetSets": 4,
+     "targetReps": "12-20",
+     "increment": 5,
+     "rest": 180,
+     "tier": 2,
+     "note": "Second half of the superset; work up in weight alongside the press. This rest is the pair's rest."
     },
     {
-      "id": "push-a",
-      "name": "Push A (Chest/Shoulders/Tri)",
-      "exercises": [
-        {
-          "name": "Incline DB Press",
-          "targetSets": 4,
-          "targetReps": "6-10",
-          "increment": 5,
-          "rest": 180,
-          "note": "Main press.",
-          "tier": 3
-        },
-        {
-          "name": "Flat Bench or Machine Chest Press",
-          "targetSets": 2,
-          "targetReps": "8-10",
-          "increment": 5,
-          "rest": 180,
-          "tier": 1
-        },
-        {
-          "name": "Overhead Press",
-          "targetSets": 3,
-          "targetReps": "6-10",
-          "increment": 5,
-          "rest": 180,
-          "tier": 2
-        },
-        {
-          "name": "Cable Lateral Raise",
-          "targetSets": 2,
-          "targetReps": "12-20",
-          "increment": 5,
-          "rest": 90,
-          "tier": 1
-        },
-        {
-          "name": "Overhead Triceps Extension",
-          "targetSets": 2,
-          "targetReps": "10-15",
-          "increment": 5,
-          "rest": 90,
-          "note": "Full stretch overhead.",
-          "tier": 1
-        }
-      ]
+     "name": "Flat Bench or Machine Chest Press",
+     "targetSets": 3,
+     "targetReps": "8-10",
+     "increment": 5,
+     "rest": 180,
+     "tier": 1
     },
     {
-      "id": "pull-b",
-      "name": "Pull B (Back width/Grip + skill)",
-      "exercises": [
-        {
-          "name": "Pull-up / Muscle-up Skill Work",
-          "targetSets": 1,
-          "targetReps": "10 min",
-          "increment": 5,
-          "rest": 120,
-          "note": "FRESH, first: explosive pull-ups, high pulls, straight-bar dips, slow negatives.",
-          "tier": 2
-        },
-        {
-          "name": "Lat Pulldown (wide) or Pull-up",
-          "targetSets": 4,
-          "targetReps": "8-12",
-          "increment": 5,
-          "rest": 180,
-          "tier": 3
-        },
-        {
-          "name": "Single-arm DB Row",
-          "targetSets": 3,
-          "targetReps": "10-12",
-          "increment": 5,
-          "rest": 180,
-          "note": "Big stretch. Last set near failure.",
-          "tier": 2
-        },
-        {
-          "name": "Rear Delt Fly",
-          "targetSets": 2,
-          "targetReps": "15",
-          "increment": 5,
-          "rest": 90,
-          "tier": 1
-        },
-        {
-          "name": "Dead Hang",
-          "targetSets": 2,
-          "targetReps": "max time",
-          "increment": 5,
-          "rest": 90,
-          "note": "Grip + shoulder decompression. Bar, open hand, never an edge.",
-          "tier": 1
-        }
-      ]
+     "name": "Overhead Press",
+     "targetSets": 3,
+     "targetReps": "6-10",
+     "increment": 5,
+     "rest": 180,
+     "tier": 2,
+     "note": "DB or bar, either counts."
     },
     {
-      "id": "lower-b",
-      "name": "Lower B (Hinge focus)",
-      "exercises": [
-        {
-          "name": "Romanian Deadlift",
-          "targetSets": 4,
-          "targetReps": "6-10",
-          "increment": 10,
-          "rest": 180,
-          "note": "Leave 1-2 in reserve. Hinge, feel the hamstring stretch.",
-          "tier": 3
-        },
-        {
-          "name": "Lateral Lunge",
-          "targetSets": 3,
-          "targetReps": "8 each",
-          "increment": 10,
-          "rest": 120,
-          "note": "THE frontal plane, taken from Ben's sheet. You play a lateral sport and this programme trained one plane.",
-          "tier": 1
-        },
-        {
-          "name": "Bulgarian Split Squat",
-          "targetSets": 3,
-          "targetReps": "8-10 each",
-          "increment": 10,
-          "rest": 180,
-          "note": "Single-leg strength; carries over to court and rock.",
-          "tier": 2
-        },
-        {
-          "name": "Seated Leg Curl",
-          "targetSets": 2,
-          "targetReps": "12-15",
-          "increment": 10,
-          "rest": 90,
-          "tier": 1
-        }
-      ]
+     "name": "Overhead Triceps Extension",
+     "targetSets": 2,
+     "targetReps": "10-15",
+     "increment": 5,
+     "rest": 90,
+     "tier": 1,
+     "note": "Full stretch overhead."
     },
     {
-      "id": "push-b",
-      "name": "Push B (Upper pump + weak points)",
-      "exercises": [
-        {
-          "name": "Machine/DB Chest Press",
-          "targetSets": 3,
-          "targetReps": "10-15",
-          "increment": 5,
-          "rest": 180,
-          "tier": 3
-        },
-        {
-          "name": "DB Half-Kneeling One-Arm Press",
-          "targetSets": 3,
-          "targetReps": "8 each",
-          "increment": 5,
-          "rest": 120,
-          "note": "From Ben's sheet. A shoulder-friendlier overhead position than a loaded bilateral press.",
-          "tier": 2
-        },
-        {
-          "name": "Lateral Raise",
-          "targetSets": 3,
-          "targetReps": "15-20",
-          "increment": 5,
-          "rest": 90,
-          "tier": 1
-        },
-        {
-          "name": "Triceps Pushdown",
-          "targetSets": 2,
-          "targetReps": "12-15",
-          "increment": 5,
-          "rest": 90,
-          "tier": 1
-        }
-      ]
+     "name": "Triceps Pushdown",
+     "targetSets": 2,
+     "targetReps": "12-15",
+     "increment": 5,
+     "rest": 90,
+     "tier": 1
     }
-  ],
-  "_tiers": "P3. Every session has three versions and all of them advance the rotation. An exercise's `tier` is the LOWEST tier it survives to: 3 = the one movement that still counts as having trained, 2 = the main work, 1 = accessory. Tier N shows every exercise with tier >= N. A tier 3 day is a completed day; the alternative to tier 3 is not tier 1, it is nothing.",
-  "conditioning": {
-    "tue": {
-      "id": "z2a",
-      "name": "Zone 2 run",
-      "after": "push-a",
-      "minutes": 28,
-      "fallbackMinutes": 15,
-      "work": "25 to 30 min conversational, 65 to 75 percent of max HR",
-      "fallback": "15 min, same easy pace",
-      "recovery": "None, it is one continuous easy effort.",
-      "when": "Later in the day, at least 6 hours after the lift.",
-      "why": "The bulk of the resting heart rate work. Expect 3 to 5 bpm by week 6 and 6 to 9 by week 12 to 16. Conversational means you could speak a full sentence.",
-      "outdoor": true
-    },
-    "fri": {
-      "id": "z2b",
-      "name": "Zone 2 run",
-      "after": "push-b",
-      "minutes": 30,
-      "fallbackMinutes": 15,
-      "work": "30 min conversational, 65 to 75 percent of max HR",
-      "fallback": "15 min, same easy pace",
-      "recovery": "None, it is one continuous easy effort.",
-      "when": "Later in the day, at least 6 hours after the lift.",
-      "why": "The second Zone 2 session. These two plus Saturday clear the 120 to 150 minute band.",
-      "outdoor": true
-    },
-    "sat": {
-      "id": "int",
-      "name": "Intervals, or tennis",
-      "after": "pull-b",
-      "minutes": 12,
-      "fallbackMinutes": 6,
-      "work": "6 x 1 min hard / 1 min easy. Tennis counts instead, and beats it.",
-      "fallback": "3 x 1 min hard / 1 min easy",
-      "recovery": "1 min easy jog between reps",
-      "when": "Later in the day. Skip it entirely if you played tennis.",
-      "why": "The one hard aerobic block in the week. Two days clear of Thursday lower and two days before Monday lower, which is the interference rule the schedule was reordered around.",
-      "outdoor": false
-    },
-    "watchRule": "Apple Watch Cardio Fitness updates ONLY from Outdoor Walk, Outdoor Run and Outdoor Hike. Treadmill, gym and indoor interval work never move the number no matter how hard it was. Both Zone 2 sessions are marked outdoor for exactly this reason: a whole training block reads as a flat line otherwise, which looks like a stalled programme when the opposite is true."
+   ]
   },
-  "_conditioningRest": "Rebuilt 2026-08-24 to the Training-Rebuild prescription: 120 to 150 minutes of aerobic work a week, of which 100 to 120 is true Zone 2 across 2 to 3 runs, plus ONE 10 to 12 minute interval block. The old Tuesday Norwegian 4x4 moved to Saturday and the Thursday 10-20-30 came out, because hard running belongs at least 24 hours from a lower-body lift and ideally 48, and Monday and Thursday are now the lower days. Every session here is LATER IN THE DAY, at least 6 hours after the lift, because the explosive-strength cost of concurrent training is concentrated when cardio and lifting share a session.",
-  "_scheduleNote": "Lower, push, pull, twice. Ratified 2026-08-24 from the owner's Training-Rebuild plan. The ordering is not cosmetic: it puts the two lower-body days on Monday and Thursday, three days apart, which is where the plyometric and sprint blocks belong, because explosive work is prescribed fresh on a lower day. The rotation still advances on COMPLETION, so this map sets the order and which days train, never a calendar.",
-  "_quality": "Pre-lift quality work, from the owner's Training-Rebuild plan, ratified 2026-08-24. It runs AFTER the warm-up and BEFORE the lifting, fresh, because explosive qualities are the first thing fatigue erases. It is NOT counted as working sets and never enters the double progression: this is rate of force development, not volume. Plyometric doses are NSCA coaching convention rather than meta-analytic, and are labelled as such.",
-  "quality": {
-    "mon": {
-      "id": "plyo",
-      "name": "Plyometrics",
-      "minutes": 8,
-      "work": "Pogo hops, low box jumps, broad jumps. 40 to 60 foot contacts total.",
-      "fallback": "Pogo hops and broad jumps only, 30 contacts.",
-      "cue": "Step DOWN off the box, never jump down. Quality over count, and stop the moment ground contact starts getting slow.",
-      "why": "Novice dose is 50 to 80 contacts, 1 to 2 sessions a week, 48 to 72 hours apart. Weeks 1 to 3 start at 40 to 60 and progress no more than 10 to 20 percent a week. NSCA coaching convention, not meta-analytic."
+  {
+   "id": "pull",
+   "name": "Pull",
+   "exercises": [
+    {
+     "name": "Weighted Pull-up or Lat Pulldown",
+     "targetSets": 4,
+     "targetReps": "6-10",
+     "increment": 5,
+     "rest": 180,
+     "tier": 3,
+     "note": "0 lb logs as bodyweight."
     },
-    "tue": {
-      "id": "rope",
-      "name": "Jump rope",
-      "minutes": 3,
-      "work": "3 minutes, easy, unbroken if you can.",
-      "fallback": "90 seconds.",
-      "cue": "Stiff ankles, quiet feet, minimal knee bend.",
-      "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+    {
+     "name": "Chest-Supported Row (or DB Row)",
+     "targetSets": 3,
+     "targetReps": "8-10",
+     "increment": 5,
+     "rest": 180,
+     "tier": 2
     },
-    "wed": {
-      "id": "rope",
-      "name": "Jump rope",
-      "minutes": 3,
-      "work": "3 minutes, easy, unbroken if you can.",
-      "fallback": "90 seconds.",
-      "cue": "Stiff ankles, quiet feet, minimal knee bend.",
-      "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+    {
+     "name": "Face Pull",
+     "targetSets": 2,
+     "targetReps": "12-20",
+     "increment": 5,
+     "rest": 90,
+     "tier": 1
     },
-    "thu": {
-      "id": "sprint",
-      "name": "Sprints and change of direction",
-      "minutes": 12,
-      "work": "6 to 8 x 25 m at 90 to 95 percent, walk back, 60 to 90 s. Then 5-10-5 shuttle x 6.",
-      "fallback": "4 x 25 m, no shuttle.",
-      "cue": "Short reps keep the fatigue cost near zero. If the times fall off, you are done.",
-      "why": "The purest fast-twitch stimulus and the cheapest in fatigue, as long as the reps stay short. Skip the shuttle on a tennis day, tennis already supplies plenty of change of direction."
+    {
+     "name": "Incline DB Curl",
+     "targetSets": 2,
+     "targetReps": "10-15",
+     "increment": 5,
+     "rest": 15,
+     "tier": 1,
+     "note": "Straight into the hammer curls, rest after the pair."
     },
-    "fri": {
-      "id": "medball",
-      "name": "Med ball",
-      "minutes": 6,
-      "work": "Rotational scoop throws 3 x 5 each side, overhead slams 3 x 5.",
-      "fallback": "Slams only, 2 x 5.",
-      "cue": "Throw it hard. Do not grind it, this is speed work.",
-      "why": "Low load, high speed, which is exactly why it suits a cranky shoulder. It is also the transverse plane that nothing else in the week trains."
-    },
-    "sat": {
-      "id": "rope",
-      "name": "Jump rope",
-      "minutes": 3,
-      "work": "3 minutes, easy, unbroken if you can.",
-      "fallback": "90 seconds.",
-      "cue": "Stiff ankles, quiet feet, minimal knee bend.",
-      "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+    {
+     "name": "Hammer Curl",
+     "targetSets": 2,
+     "targetReps": "10-15",
+     "increment": 5,
+     "rest": 90,
+     "tier": 1
     }
+   ]
   },
-  "restDay": {
-    "name": "Rest",
-    "job": "One easy 20 to 30 minute walk or jog, OR 20 minutes of mobility on ankle dorsiflexion and the shoulder. Pick one, or neither.",
-    "why": "No alarm. This day exists to pay the sleep debt: you get 6 to 7 hours against a 7.5 to 8 target while waking early six mornings, and restricted sleep measurably cuts myofibrillar protein synthesis. The tiny job is an adherence device, not training. An unscheduled day is where a six-day habit breaks, so day seven gets a named job precisely to protect the other six.",
-    "notRest": "Tennis and bouldering are not rest, and they belong on lifting days."
-  },
-  "commute": {
-    "push": "Jog to the gym, easy, capped at about 10 minutes.",
-    "pull": "Jog to the gym, easy, capped at about 10 minutes.",
-    "lower": "Walk or bike. Never jog in before squats or deadlifts.",
-    "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
+  {
+   "id": "lower",
+   "name": "Legs",
+   "exercises": [
+    {
+     "name": "Back Squat",
+     "targetSets": 3,
+     "targetReps": "5-8",
+     "increment": 10,
+     "rest": 180,
+     "tier": 3,
+     "note": "Leave 1-2 in reserve. Depth + control."
+    },
+    {
+     "name": "Romanian Deadlift",
+     "targetSets": 3,
+     "targetReps": "6-10",
+     "increment": 10,
+     "rest": 180,
+     "tier": 2
+    },
+    {
+     "name": "Leg Press",
+     "targetSets": 2,
+     "targetReps": "10-12",
+     "increment": 10,
+     "rest": 180,
+     "tier": 1
+    },
+    {
+     "name": "Seated Leg Curl",
+     "targetSets": 2,
+     "targetReps": "10-15",
+     "increment": 10,
+     "rest": 90,
+     "tier": 1
+    },
+    {
+     "name": "Standing Calf Raise",
+     "targetSets": 3,
+     "targetReps": "10-15",
+     "increment": 10,
+     "rest": 90,
+     "tier": 1,
+     "note": "Pause + full stretch at the bottom."
+    }
+   ]
   }
+ ],
+ "_tiers": "P3. Every session has three versions and all of them advance the rotation. An exercise's `tier` is the LOWEST tier it survives to: 3 = the one movement that still counts as having trained, 2 = the main work, 1 = accessory. Tier N shows every exercise with tier >= N. A tier 3 day is a completed day; the alternative to tier 3 is not tier 1, it is nothing.",
+ "conditioning": {
+  "tue": {
+   "id": "z2a",
+   "name": "Zone 2 run",
+   "after": "push-a",
+   "minutes": 28,
+   "fallbackMinutes": 15,
+   "work": "25 to 30 min conversational, 65 to 75 percent of max HR",
+   "fallback": "15 min, same easy pace",
+   "recovery": "None, it is one continuous easy effort.",
+   "when": "Later in the day, at least 6 hours after the lift.",
+   "why": "The bulk of the resting heart rate work. Expect 3 to 5 bpm by week 6 and 6 to 9 by week 12 to 16. Conversational means you could speak a full sentence.",
+   "outdoor": true
+  },
+  "fri": {
+   "id": "z2b",
+   "name": "Zone 2 run",
+   "after": "push-b",
+   "minutes": 30,
+   "fallbackMinutes": 15,
+   "work": "30 min conversational, 65 to 75 percent of max HR",
+   "fallback": "15 min, same easy pace",
+   "recovery": "None, it is one continuous easy effort.",
+   "when": "Later in the day, at least 6 hours after the lift.",
+   "why": "The second Zone 2 session. These two plus Saturday clear the 120 to 150 minute band.",
+   "outdoor": true
+  },
+  "sat": {
+   "id": "int",
+   "name": "Intervals, or tennis",
+   "after": "pull-b",
+   "minutes": 12,
+   "fallbackMinutes": 6,
+   "work": "6 x 1 min hard / 1 min easy. Tennis counts instead, and beats it.",
+   "fallback": "3 x 1 min hard / 1 min easy",
+   "recovery": "1 min easy jog between reps",
+   "when": "Later in the day. Skip it entirely if you played tennis.",
+   "why": "The one hard aerobic block in the week. Two days clear of Thursday lower and two days before Monday lower, which is the interference rule the schedule was reordered around.",
+   "outdoor": false
+  },
+  "watchRule": "Apple Watch Cardio Fitness updates ONLY from Outdoor Walk, Outdoor Run and Outdoor Hike. Treadmill, gym and indoor interval work never move the number no matter how hard it was. Both Zone 2 sessions are marked outdoor for exactly this reason: a whole training block reads as a flat line otherwise, which looks like a stalled programme when the opposite is true."
+ },
+ "_conditioningRest": "Rebuilt 2026-08-24 to the Training-Rebuild prescription: 120 to 150 minutes of aerobic work a week, of which 100 to 120 is true Zone 2 across 2 to 3 runs, plus ONE 10 to 12 minute interval block. The old Tuesday Norwegian 4x4 moved to Saturday and the Thursday 10-20-30 came out, because hard running belongs at least 24 hours from a lower-body lift and ideally 48, and Monday and Thursday are now the lower days. Every session here is LATER IN THE DAY, at least 6 hours after the lift, because the explosive-strength cost of concurrent training is concentrated when cardio and lifting share a session.",
+ "_scheduleNote": "Three-day rotation, completion-based, approved in advance 2026-09-01: the push day is the lifter's own dictated session (the old push A and B merged), pull and legs are built from what the logs show actually gets done. At about four sessions a week each day recurs every five days or so. Sunday rests.",
+ "_quality": "Pre-lift quality work, from the owner's Training-Rebuild plan, ratified 2026-08-24. It runs AFTER the warm-up and BEFORE the lifting, fresh, because explosive qualities are the first thing fatigue erases. It is NOT counted as working sets and never enters the double progression: this is rate of force development, not volume. Plyometric doses are NSCA coaching convention rather than meta-analytic, and are labelled as such.",
+ "quality": {
+  "mon": {
+   "id": "plyo",
+   "name": "Plyometrics",
+   "minutes": 8,
+   "work": "Pogo hops, low box jumps, broad jumps. 40 to 60 foot contacts total.",
+   "fallback": "Pogo hops and broad jumps only, 30 contacts.",
+   "cue": "Step DOWN off the box, never jump down. Quality over count, and stop the moment ground contact starts getting slow.",
+   "why": "Novice dose is 50 to 80 contacts, 1 to 2 sessions a week, 48 to 72 hours apart. Weeks 1 to 3 start at 40 to 60 and progress no more than 10 to 20 percent a week. NSCA coaching convention, not meta-analytic."
+  },
+  "tue": {
+   "id": "rope",
+   "name": "Jump rope",
+   "minutes": 3,
+   "work": "3 minutes, easy, unbroken if you can.",
+   "fallback": "90 seconds.",
+   "cue": "Stiff ankles, quiet feet, minimal knee bend.",
+   "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+  },
+  "wed": {
+   "id": "rope",
+   "name": "Jump rope",
+   "minutes": 3,
+   "work": "3 minutes, easy, unbroken if you can.",
+   "fallback": "90 seconds.",
+   "cue": "Stiff ankles, quiet feet, minimal knee bend.",
+   "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+  },
+  "thu": {
+   "id": "sprint",
+   "name": "Sprints and change of direction",
+   "minutes": 12,
+   "work": "6 to 8 x 25 m at 90 to 95 percent, walk back, 60 to 90 s. Then 5-10-5 shuttle x 6.",
+   "fallback": "4 x 25 m, no shuttle.",
+   "cue": "Short reps keep the fatigue cost near zero. If the times fall off, you are done.",
+   "why": "The purest fast-twitch stimulus and the cheapest in fatigue, as long as the reps stay short. Skip the shuttle on a tennis day, tennis already supplies plenty of change of direction."
+  },
+  "fri": {
+   "id": "medball",
+   "name": "Med ball",
+   "minutes": 6,
+   "work": "Rotational scoop throws 3 x 5 each side, overhead slams 3 x 5.",
+   "fallback": "Slams only, 2 x 5.",
+   "cue": "Throw it hard. Do not grind it, this is speed work.",
+   "why": "Low load, high speed, which is exactly why it suits a cranky shoulder. It is also the transverse plane that nothing else in the week trains."
+  },
+  "sat": {
+   "id": "rope",
+   "name": "Jump rope",
+   "minutes": 3,
+   "work": "3 minutes, easy, unbroken if you can.",
+   "fallback": "90 seconds.",
+   "cue": "Stiff ankles, quiet feet, minimal knee bend.",
+   "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
+  }
+ },
+ "restDay": {
+  "name": "Rest",
+  "job": "One easy 20 to 30 minute walk or jog, OR 20 minutes of mobility on ankle dorsiflexion and the shoulder. Pick one, or neither.",
+  "why": "No alarm. This day exists to pay the sleep debt: you get 6 to 7 hours against a 7.5 to 8 target while waking early six mornings, and restricted sleep measurably cuts myofibrillar protein synthesis. The tiny job is an adherence device, not training. An unscheduled day is where a six-day habit breaks, so day seven gets a named job precisely to protect the other six.",
+  "notRest": "Tennis and bouldering are not rest, and they belong on lifting days."
+ },
+ "commute": {
+  "push": "Jog to the gym, easy, capped at about 10 minutes.",
+  "pull": "Jog to the gym, easy, capped at about 10 minutes.",
+  "lower": "Walk or bike. Never jog in before squats or deadlifts.",
+  "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
+ }
 }
