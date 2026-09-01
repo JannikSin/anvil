@@ -216,22 +216,70 @@ export function seriesFor(sessions, exercise) {
 }
 
 /**
- * Set (or replace) the single top-set result for one exercise in an
- * in-progress session: the simplified logging flow logs once per lift,
- * not once per set. Pure.
+ * Append one set to an exercise in an in-progress session. Every set is a
+ * record: David trains straight sets working up in weight ("then I work my
+ * way up in weight", 2026-09-01), and the old replace-with-latest model
+ * (setTopSet) either silently overwrote the earlier sets or, when the new
+ * set matched the shown numbers, appeared to reject the entry outright.
+ * Pure.
  * @param {Session} session
  * @param {string} exercise
  * @param {SetEntry} set
  * @returns {Session}
  */
-export function setTopSet(session, exercise, set) {
+export function addSet(session, exercise, set) {
   const existing = session.exercises.find((e) => e.name === exercise);
   return {
     ...session,
     exercises: existing
-      ? session.exercises.map((e) => (e.name === exercise ? { ...e, sets: [set] } : e))
+      ? session.exercises.map((e) => (e.name === exercise ? { ...e, sets: [...e.sets, set] } : e))
       : [...session.exercises, { name: exercise, sets: [set] }],
   };
+}
+
+/**
+ * Remove the most recent set of one exercise; an exercise left with no sets
+ * leaves the session entirely. The fat-thumb escape hatch: a wrong LOG press
+ * used to be uncorrectable because the CHANGE IT button only rewrote keypad
+ * state the pad never re-read. Pure.
+ * @param {Session} session
+ * @param {string} exercise
+ * @returns {Session}
+ */
+export function undoSet(session, exercise) {
+  return {
+    ...session,
+    exercises: session.exercises
+      .map((e) => (e.name === exercise ? { ...e, sets: e.sets.slice(0, -1) } : e))
+      .filter((e) => e.sets.length > 0),
+  };
+}
+
+/**
+ * The one place pad numbers are resolved. The render and the LOG press MUST
+ * share this: until 2026-09-01 the pad displayed a seeded prefill while the
+ * LOG handler read only the typed keypad state, so accepting the shown
+ * numbers untouched — which is exactly a set identical to last time — filed
+ * nothing and flashed invalid. David reported it as "sometimes I put
+ * something in and it doesn't accept it".
+ *
+ * Precedence: what is typed right now, else the set just logged this session
+ * (so the next straight set opens on the working weight), else the
+ * progression proposal, else last session's top set, else the plan baseline,
+ * else blanks.
+ * @param {{ w: string, r: string } | undefined} typed
+ * @param {SetEntry[] | undefined} loggedSets sets already filed this session
+ * @param {{ weight: number, reps: number } | null} prog
+ * @param {SetEntry[] | null} lastSets
+ * @param {{ weight: number, reps: number } | undefined} baseline
+ * @returns {{ w: string, r: string }}
+ */
+export function padValues(typed, loggedSets, prog, lastSets, baseline) {
+  if (typed) return typed;
+  const loggedSet = loggedSets?.[loggedSets.length - 1];
+  if (loggedSet) return { w: String(loggedSet.weight), r: String(loggedSet.reps) };
+  const seed = prog ?? lastSets?.[lastSets.length - 1] ?? baseline ?? null;
+  return seed ? { w: String(seed.weight), r: String(seed.reps) } : { w: "", r: "" };
 }
 
 const WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];

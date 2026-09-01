@@ -9,10 +9,12 @@ import {
   formatSets,
   lastSetsFor,
   nextInRotation,
+  padValues,
   progressionFor,
   sessionAtTier,
   sessionsOn,
-  setTopSet,
+  addSet,
+  undoSet,
   tierMinutes,
   upcomingSessions,
 } from "../lib/workouts.js";
@@ -204,7 +206,26 @@ export function TodayView({
   const condTag = (/** @type {string} */ name) => (name.length <= 22 ? name : "cardio");
 
   const logSet = (/** @type {string} */ name) => {
-    const inp = inputs[name] ?? { w: "", r: "" };
+    const ex = template?.exercises?.find((/** @type {any} */ e) => e.name === name);
+    const already = session?.exercises.find((/** @type {any} */ e) => e.name === name);
+    // THE SAME resolution the pad renders with (padValues), not the raw keypad
+    // state: the pad shows a seeded prefill before anything is typed, and a
+    // press on LOG must file the numbers the person is looking at. Reading
+    // only `inputs` here is the 2026-09-01 "it doesn't accept it" bug.
+    const inp = padValues(
+      inputs[name],
+      already?.sets,
+      ex
+        ? progressionFor(
+            /** @type {any} */ (workouts.sessions),
+            name,
+            ex.targetReps,
+            Number(ex.increment) || 5,
+          )
+        : null,
+      lastSetsFor(/** @type {any} */ (workouts.sessions), name),
+      baselines[name],
+    );
     const weight = Number(inp.w);
     const reps = Number(inp.r);
     // a BLANK weight is invalid (0 must be an explicit bodyweight entry) —
@@ -223,10 +244,24 @@ export function TodayView({
     const base = session ?? { date: logDate, templateId: template?.id ?? null, exercises: [] };
     onDraft({
       ...draft,
-      session: setTopSet(/** @type {any} */ (base), name, { weight, reps }),
+      session: addSet(/** @type {any} */ (base), name, { weight, reps }),
     });
-    const ex = template?.exercises?.find((/** @type {any} */ e) => e.name === name);
     startRest(Number(ex?.rest) || REST_FALLBACK);
+  };
+
+  /** Take back the most recent set of one lift, reopening its numbers on the
+   *  pad so a mispress is a two-tap correction rather than a lost record. */
+  const undoLast = (/** @type {string} */ name) => {
+    if (!session) return;
+    const ex = session.exercises.find((/** @type {any} */ e) => e.name === name);
+    const removed = ex?.sets?.[ex.sets.length - 1];
+    onDraft({
+      ...draft,
+      session: undoSet(/** @type {any} */ (session), name),
+      inputs: removed
+        ? { ...inputs, [name]: { w: String(removed.weight), r: String(removed.reps) } }
+        : inputs,
+    });
   };
 
   const finishSession = () => {
@@ -541,18 +576,16 @@ export function TodayView({
                 inc,
               );
               const seed = prog ?? last?.[last.length - 1] ?? baseline ?? null;
-              // Precedence, and the order is the 2026-08-24 fix: what is typed
-              // right now, else what was just LOGGED this session (so CHANGE IT
-              // opens on the number being corrected rather than on a fresh
-              // proposal), else the progression, else nothing. `inputs` is
-              // scrubbed along with the session in lib/draft.js, so it can no
-              // longer carry a filed session's numbers into the next one.
-              const loggedSet = logged?.sets?.[logged.sets.length - 1];
-              const inp =
-                inputs[ex.name] ??
-                (loggedSet
-                  ? { w: String(loggedSet.weight), r: String(loggedSet.reps) }
-                  : { w: seed ? String(seed.weight) : "", r: seed ? String(seed.reps) : "" });
+              // Resolved by padValues, the SAME function the LOG press reads,
+              // so what the pad shows is always what a press files. `inputs`
+              // is scrubbed along with the session in lib/draft.js, so it can
+              // no longer carry a filed session's numbers into the next one.
+              const inp = padValues(inputs[ex.name], logged?.sets, prog, last, baselines[ex.name]);
+              // Done is the PRESCRIPTION met, not the first press: one logged
+              // set out of four used to strike the whole lift and lock its
+              // pad, which read as the app refusing further sets.
+              const target = Number(ex.targetSets) || 1;
+              const done = Boolean(logged && logged.sets.length >= target);
               const onTarget = seed && inp.w === String(seed.weight) && inp.r === String(seed.reps);
               // no history and no baseline means the pad is empty, and the line
               // beside the strike button has to say so rather than promising to
@@ -583,7 +616,7 @@ export function TodayView({
               `;
 
               return html`
-                <div class=${`lift ${logged ? "is-logged" : ""}`} key=${ex.name}>
+                <div class=${`lift ${done ? "is-logged" : ""}`} key=${ex.name}>
                   <div class="lift__head">
                     <span class="lift__name">${ex.name}</span>
                     <span class="lift__pres num">${`${ex.targetSets}×${ex.targetReps}`}</span>
@@ -591,7 +624,7 @@ export function TodayView({
                   <div class="lift__last num">
                     ${
                       logged
-                        ? `logged ${formatSets(logged.sets)}`
+                        ? `${logged.sets.length} of ${target} · ${formatSets(logged.sets)}`
                         : last
                           ? `last: ${formatSets(last)}`
                           : baseline
@@ -614,11 +647,13 @@ export function TodayView({
                   ${
                     logged &&
                     html`<div class="act">
-                      <button class="ghost" onClick=${() => set({})}>CHANGE IT</button>
+                      <button class="ghost" onClick=${() => undoLast(ex.name)}>UNDO LAST</button>
                     </div>`
                   }
                   ${
-                    !logged &&
+                    // The pad NEVER locks. A lift past its prescription keeps
+                    // accepting sets — an extra set is a record, not an error,
+                    // and the sit-down between sets is the logging window.
                     html`
                       <div class=${`setpad ${invalid === ex.name ? "is-bad" : ""}`}>
                         ${knob(`−${inc}`, "w", -inc, `${inc} pounds off ${ex.name}`)}

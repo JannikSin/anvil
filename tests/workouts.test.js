@@ -4,7 +4,9 @@ import {
   lastSetsFor,
   personalRecords,
   seriesFor,
-  setTopSet,
+  addSet,
+  undoSet,
+  padValues,
   formatSets,
   templateForDate,
 } from "../app/lib/workouts.js";
@@ -64,15 +66,73 @@ test("seriesFor returns date-sorted top weight per session for charting", () => 
   assert.deepEqual(seriesFor(SESSIONS, "Squat"), []);
 });
 
-test("setTopSet replaces rather than appends", () => {
+test("addSet appends: straight sets working up in weight all survive", () => {
   let s = { date: "2026-07-06", templateId: "legs", exercises: [] };
-  s = setTopSet(s, "Squat", { weight: 185, reps: 5 });
-  s = setTopSet(s, "Squat", { weight: 195, reps: 3 });
-  s = setTopSet(s, "Leg Press", { weight: 300, reps: 10 });
+  s = addSet(s, "Squat", { weight: 185, reps: 5 });
+  s = addSet(s, "Squat", { weight: 195, reps: 3 });
+  s = addSet(s, "Leg Press", { weight: 300, reps: 10 });
   assert.equal(s.exercises.length, 2);
-  assert.equal(s.exercises[0].sets.length, 1);
-  assert.deepEqual(s.exercises[0], { name: "Squat", sets: [{ weight: 195, reps: 3 }] });
+  assert.deepEqual(s.exercises[0], {
+    name: "Squat",
+    sets: [
+      { weight: 185, reps: 5 },
+      { weight: 195, reps: 3 },
+    ],
+  });
   assert.deepEqual(s.exercises[1], { name: "Leg Press", sets: [{ weight: 300, reps: 10 }] });
+});
+
+test("addSet accepts a set identical to the previous one (the 2026-09-01 report)", () => {
+  let s = { date: "2026-09-01", templateId: "push-a", exercises: [] };
+  s = addSet(s, "Incline DB Press", { weight: 70, reps: 8 });
+  s = addSet(s, "Incline DB Press", { weight: 70, reps: 8 });
+  assert.deepEqual(s.exercises[0].sets, [
+    { weight: 70, reps: 8 },
+    { weight: 70, reps: 8 },
+  ]);
+});
+
+test("undoSet removes the last set and drops an emptied exercise", () => {
+  let s = { date: "2026-07-06", templateId: "legs", exercises: [] };
+  s = addSet(s, "Squat", { weight: 185, reps: 5 });
+  s = addSet(s, "Squat", { weight: 195, reps: 3 });
+  s = addSet(s, "Leg Press", { weight: 300, reps: 10 });
+  s = undoSet(s, "Squat");
+  assert.deepEqual(s.exercises[0].sets, [{ weight: 185, reps: 5 }]);
+  s = undoSet(s, "Leg Press");
+  assert.deepEqual(
+    s.exercises.map((e) => e.name),
+    ["Squat"],
+  );
+});
+
+test("padValues: what the pad shows is what a press files", () => {
+  // typed numbers win
+  assert.deepEqual(
+    padValues({ w: "75", r: "8" }, undefined, { weight: 70, reps: 9 }, null, undefined),
+    { w: "75", r: "8" },
+  );
+  // nothing typed, nothing logged: the progression seed IS the value, so a
+  // bare LOG press files the shown numbers instead of flashing invalid
+  assert.deepEqual(padValues(undefined, undefined, { weight: 70, reps: 9 }, null, undefined), {
+    w: "70",
+    r: "9",
+  });
+  // mid-session: the set just logged wins over the progression
+  assert.deepEqual(
+    padValues(undefined, [{ weight: 65, reps: 10 }], { weight: 70, reps: 9 }, null, undefined),
+    { w: "65", r: "10" },
+  );
+  // fresh lift, no progression: last session, then baseline, then blanks
+  assert.deepEqual(padValues(undefined, undefined, null, [{ weight: 155, reps: 5 }], undefined), {
+    w: "155",
+    r: "5",
+  });
+  assert.deepEqual(padValues(undefined, undefined, null, null, { weight: 160, reps: 10 }), {
+    w: "160",
+    r: "10",
+  });
+  assert.deepEqual(padValues(undefined, undefined, null, null, undefined), { w: "", r: "" });
 });
 
 const SCHEDULE = {
