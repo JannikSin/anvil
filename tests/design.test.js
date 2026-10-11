@@ -21,7 +21,6 @@ const VIEW_DIR = new URL("../app/views/", import.meta.url);
 const VIEWS = readdirSync(VIEW_DIR)
   .filter((f) => f.endsWith(".js"))
   .map((f) => [f, readFileSync(new URL(f, VIEW_DIR), "utf8")]);
-const TODAY = readFileSync(new URL("../app/views/today.js", import.meta.url), "utf8");
 
 /** Every colour the sheet mentions, as [r, g, b] with a source label. */
 function colours(css) {
@@ -108,18 +107,8 @@ test("the chamfered surfaces layer edge-under-fill, never the reverse", () => {
   );
 });
 
-test("the session screen offers all three tiers as one control (P3's UI half)", () => {
-  // The promise says choosing a tier is "a single control on the session
-  // screen". The data model has had three tiers since 2026-08-19 and the screen
-  // had no way to pick one, so the promise was half built and read as done.
-  assert.match(TODAY, /sessionAtTier/, "the session must be resolvable at a tier");
-  assert.match(TODAY, /tierMinutes/, "each tier must be priced in minutes, not named by number");
-  assert.match(TODAY, /class="tierpad"/, "the three tiers must be one control, not a menu");
-  // the type annotation on the table also reads "tier: 1 | 2 | 3", so match the
-  // table rows themselves rather than every occurrence of the word
-  const tiers = [...TODAY.matchAll(/\{\s*tier:\s*([123]),\s*name:/g)].map((m) => m[1]);
-  assert.deepEqual(tiers, ["1", "2", "3"], "all three tiers must be offered, in order");
-});
+// The tier-control test was removed 2026-10-11: Block 1 cut the tiers for
+// one session as written with lifts marked "first cut" (P3, promises.test.js).
 
 test("no tier is styled or worded as a lesser day", () => {
   // P3: a tier 3 day is a completed day, and the app is never allowed to render

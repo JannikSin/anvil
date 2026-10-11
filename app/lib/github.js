@@ -68,7 +68,7 @@ export function describeSyncError(e) {
     switch (e.status) {
       case 401:
         return {
-          text: "GitHub rejected the token itself: it is expired, revoked or mistyped. Paste a new one in Rig.",
+          text: "GitHub rejected the token itself: it is expired, revoked or mistyped. Paste a new one in Setup (bottom right).",
           fixable: true,
         };
       case 403:
@@ -89,7 +89,7 @@ export function describeSyncError(e) {
   }
   const msg = e instanceof Error ? e.message : String(e);
   if (/no token set/.test(msg))
-    return { text: "No token saved on this device. Add one in Rig.", fixable: true };
+    return { text: "No token saved on this device. Add one in Setup (bottom right).", fixable: true };
   return { text: "Can't reach GitHub right now. Retrying on its own.", fixable: false };
 }
 

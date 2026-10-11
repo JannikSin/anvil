@@ -969,6 +969,52 @@ button.bar .bar__meta::after {
   color: var(--dim);
 }
 
+/* Block 1 (2026-10-11): the prescription line under the lift name. How heavy,
+   how close to failure, how long to rest, in one mono row. */
+.lift__rx {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  color: var(--arc-hi);
+}
+
+.lift__tags {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ion);
+  white-space: pre-wrap;
+}
+
+/* the feasibility note, week one of Block 1: what he thinks of each lift */
+.lift__memo {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 10px;
+  background: var(--plate-lo);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.lift__memo:focus {
+  outline: none;
+  border-color: var(--arc);
+  box-shadow: 0 0 0 3px var(--arc-film);
+}
+
+.lift__memo::placeholder {
+  color: var(--faint);
+}
+
 /* ---------------------------------------------------------------- setpad -- */
 /* The entry cluster. Two number wells with a round knob either side, and the
    strike button under them. Every knob is 44px so a thumb finds it without
@@ -2172,8 +2218,12 @@ button.bar .bar__meta::after {
 /* The screen itself arrives, not just its children. Each view mounts a fresh
    .deck (the route swaps one component for another), so this plays once per
    tab press and never on a re-render inside a screen. */
+/* fill BACKWARDS, not both: a held end-state transform, even an identity
+   one, makes .deck the containing block for position: fixed, and the rest
+   dial (a fixed child) then drew at the bottom of the whole page instead of
+   over the thumb. Found 2026-10-11 testing Block 1. */
 .deck {
-  animation: arrive 0.26s ease-out both;
+  animation: arrive 0.26s ease-out backwards;
 }
 
 @keyframes arrive {

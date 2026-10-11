@@ -15,11 +15,9 @@ const sw = readFileSync(new URL("../sw.js", import.meta.url), "utf8");
 const main = readFileSync(new URL("../app/main.js", import.meta.url), "utf8");
 
 test("the bundled programme is the real split, not a stub", () => {
-  // Three days since 2026-09-01: the programme is the lifter's own dictated
-  // sessions (the old A/B pairs merged), rotated by completion at his real
-  // ~4 sessions a week. Six templates at 4 days a week meant each muscle
-  // recurred every ~10 days, which killed the plan's own 2x/week premise.
-  assert.equal(program.templates.length, 3);
+  // Six days since 2026-10-11 (Block 1, Crystal Life/Training-Recipe): push,
+  // pull and legs twice, as A/B days, so each muscle is hit twice a week.
+  assert.equal(program.templates.length, 6);
   assert.ok(program.schedule, "no weekly schedule");
   // The guard is a STUB detector, not a volume prescription, so it checks
   // that every session is a real session rather than pinning a total that a
@@ -38,9 +36,9 @@ test("the bundled programme is the real split, not a stub", () => {
   );
   for (const [i, n] of sets.entries()) {
     assert.ok(
-      n >= 10 && n <= 18,
-      `${program.templates[i].id} has ${n} working sets, outside the 13 to 18 band the ` +
-        "three-day rotation carries (10 to 18 allowed, so a deliberate tweak is not a build break)",
+      n >= 10 && n <= 20,
+      `${program.templates[i].id} has ${n} working sets, outside the 15 to 19 band Block 1 carries ` +
+        "(10 to 20 allowed, so a deliberate tweak is not a build break)",
     );
   }
   for (const t of program.templates) {

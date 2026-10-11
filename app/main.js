@@ -21,6 +21,7 @@ import { localIsoDate } from "./lib/dates.js";
 import { clearDraft, readDraft, writeDraft } from "./lib/draft.js";
 import { upsertDay } from "./lib/daily.js";
 import { addActivity } from "./lib/activities.js";
+import { adoptProgram } from "./lib/workouts.js";
 import { TodayView } from "./views/today.js";
 import { CoreView } from "./views/core.js";
 import { ProgressView } from "./views/progress.js";
@@ -29,14 +30,22 @@ import { SystemView } from "./views/system.js";
 import { CheckinModal } from "./views/checkin-modal.js";
 import { Glyph, Sigil } from "./views/glyphs.js";
 
+// The bundled programme, fetched once. Both loaders wait on it: the cold-start
+// one renders it, and the repo one compares programVersion against it so a new
+// block reaches a phone whose data repo still holds the old split.
+const BUNDLE = fetch(new URL("./data/program.json", import.meta.url))
+  .then((r) => (r.ok ? r.json() : null))
+  .catch(() => null);
+
 // Five screens on a circular rail. The names are the app's own nouns: what is
 // on the bar today, the floor work, the record, the watch, the machine.
+// Cut to two on 2026-10-11: David opened Floor, Record and Watch and could not
+// say what they were for, and "it only needs one page". The routes still
+// resolve (#/core, #/progress, #/vitals) for anyone with a link; they are just
+// not on the dock. Setup stays because the token lives there.
 const TABS = [
-  { hash: "#/today", view: "today", glyph: "today", label: "Bar" },
-  { hash: "#/core", view: "core", glyph: "floor", label: "Floor" },
-  { hash: "#/progress", view: "progress", glyph: "progress", label: "Record" },
-  { hash: "#/vitals", view: "vitals", glyph: "vitals", label: "Watch" },
-  { hash: "#/system", view: "system", glyph: "system", label: "Rig" },
+  { hash: "#/today", view: "today", glyph: "today", label: "Gym" },
+  { hash: "#/system", view: "system", glyph: "system", label: "Setup" },
 ];
 
 /** @param {string | null} at */
@@ -84,7 +93,7 @@ function App() {
   // ---- data ---------------------------------------------------------------
 
   const [workouts, setWorkouts] = useState(
-    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, quality?: Record<string, any>, commute?: Record<string, any>, restDay?: Record<string, any>, bundled?: boolean, baselines?: Record<string, any> }} */ ({
+    /** @type {{ templates: Record<string, any>[], sessions: Record<string, any>[], schedule?: Record<string, string | null>, conditioning?: Record<string, any>, quality?: Record<string, any>, commute?: Record<string, any>, restDay?: Record<string, any>, bundled?: boolean, baselines?: Record<string, any>, programVersion?: string }} */ ({
       templates: [],
       sessions: [],
     }),
@@ -108,9 +117,7 @@ function App() {
   // service worker, and the repo copy overrides it the moment it loads.
   useEffect(() => {
     let alive = true;
-    fetch(new URL("./data/program.json", import.meta.url))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((prog) => {
+    BUNDLE.then((prog) => {
         if (!alive || !prog) return;
         setWorkouts((cur) =>
           // never clobber the real thing, and never drop logged sessions.
@@ -134,13 +141,13 @@ function App() {
                 quality: prog.quality,
                 commute: prog.commute,
                 restDay: prog.restDay,
+                programVersion: prog.programVersion,
                 bundled: true,
               }
             : cur,
         );
         setLoaded(true);
-      })
-      .catch(() => {});
+      });
     return () => {
       alive = false;
     };
@@ -149,16 +156,18 @@ function App() {
   useEffect(() => {
     let alive = true;
     const load = () => {
-      read("workouts.json").then((w) => {
+      Promise.all([BUNDLE, read("workouts.json")]).then(([prog, w]) => {
         if (!alive) return;
         // workouts.json owns schedule, templates, sessions and baselines. It
         // has never carried conditioning, quality, commute or restDay, so a
         // naive setWorkouts(w) deletes the bundled blocks the moment the first
         // sync lands, and the feature would work only until the token started
         // working. Each one falls back to the bundled copy.
-        if (w)
+        if (w) {
+          const merged = adoptProgram(/** @type {any} */ (w), prog);
+          if (merged !== w) void write("workouts.json", /** @type {any} */ (merged));
           setWorkouts((cur) => {
-            const repo = /** @type {any} */ (w);
+            const repo = /** @type {any} */ (merged);
             return {
               ...cur,
               ...repo,
@@ -168,6 +177,7 @@ function App() {
               restDay: repo.restDay ?? cur.restDay,
             };
           });
+        }
         setLoaded(true);
       });
       read(SHARED_DAILY).then((d) => {
@@ -261,6 +271,7 @@ function App() {
       tier: /** @type {1} */ (1),
       session: null,
       inputs: {},
+      notes: {},
     };
     setDraft(fresh);
     clearDraft();

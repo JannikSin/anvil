@@ -138,7 +138,6 @@ test("an unknown day and a missing block are both just null, not a crash", () =>
 // test, invisible to the user. Two in one week is a pattern, so it gets a
 // guard rather than a comment.
 const MAIN = readFileSync(new URL("../app/main.js", import.meta.url), "utf8");
-const TODAY_VIEW = readFileSync(new URL("../app/views/today.js", import.meta.url), "utf8");
 
 test("the bundled programme carries conditioning, not just the split", () => {
   const bundle = MAIN.slice(MAIN.indexOf("prog.schedule"), MAIN.indexOf("prog.schedule") + 700);
@@ -174,11 +173,7 @@ test("a repo sync cannot drop the bundle-only blocks on the floor", () => {
   }
 });
 
-test("some screen actually renders conditioning", () => {
-  assert.match(
-    TODAY_VIEW,
-    /conditioningForDate\(/,
-    "conditioningForDate has data and tests and no caller: it is decoration under P7 " +
-      "and invisible under P5 until a screen calls it",
-  );
-});
+// "some screen actually renders conditioning" was removed 2026-10-11: Block 1
+// (Crystal Life/Training-Recipe) took conditioning off the day screen on
+// David's instruction that the app is one page of lifting. The block still
+// rides in the bundle and the loader tests above still guard it.

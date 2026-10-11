@@ -1,166 +1,518 @@
 {
- "_note": "The programme, bundled into the app shell so anvil is usable on first open with no token and no network. Structure and coaching cues only: this repo is public and never carries real logged data, loads, or personal health details. The live copy lives in the private data repo and wins whenever it loads.",
+ "_note": "The programme, bundled into the app shell so anvil is usable on first open with no token and no network. Structure and coaching cues only: this repo is public and never carries real logged data, loads, or personal health details. The live copy lives in the private data repo and keeps every logged session and baseline. Block 1 (Crystal Life/Training-Recipe), committed 2026-10-11. programVersion decides which split wins: when it differs from the private data repo's, the app adopts this one and writes it back.",
  "schedule": {
-  "mon": "push",
-  "tue": "pull",
-  "wed": "lower",
-  "thu": "push",
-  "fri": "pull",
-  "sat": "lower",
+  "mon": "push-a",
+  "tue": "pull-a",
+  "wed": "legs-a",
+  "thu": "push-b",
+  "fri": "pull-b",
+  "sat": "legs-b",
   "sun": null
  },
  "templates": [
   {
-   "id": "push",
-   "name": "Push",
+   "id": "push-a",
+   "name": "Push A",
+   "focus": "chest",
+   "minutes": 50,
    "exercises": [
     {
      "name": "Incline DB Press",
-     "targetSets": 4,
+     "targetSets": 3,
      "targetReps": "6-10",
+     "load": "heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 150,
      "increment": 5,
-     "rest": 15,
-     "tier": 3,
-     "note": "Main press. Straight into the lateral raises, rest after the pair."
+     "tier": 1,
+     "cue": "Bench at 30 degrees, shoulder blades pinned, lower to chest level for the stretch, press up and slightly in.",
+     "main": true
+    },
+    {
+     "name": "Machine Chest Press",
+     "targetSets": 3,
+     "targetReps": "8-12",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 120,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Handles at mid-chest, full stretch at the back, shoulders stay back at the top."
+    },
+    {
+     "name": "Cable Fly or Pec Deck",
+     "targetSets": 2,
+     "targetReps": "10-15",
+     "load": "light",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 90,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Arms softly bent and locked there, open wide until the chest stretches, hug back in.",
+     "cut": true
     },
     {
      "name": "Lateral Raise",
-     "targetSets": 4,
+     "targetSets": 3,
      "targetReps": "12-20",
+     "load": "light",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 0,
      "increment": 5,
-     "rest": 180,
-     "tier": 2,
-     "note": "Second half of the superset; work up in weight alongside the press. This rest is the pair's rest."
-    },
-    {
-     "name": "Flat Bench or Machine Chest Press",
-     "targetSets": 3,
-     "targetReps": "8-10",
-     "increment": 5,
-     "rest": 180,
-     "tier": 1
-    },
-    {
-     "name": "Overhead Press",
-     "targetSets": 3,
-     "targetReps": "6-10",
-     "increment": 5,
-     "rest": 180,
-     "tier": 2,
-     "note": "DB or bar, either counts."
+     "tier": 1,
+     "cue": "Stand tall or lean 10-15 degrees, arms 30 degrees in front, lead with the elbows to shoulder height, no shrug.",
+     "superset": "Overhead Triceps Extension"
     },
     {
      "name": "Overhead Triceps Extension",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 75,
      "increment": 5,
-     "rest": 90,
      "tier": 1,
-     "note": "Full stretch overhead."
+     "cue": "Elbows up and in, lower deep behind the head for the stretch, extend fully.",
+     "superset": "Lateral Raise"
     },
     {
-     "name": "Triceps Pushdown",
+     "name": "Pallof Press",
      "targetSets": 2,
-     "targetReps": "12-15",
+     "targetReps": "10 each side",
+     "load": "moderate",
+     "effort": "controlled, 2 s hold",
+     "rest": 60,
      "increment": 5,
-     "rest": 90,
-     "tier": 1
+     "tier": 1,
+     "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you."
     }
    ]
   },
   {
-   "id": "pull",
-   "name": "Pull",
+   "id": "pull-a",
+   "name": "Pull A",
+   "focus": "back thickness",
+   "minutes": 50,
    "exercises": [
     {
-     "name": "Weighted Pull-up or Lat Pulldown",
-     "targetSets": 4,
+     "name": "Cable Row",
+     "targetSets": 3,
      "targetReps": "6-10",
+     "load": "heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 150,
      "increment": 5,
-     "rest": 180,
-     "tier": 3,
-     "note": "0 lb logs as bodyweight."
+     "tier": 1,
+     "cue": "Chest up, let the weight pull the shoulders forward for the stretch, row to the lower ribs, torso still.",
+     "main": true
     },
     {
-     "name": "Chest-Supported Row (or DB Row)",
+     "name": "Weighted Pull-up or Lat Pulldown",
      "targetSets": 3,
-     "targetReps": "8-10",
+     "targetReps": "6-8",
+     "load": "heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 150,
      "increment": 5,
-     "rest": 180,
-     "tier": 2
+     "tier": 1,
+     "cue": "Dead hang at the bottom every rep, chest to the bar. Bodyweight logs as 0."
+    },
+    {
+     "name": "Chest-Supported High Row",
+     "targetSets": 3,
+     "targetReps": "8-12",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 120,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Hammer Strength Iso-Lateral High Row: chest on the pad, let the shoulders rise for the stretch, pull down and back."
     },
     {
      "name": "Face Pull",
      "targetSets": 2,
      "targetReps": "12-20",
+     "load": "light",
+     "effort": "last set to failure",
+     "rest": 0,
      "increment": 5,
-     "rest": 90,
-     "tier": 1
+     "tier": 1,
+     "cue": "Rope at forehead height, pull to the eyes, hands finish beside the ears, thumbs back.",
+     "superset": "Cable External Rotation"
     },
     {
-     "name": "Incline DB Curl",
+     "name": "Cable External Rotation",
      "targetSets": 2,
-     "targetReps": "10-15",
+     "targetReps": "12-15 each arm",
+     "load": "light",
+     "effort": "smooth, no swinging",
+     "rest": 60,
      "increment": 5,
-     "rest": 15,
      "tier": 1,
-     "note": "Straight into the hammer curls, rest after the pair."
+     "cue": "Elbow pinned to the side (towel under the arm), rotate the forearm outward, slow back.",
+     "superset": "Face Pull"
     },
     {
      "name": "Hammer Curl",
      "targetSets": 2,
      "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 0,
      "increment": 5,
-     "rest": 90,
-     "tier": 1
+     "tier": 1,
+     "cue": "Neutral grip, elbows still, all the way down each rep.",
+     "superset": "Hanging Leg Raise",
+     "cut": true
+    },
+    {
+     "name": "Hanging Leg Raise",
+     "targetSets": 3,
+     "targetReps": "8-12",
+     "load": "bodyweight",
+     "effort": "last set to failure",
+     "rest": 75,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
+     "superset": "Hammer Curl"
     }
    ]
   },
   {
-   "id": "lower",
-   "name": "Legs",
+   "id": "legs-a",
+   "name": "Legs A",
+   "focus": "squat and quads",
+   "minutes": 50,
    "exercises": [
     {
      "name": "Back Squat",
      "targetSets": 3,
      "targetReps": "5-8",
-     "increment": 10,
+     "load": "heavy",
+     "effort": "stop 2 reps short, never to failure",
      "rest": 180,
-     "tier": 3,
-     "note": "Leave 1-2 in reserve. Depth + control."
+     "increment": 10,
+     "tier": 1,
+     "cue": "High bar, brace first, sit down between the heels as deep as you stay tight, drive up fast.",
+     "main": true
+    },
+    {
+     "name": "Bulgarian Split Squat",
+     "targetSets": 3,
+     "targetReps": "8-10 each leg",
+     "load": "moderate-heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 90,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Back foot on the bench, front knee roughly over the toes, drop straight down."
+    },
+    {
+     "name": "Single-Leg Extension",
+     "targetSets": 2,
+     "targetReps": "12-15 each leg",
+     "load": "moderate",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 0,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Knee lined up with the pivot, pause 1 second at the top, control down. One leg at a time.",
+     "superset": "Seated Leg Curl"
+    },
+    {
+     "name": "Seated Leg Curl",
+     "targetSets": 3,
+     "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 75,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Lean the torso forward: more hamstring stretch, more growth.",
+     "superset": "Single-Leg Extension"
+    },
+    {
+     "name": "Leg Press",
+     "targetSets": 2,
+     "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "stop 1 rep short",
+     "rest": 120,
+     "increment": 10,
+     "tier": 1,
+     "cue": "Feet mid-platform, shoulder width, lower until the hips just start to curl off the pad.",
+     "cut": true
+    },
+    {
+     "name": "Cable Woodchop",
+     "targetSets": 2,
+     "targetReps": "10 each side",
+     "load": "moderate",
+     "effort": "controlled",
+     "rest": 60,
+     "increment": 5,
+     "tier": 1,
+     "cue": "High to low across the body, turn through hips and upper back together, arms long."
+    }
+   ]
+  },
+  {
+   "id": "push-b",
+   "name": "Push B",
+   "focus": "shoulders",
+   "minutes": 50,
+   "exercises": [
+    {
+     "name": "Overhead Press",
+     "targetSets": 3,
+     "targetReps": "6-10",
+     "load": "heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 150,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Seated DB: bench upright or one notch back, start at ear height, press up and slightly in, no big arch.",
+     "main": true
+    },
+    {
+     "name": "Flat Bench Press",
+     "targetSets": 3,
+     "targetReps": "6-10",
+     "load": "heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 150,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Shoulder blades pinned, touch the lower chest, press back toward the face. Bar or DBs."
+    },
+    {
+     "name": "Lateral Raise",
+     "targetSets": 4,
+     "targetReps": "12-20",
+     "load": "light",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 0,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Stand tall or lean 10-15 degrees, arms 30 degrees in front, lead with the elbows to shoulder height, no shrug.",
+     "superset": "Triceps Pushdown"
+    },
+    {
+     "name": "Triceps Pushdown",
+     "targetSets": 3,
+     "targetReps": "12-15",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 75,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Elbows pinned at the sides, full lockout, hands rise to the chest on the way up.",
+     "superset": "Lateral Raise"
+    },
+    {
+     "name": "Cable Fly or Pec Deck",
+     "targetSets": 2,
+     "targetReps": "12-15",
+     "load": "light",
+     "effort": "last set to failure",
+     "rest": 90,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Low to high or flat. Lighter second chest hit; stretch wide, hug in.",
+     "cut": true
+    },
+    {
+     "name": "Pallof Press",
+     "targetSets": 2,
+     "targetReps": "10 each side",
+     "load": "moderate",
+     "effort": "controlled, 2 s hold",
+     "rest": 60,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you."
+    }
+   ]
+  },
+  {
+   "id": "pull-b",
+   "name": "Pull B",
+   "focus": "lats and biceps",
+   "minutes": 50,
+   "exercises": [
+    {
+     "name": "Weighted Pull-up or Lat Pulldown",
+     "targetSets": 4,
+     "targetReps": "5-8",
+     "load": "heavy",
+     "effort": "stop 1-2 reps short",
+     "rest": 150,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Full dead hang, chest to the bar. Muscle-up groundwork. Bodyweight logs as 0.",
+     "main": true
+    },
+    {
+     "name": "Lat Pulldown",
+     "targetSets": 3,
+     "targetReps": "10-12",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 120,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Wide or single-arm cable. Lean back slightly, elbows to the back pockets, bar all the way up for the stretch."
+    },
+    {
+     "name": "Cable Row",
+     "targetSets": 2,
+     "targetReps": "10-12",
+     "load": "moderate",
+     "effort": "stop 1 rep short",
+     "rest": 120,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Lighter than Pull A. Strict, big stretch forward, pause at the ribs.",
+     "cut": true
+    },
+    {
+     "name": "Incline DB Curl",
+     "targetSets": 3,
+     "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 0,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Bench at 45-60 degrees, arms hang behind the body, curl without the elbows swinging forward.",
+     "superset": "Hanging Leg Raise"
+    },
+    {
+     "name": "Hanging Leg Raise",
+     "targetSets": 3,
+     "targetReps": "8-12",
+     "load": "bodyweight",
+     "effort": "last set to failure",
+     "rest": 75,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
+     "superset": "Incline DB Curl"
+    },
+    {
+     "name": "Face Pull",
+     "targetSets": 2,
+     "targetReps": "12-20",
+     "load": "light",
+     "effort": "last set to failure",
+     "rest": 0,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Rope at forehead height, pull to the eyes, hands finish beside the ears, thumbs back.",
+     "superset": "Cable External Rotation"
+    },
+    {
+     "name": "Cable External Rotation",
+     "targetSets": 2,
+     "targetReps": "12-15 each arm",
+     "load": "light",
+     "effort": "smooth, no swinging",
+     "rest": 60,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Elbow pinned to the side (towel under the arm), rotate the forearm outward, slow back.",
+     "superset": "Face Pull"
+    }
+   ]
+  },
+  {
+   "id": "legs-b",
+   "name": "Legs B",
+   "focus": "hinge, hamstrings, glutes",
+   "minutes": 50,
+   "exercises": [
+    {
+     "name": "Back Squat",
+     "targetSets": 3,
+     "targetReps": "8-10",
+     "load": "moderate",
+     "effort": "stop 2 reps short, about 10-15% under Legs A",
+     "rest": 180,
+     "increment": 10,
+     "tier": 1,
+     "cue": "Same lift as Legs A, lighter and more reps."
     },
     {
      "name": "Romanian Deadlift",
      "targetSets": 3,
      "targetReps": "6-10",
-     "increment": 10,
+     "load": "heavy",
+     "effort": "stop 2 reps short",
      "rest": 180,
-     "tier": 2
+     "increment": 10,
+     "tier": 1,
+     "cue": "Soft knees, hips back, bar slides down the thighs to a hard hamstring stretch, back flat, drive the hips forward.",
+     "main": true
+    },
+    {
+     "name": "Seated Leg Curl",
+     "targetSets": 3,
+     "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 0,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Lean the torso forward. Hamstring day: three sets.",
+     "superset": "Single-Leg Extension"
+    },
+    {
+     "name": "Single-Leg Extension",
+     "targetSets": 2,
+     "targetReps": "12-15 each leg",
+     "load": "moderate",
+     "effort": "last set to failure, then half reps at the stretch",
+     "rest": 75,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Knee lined up with the pivot, pause 1 second at the top, control down. One leg at a time.",
+     "superset": "Seated Leg Curl"
     },
     {
      "name": "Leg Press",
      "targetSets": 2,
-     "targetReps": "10-12",
+     "targetReps": "12-15",
+     "load": "moderate",
+     "effort": "stop 1 rep short",
+     "rest": 120,
      "increment": 10,
-     "rest": 180,
-     "tier": 1
+     "tier": 1,
+     "cue": "Feet high and wide: shifts it to glutes and hamstrings.",
+     "cut": true
     },
     {
-     "name": "Seated Leg Curl",
+     "name": "Cable Crunch",
      "targetSets": 2,
-     "targetReps": "10-15",
-     "increment": 10,
-     "rest": 90,
-     "tier": 1
+     "targetReps": "10-12",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 60,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Kneel, rope beside the head, curl the ribs toward the hips (round the spine), not a hip hinge."
     },
     {
      "name": "Standing Calf Raise",
-     "targetSets": 3,
+     "targetSets": 2,
      "targetReps": "10-15",
-     "increment": 10,
-     "rest": 90,
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 60,
+     "increment": 5,
      "tier": 1,
-     "note": "Pause + full stretch at the bottom."
+     "cue": "Optional. Pause 2 seconds at the bottom stretch.",
+     "cut": true
     }
    ]
   }
@@ -209,7 +561,7 @@
   "watchRule": "Apple Watch Cardio Fitness updates ONLY from Outdoor Walk, Outdoor Run and Outdoor Hike. Treadmill, gym and indoor interval work never move the number no matter how hard it was. Both Zone 2 sessions are marked outdoor for exactly this reason: a whole training block reads as a flat line otherwise, which looks like a stalled programme when the opposite is true."
  },
  "_conditioningRest": "Rebuilt 2026-08-24 to the Training-Rebuild prescription: 120 to 150 minutes of aerobic work a week, of which 100 to 120 is true Zone 2 across 2 to 3 runs, plus ONE 10 to 12 minute interval block. The old Tuesday Norwegian 4x4 moved to Saturday and the Thursday 10-20-30 came out, because hard running belongs at least 24 hours from a lower-body lift and ideally 48, and Monday and Thursday are now the lower days. Every session here is LATER IN THE DAY, at least 6 hours after the lift, because the explosive-strength cost of concurrent training is concentrated when cardio and lifting share a session.",
- "_scheduleNote": "Three-day rotation, completion-based, approved in advance 2026-09-01: the push day is the lifter's own dictated session (the old push A and B merged), pull and legs are built from what the logs show actually gets done. At about four sessions a week each day recurs every five days or so. Sunday rests.",
+ "_scheduleNote": "Six-day A/B push/pull/legs, completion-based: the weekday keys only fix the ORDER of the queue. Block 1 runs 2026-10-11 to 2026-12-05, deload 2026-12-07 to 2026-12-13. Log the top set only.",
  "_quality": "Pre-lift quality work, from the owner's Training-Rebuild plan, ratified 2026-08-24. It runs AFTER the warm-up and BEFORE the lifting, fresh, because explosive qualities are the first thing fatigue erases. It is NOT counted as working sets and never enters the double progression: this is rate of force development, not volume. Plyometric doses are NSCA coaching convention rather than meta-analytic, and are labelled as such.",
  "quality": {
   "mon": {
@@ -278,5 +630,6 @@
   "pull": "Jog to the gym, easy, capped at about 10 minutes.",
   "lower": "Walk or bike. Never jog in before squats or deadlifts.",
   "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
- }
+ },
+ "programVersion": "block1-2026-10-11"
 }

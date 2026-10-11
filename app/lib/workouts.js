@@ -160,8 +160,10 @@ export function tierMinutes(template, tier = 1) {
  * @returns {SetEntry[] | null}
  */
 export function lastSetsFor(sessions, exercise) {
+  // a note-only entry (sets: []) is a feasibility remark, not a lift, and must
+  // not hide the last time the lift was actually done
   const withLift = sessions
-    .filter((s) => s.exercises.some((e) => e.name === exercise))
+    .filter((s) => s.exercises.some((e) => e.name === exercise && e.sets?.length))
     .sort((a, b) => b.date.localeCompare(a.date));
   const latest = withLift[0];
   if (!latest) return null;
@@ -597,4 +599,30 @@ export function commuteFor(commute, templateId) {
   const id = String(templateId);
   const kind = id.startsWith("lower") ? "lower" : id.startsWith("push") ? "push" : "pull";
   return typeof commute[kind] === "string" ? commute[kind] : null;
+}
+
+/**
+ * Bring a data-repo workouts.json onto the bundled programme when the bundle
+ * is a newer block. The repo copy used to win outright, so a programme change
+ * shipped in the app never reached a phone whose repo still held the old
+ * split. programVersion is the switch: when it differs, the bundle's schedule
+ * and templates replace the repo's, and everything that is a record stays
+ * exactly as it was (sessions, baselines, any other key).
+ *
+ * Returns the SAME object when nothing changes, so the caller can tell whether
+ * a write-back is needed by identity.
+ *
+ * @param {Record<string, any>} repo
+ * @param {Record<string, any> | null} bundle
+ * @returns {Record<string, any>}
+ */
+export function adoptProgram(repo, bundle) {
+  if (!repo || !bundle || !bundle.programVersion) return repo;
+  if (repo.programVersion === bundle.programVersion) return repo;
+  return {
+    ...repo,
+    programVersion: bundle.programVersion,
+    schedule: bundle.schedule,
+    templates: bundle.templates,
+  };
 }

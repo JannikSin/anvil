@@ -30,7 +30,8 @@ const KEY = "anvil.draft";
  *   templateId: string | null,
  *   tier: 1 | 2 | 3,
  *   session: Record<string, any> | null,
- *   inputs: Record<string, { w: string, r: string }>
+ *   inputs: Record<string, { w: string, r: string }>,
+ *   notes?: Record<string, string>
  * }} Draft
  */
 
@@ -40,7 +41,7 @@ const KEY = "anvil.draft";
  * @returns {Draft}
  */
 export function emptyDraft(date) {
-  return { date, templateId: null, tier: 1, session: null, inputs: {} };
+  return { date, templateId: null, tier: 1, session: null, inputs: {}, notes: {} };
 }
 
 /**
@@ -116,6 +117,10 @@ export function normalizeDraft(raw, fallbackDate) {
     tier,
     session,
     inputs: session && d.inputs && typeof d.inputs === "object" ? d.inputs : {},
+    // Notes are NOT scrubbed with the session, unlike inputs: a note typed
+    // before the first set is a record in the making ("machine taken, did
+    // DBs"), not a stale keypad value, and it is filed with the session.
+    notes: d.notes && typeof d.notes === "object" && !Array.isArray(d.notes) ? d.notes : {},
   };
 }
 

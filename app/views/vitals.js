@@ -127,7 +127,7 @@ export function VitalsView({ vitals, loading, hasToken, today }) {
           ${
             hasToken
               ? "no watch data yet — connect the export automation that posts to vitals.json"
-              : "connect a token in Rig"
+              : "connect a token in Setup"
           }
         </div>`
       }

@@ -5,7 +5,6 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 import {
   nextInRotation,
   progressionFor,
-  sessionAtTier,
   sessionsOn,
   tierMinutes,
 } from "../app/lib/workouts.js";
@@ -123,73 +122,38 @@ const PROMISES = [
   },
   {
     id: "P3",
-    name: "P3 every session has three tiers and all of them advance the rotation",
+    name: "P3 every session marks what to cut and a partial session still advances the rotation",
     fn: () => {
+      // Block 1 (2026-10-11) replaced the three tiers with one session as
+      // written, plus lifts marked "first cut" for a day that runs long. The
+      // promise is unchanged: there is always a version of today you can do,
+      // and doing part of it is doing it.
       for (const t of program.templates) {
-        const one = sessionAtTier(t, 1);
-        const two = sessionAtTier(t, 2);
-        const three = sessionAtTier(t, 3);
-
-        // all three exist and are genuinely different sizes
-        assert.ok(one && two && three, `${t.id} is missing a tier`);
-        assert.equal(
-          one.exercises.length,
-          t.exercises.length,
-          `${t.id} tier 1 is not the full session`,
-        );
-        assert.ok(two.exercises.length < one.exercises.length, `${t.id} tier 2 cuts nothing`);
-        assert.equal(three.exercises.length, 1, `${t.id} tier 3 must be exactly one movement`);
-
-        // nesting: the smaller tier is always a subset of the larger one, so
-        // dropping a tier never introduces a lift the person has not warmed up for
-        const names = (s) => s.exercises.map((e) => e.name);
-        for (const n of names(three))
-          assert.ok(names(two).includes(n), `${t.id} tier 3 lift absent from tier 2`);
-        for (const n of names(two))
-          assert.ok(names(one).includes(n), `${t.id} tier 2 lift absent from tier 1`);
-
-        // the tier 3 movement is the one that matters, not whatever sorted first
-        assert.ok(
-          t.exercises.find((e) => e.name === names(three)[0]).tier === 3,
-          `${t.id} tier 3 picked an exercise not marked tier 3`,
-        );
-
-        // and it is honestly shorter, which is the only reason anyone picks it
-        assert.ok(
-          tierMinutes(t, 3) < tierMinutes(t, 2) && tierMinutes(t, 2) < tierMinutes(t, 1),
-          `${t.id} tiers do not actually save time (${tierMinutes(t, 1)}/${tierMinutes(t, 2)}/${tierMinutes(t, 3)} min)`,
-        );
+        const cuts = t.exercises.filter((e) => e.cut);
+        const mains = t.exercises.filter((e) => e.main);
+        assert.ok(cuts.length >= 1, `${t.id} marks nothing to cut when the day runs long`);
+        assert.ok(cuts.length < t.exercises.length - 1, `${t.id} marks almost everything as a cut`);
+        assert.equal(mains.length, 1, `${t.id} needs exactly one main lift to overload`);
+        assert.ok(!mains[0].cut, `${t.id} marks its main lift as a cut`);
       }
 
-      // A tier 3 completion advances the rotation exactly as a tier 1 does. This is
-      // the half of the promise that is easy to get wrong: nextInRotation must key
-      // off the session having HAPPENED, never off how much of it happened.
-      const done = [{ date: "2026-08-19", templateId: "lower-a", exercises: [] }];
-      const full = nextInRotation(program.schedule, program.templates, done);
+      // A session of just the main lift advances the queue exactly as a full
+      // one does: nextInRotation keys off the session having HAPPENED, never
+      // off how much of it happened.
+      const first = program.templates[0];
+      const main = first.exercises.find((e) => e.main);
+      const full = nextInRotation(program.schedule, program.templates, [
+        { date: "2026-10-11", templateId: first.id, exercises: [] },
+      ]);
       const reduced = nextInRotation(program.schedule, program.templates, [
         {
-          ...done[0],
-          tier: 3,
-          exercises: [{ name: "Back Squat", sets: [{ weight: 225, reps: 5 }] }],
+          date: "2026-10-11",
+          templateId: first.id,
+          exercises: [{ name: main.name, sets: [{ weight: 70, reps: 8 }] }],
         },
       ]);
-      assert.equal(
-        reduced?.id,
-        full?.id,
-        "a tier 3 day did not advance the rotation like a tier 1 day",
-      );
-
-      // a template with no tier data must not collapse to an empty session
-      const untiered = {
-        id: "x",
-        name: "X",
-        exercises: [{ name: "A", targetSets: 3, targetReps: "5" }],
-      };
-      assert.equal(
-        sessionAtTier(untiered, 3).exercises.length,
-        1,
-        "untiered template offered an empty fallback",
-      );
+      assert.ok(full && full.id !== first.id, "filing a session did not move the queue");
+      assert.equal(reduced?.id, full?.id, "a partial day did not advance the queue like a full one");
     },
   },
   {
