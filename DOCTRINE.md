@@ -1,180 +1,100 @@
 # Anvil: the doctrine
 
-> [!warning] **This is a v1 doctrine, and the standard moved on 2026-08-29.**
-> Everything below is true and came out of this app's own history, so none of it is wasted. But the
-> six-article shape was invented rather than researched, and the research (Amazon tenets, Nygard's
-> Architecture Decision Records, design-doc non-goals) says these are **three documents, not one**.
-> **What changes:** the prohibitions become *invariants* with a test named against each, the
-> "settled" list becomes numbered decision records that can be marked *superseded* instead of
-> silently going stale, the failure table becomes an incidents file, and the doctrine itself is
-> capped at one page. **Awaiting David's review and go.** Standard: Crystal `System/App-Doctrine.md`.
+One page, by amendment only. What Anvil is for, what it deliberately is not, how a tie is
+broken, and what must never happen. The promises live in Crystal `Lanes/Anvil-Core-Purpose`
+(the goals document, machine-checked by `tests/promises.test.js`). Settled choices live in
+`docs/decisions/`, one file each with a status. What has gone wrong lives in
+`docs/incidents.md`. How to work here is `CLAUDE.md`. Shape: Crystal `System/App-Doctrine`
+(v2). Rewritten from the v1 six-article form on 2026-10-12; v1 is in git history (05c697b).
 
-**What this file is.** The governing principles of this app: what it is for, what
-it will never do, which decisions are already settled, and how to tell a good
-change from a bad one. `CLAUDE.md` says how to work here. Crystal
-`Lanes/Anvil-Core-Purpose.md` says what Anvil promises, in eleven numbered
-promises the test suite enforces. **This says what is true regardless of the
-code**, and it outranks `CLAUDE.md` where they disagree. It does not outrank the
-Core Purpose.
+## The job
 
-Written 2026-08-28 (session **trinity**) under the standard David set that day.
-Shape: Crystal `System/App-Doctrine.md`.
+**Anvil is your trainer and your daily routine on one page: it issues a complete,
+evidence-backed plan for your goal, reminds you until each item is done and recorded, and
+makes recording cost less than skipping.** A feature must be able to lose to this sentence.
 
----
+## Non-goals
 
-## Article 0. The job
+- **Nutrition.** No calories, macros, recipes or meals; Mise owns what is eaten.
+- **A medical record.** Heart rate and sleep are training inputs. A symptom goes to a
+  clinician, and the app is never what decides it does not need to.
+- **A programme library.** It runs one evidence-backed programme per person, not a catalogue
+  to browse.
+- **A social app.** No feeds, sharing, friend graph or leaderboards.
+- **Scorekeeping.** No streaks, percentages, completion rates or red days (Core Purpose P9).
 
-**Anvil is the lifting half of Mise, on its own two feet: it makes logging a
-session cost less than skipping it.**
+~~**No notifications.**~~ Struck 2026-10-12 on David's yes (decision 0004); its reason
+survives as the reminder invariants below.
 
-Split out 2026-08-18. Eleven promises in four acts, each with a done test, and
-**P4 is the keystone: logging costs less than skipping it.** P4 wins every tie.
+## Tenets, in order, unless you know better ones
 
-**Therefore every change answers two questions, not one.** The first is which
-promise number it serves. The second is specific to this app: **does it add an
-action to logging?** If it does, it needs a promise number *and* an argument,
-because the whole app is a bet that friction is the only thing standing between
-him and a logged session.
+Adopted 2026-10-12 on David's approval (decision 0005). The order breaks ties.
 
----
+1. **The plan covers the goal and the whole body.** Every week trains every major muscle
+   group at a productive volume, plus one conditioning session and mobility; a plan with a
+   gap is not issued. This costs skipping the work you enjoy less.
+2. **Evidence before novelty.** Every exercise, cue and number traces to published research
+   through a short list of vetted sources, and a study outranks a personality. This costs
+   speed of change and popular trends.
+3. **Technique before time.** Sessions are compressed with supersets and compound lifts,
+   never at the cost of form. This costs the shortest possible session and heavier loads.
+4. **Attendance before perfection.** A short session counts, a missed day is never shown as
+   failure, and the next session is always achievable. This costs the ambitious plan on
+   screen.
+5. **Recording costs less than skipping, and the app persists until it is done.** Reminders
+   repeat until the item is recorded. This costs quiet.
+6. **One page per day.** Weight, sleep, the routine, supplements and the day's session live
+   on one screen. This costs every other screen.
+7. **Coach, not counter.** Each step states what to do, the load, why, and the one cue that
+   matters. This costs the simplicity of a bare log.
 
-## Article 1. The behaviour it is built around
+## Invariants
 
-**Zero sessions were ever logged in the first version, and the one workout he did
-log was destroyed** by a `useState` that iOS discarded when the PWA backgrounded.
-No error, no trace, a whole morning of lifting gone, and the warning that would
-have said so was gated permanently off.
+Absolute, testable, each with its cause and the thing that enforces it.
 
-That single incident sets three of this app's hardest rules (Article 2.1, 2.2 and
-Article 3's draft rule). **The user of this app is someone who will lose a
-session to a backgrounded tab and never come back**, and every design decision
-assumes it.
-
-The second measured fact is the same one that governs Mise: **he logs
-retroactively or not at all.** A late entry is a first-class entry, which is why
-a session's date is data rather than the clock.
-
----
-
-## Article 2. What Anvil will never do
-
-1. **Nothing logged may live only in memory.** The in-progress session writes to
-   `localStorage` through `lib/draft.js` on every change, keystrokes included.
-   **localStorage rather than IndexedDB on purpose:** it is synchronous, so the
-   write lands before the page can be killed, whereas an IDB transaction opened
-   in a page's last moments is exactly the write that does not commit. Any new
-   kind of in-progress state goes through the same door.
-2. **Never stamp a write with `new Date()`.** The date lives in the draft and the
-   session screen carries a control for it. P4 says a late entry is first class;
-   a clock stamp silently makes it a lie.
-3. **Never write a calorie number.** Nutrition is Mise's job. Two apps writing
-   one number is how the 210-against-190 protein conflict happened.
-4. **Never render a person as behind.** A lower tier, a skipped day and a short
-   session all use the same blue as a full one. This is a colour rule as much as
-   a copy rule, and `tests/design.test.js` enforces the colour half.
-5. **Never let Anvil resemble Mise.** Rebuilt from zero 2026-08-22 on David's
-   instruction: it must not be traceable to the app it came from. If you are
-   typing `.food`, `.checkrow`, `.slots`, `.tile` or `.hint`, you are copying
-   from the other app.
-6. **Never use green.** One accent (`--arc` #2f6bff), cyan for live, amber for
-   caution, red for a broken pipe. The test parses every colour in the sheet and
-   rejects any whose green channel leads both others.
-7. **Never rewrite the whole shared daily row.** `upsertDay` is a shallow field
-   patch in both repos. Anything that rewrites the row drops the other app's data
-   on every write.
-
----
-
-## Article 3. Settled. Do not re-litigate
-
-- **Two data repos, routed by path.** `workouts.json`, `vitals.json`,
-  `activities.json` to `anvil-data` read and write; `fitness/daily.json` to
-  `mise-data` read and write, shared with Mise; `fitness/targets.json` to
-  `mise-data` **read only, enforced in `writeFile`**. The PAT must be scoped to
-  both repos or half the app silently does nothing.
-- **Origin hygiene.** localStorage keys are `anvil.*`, `DB_NAME` is `"anvil"`,
-  the cache is `anvil-shell-vN` scoped `./`, and `activate` deletes only caches
-  starting with `anvil-shell-`. `tests/origin.test.js` guards all of it. A key
-  named `mise.pat` here makes Anvil read Mise's token and write to Mise's repo.
-- **Sessions carry an id.** It is the merge key. Without it two same-day sessions
-  or two devices collapse into one.
-- **The plate, the ring, the vocabulary.** Every surface is a rectangle with
-  top-left and bottom-right chamfered via `--plate-cut`, never a rounded card.
-  Anything measured or timed is an arc eating a circle and goes through
-  `views/ring.js`. The noun list is fixed: `deck, crest, band, plate, rack, bar,
-  lift, setpad, knob, strike, tierpad, timer, gauge, dock, sheet, note, void,
-  alarm`.
-- **The clip-path layering order.** `clip-path` establishes a stacking context,
-  so a `z-index: -1` pseudo inside a clipped element is clamped and paints above
-  its own background. **The element carries the edge colour, the `::before`
-  carries the fill at `inset: 1px`.** The intuitive way floods every surface with
-  the edge colour, which is what the first cut of the rebuild did.
-- **htm eats whitespace runs containing a newline where they touch a tag.** A
-  word and its neighbouring inline tag sit on the same line, and prettier will
-  rewrap a long line straight back into the bug. For sentences with values,
-  interpolate one whole string.
-- **Promise status lines change in the same commit as the code.** This test
-  exists because Mise's equivalent document promised a protein ceiling that was
-  never implemented and nobody noticed.
-
----
-
-## Article 4. How to tell a good change from a bad one
-
-1. **Which promise number, and does it add an action to logging?** If it adds an
-   action, it needs an argument that beats P4. Most do not.
-2. **Can the phone be killed mid-set without losing anything?** Article 2.1.
-3. **Does it still work when he logs it two days late?** Article 2.2.
-4. **Would a Mise session recognise the design?** If yes, it is off-doctrine.
-5. **Three gates green, then press the thing.** `npx eslint .`,
-   `npx tsc --noEmit -p jsconfig.json`, `node --test "tests/*.test.js"`, then open
-   the app. A source-scan test proves the file says the right words, not that the
-   button responds.
-6. **Bump `CACHE_VERSION` and add new modules to `SHELL`.**
-   `tests/origin.test.js` walks the real import graph and fails if you forget.
-
----
-
-## Article 5. The failure modes this app is armed against
-
-| Failure | What happened | The armour |
+| Invariant | Cause | Enforced by |
 |---|---|---|
-| In-memory state discarded by iOS | a whole morning of lifting, no error | `lib/draft.js`, synchronous localStorage |
-| A clock stamp overwriting a late entry | every session dated at write time | date lives in the draft |
-| Sibling data loss on a shared row | Mise's fields dropped by a full-row write | shallow patch, `tests/daily.test.js` |
-| Cross-app storage collision | one origin, six PWAs | `anvil.*` keys, `tests/origin.test.js` |
-| Design drift back to the parent app | ~400 lines of Mise's sheet at the split | `tests/design.test.js` |
-| A number two apps both write | 210 g against 190 g protein | Anvil never writes a calorie number |
+| Nothing logged lives only in memory | a morning of lifting lost to a backgrounded tab (incidents) | `lib/draft.js`, synchronous localStorage; `tests/draft.test.js` |
+| A write is never stamped with the clock; the date is data | late entries filed as today (incidents) | the date in the draft; `tests/promises.test.js` P4 |
+| Anvil never writes a calorie number | 210 g against 190 g, two writers (incidents) | `writeFile` refuses `fitness/targets.json`; `tests/promises.test.js` |
+| A person is never rendered as behind | Core Purpose P9 | `tests/design.test.js`, `tests/promises.test.js` P9 |
+| Anvil never resembles Mise, and uses no green | the split carried Mise's sheet (decision 0008) | `tests/design.test.js` |
+| The shared daily row is patched field by field, never rewritten | Mise's fields dropped by a full-row write (incidents) | `upsertDay`; `tests/daily.test.js` |
+| Every storage key, cache and database is `anvil`-prefixed, and cleanup deletes only its own | one origin, six PWAs (decision 0006) | `tests/origin.test.js` |
+| One profile per person; Anvil writes only the training section | two apps writing one number (decision 0002) | not yet; owed by the redo |
+| A reminder never fires for an item already recorded | the reason "No notifications" existed (decision 0004) | not yet; gate register P15 |
+| A reminder never breaks through Do Not Disturb | David's ruling, 2026-10-12 (decision 0004) | not yet; gate register P15 |
 
----
+## Amending this doctrine
 
-## Article 6. Kill conditions
+**The job, the non-goals and the invariants change only by amendment.** An amendment names
+the clause, states the reason the clause exists, states why that reason no longer holds, and
+carries **David's named yes**. A superseded clause is **struck through and kept**, with the
+date and what replaced it. It is never deleted, because the next person to propose the same
+change needs to find the argument that was already had.
 
-**PROPOSED, not adopted. Needs David's named yes.**
+**Tenets are open season, by design.** They end with *unless you know better ones*.
+Proposing a better tenet is not a challenge to the doctrine, it is the doctrine working. A
+tenet still needs David's yes to change, but it does not need an incident.
 
-Anvil exists because logging was too expensive. Review **2026-12-18**. It has
-failed at Article 0 if by then:
+**Invariants retire only when their cause is gone**, never because they are inconvenient. If
+the incident that created an invariant can no longer occur, say why, and strike it.
 
-- **fewer than 40 sessions were logged across the semester**, which is under two
-  a week against a six-day plan, meaning the friction was never the binding
-  constraint; or
-- **more than a quarter of logged sessions were entered on the same day they
-  happened but re-edited later**, meaning the capture path is still wrong; or
-- **the split itself never paid**: no feature was built here that could not have
-  lived in Mise, in which case the second icon is not earned.
+**A session may not work around a clause silently.** Doing so once means either the clause
+was wrong or the work was wrong, and either way it gets said out loud.
 
----
+**The kill conditions are not amendable by a session at all.** Only David changes those.
 
-## One correction this doctrine carries
+## Kill conditions (PROPOSED 2026-08-28, not adopted; David's named yes required)
 
-`CLAUDE.md` states that **Mise is the one app still evicting its siblings' caches
-on every deploy.** That was true when written and **is no longer true**: Mise's
-`sw.js` was prefix-scoped on 2026-08-18 and now filters `caches.keys()` by
-`mise-`, verified 2026-08-28. Every app on the origin is prefix-scoped. The rule
-for Anvil is unchanged; only the claim about the sibling is stale.
+Review **2026-12-18**. Anvil has failed at the job if by then:
 
----
+- **fewer than 40 sessions were logged across the semester**, under two a week against a
+  six-day plan, meaning friction was never the binding constraint; or
+- **more than a quarter of logged sessions were entered on the day but re-edited later**,
+  meaning the capture path is still wrong; or
+- **the split never paid**: nothing was built here that could not have lived in Mise.
 
-*Companion documents: `CLAUDE.md` (how to work here), Crystal
-`Lanes/Anvil-Core-Purpose.md` (the eleven promises), Crystal
-`System/App-Doctrine.md` (this shape).*
+Proposed addition, 2026-10-12 (tweener), for David to accept or strike: **the routine card
+is ticked on fewer than half of days in its first month**, meaning one page and reminders did
+not make recording cheaper than skipping.

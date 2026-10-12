@@ -445,6 +445,26 @@ const UNBUILT = [
     name: "P11 a dated event is held and the remaining session count is correct",
     why: "unbuilt, owner David, Fix-List job 3. The 2 Oct bench competition lives in a vault note and in nothing the app can read.",
   },
+  {
+    id: "P12",
+    name: "P12 every issued programme covers every muscle group, conditioning and mobility, inside the session length",
+    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). No coverage check runs before a programme is shown.",
+  },
+  {
+    id: "P13",
+    name: "P13 every exercise names its source and shows its cue beside the load",
+    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). program.json carries no source or cue fields yet.",
+  },
+  {
+    id: "P14",
+    name: "P14 the day's routine and session sit on one screen, one tap each",
+    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0003, shrike's twelve requirements). Supplements and water are still ticked in Mise and the Crystal brief.",
+  },
+  {
+    id: "P15",
+    name: "P15 a reminder repeats until its item is recorded and never breaks Do Not Disturb",
+    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0004). Anvil sends no reminders today.",
+  },
 ];
 
 for (const u of UNBUILT) test(u.name, { todo: u.why }, () => {});
