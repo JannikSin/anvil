@@ -62,8 +62,10 @@ export function RoutineCard({ items, daily, today, onPatch }) {
             aria-label=${`${it.label}${v === true ? ", recorded" : ""}`}
             onClick=${() => onPatch(tickPatch(day, it, v !== true), date)}
           >
-            <span class="bar__name">${it.label}</span>
-            <span class="bar__meta num">${it.sub}</span>
+            <span class="routine__what">
+              <span class="bar__name">${it.label}</span>
+              ${it.sub && html`<span class="routine__sub">${it.sub}</span>`}
+            </span>
             <span class=${`knob ${v === true ? "is-on" : ""}`} aria-hidden="true">
               ${v === true ? "✓" : ""}
             </span>
@@ -124,21 +126,21 @@ export function RoutineEditor({ routine, onChange, add, remove }) {
       items.length > 0 &&
       html`<div class="rack">
         ${items.map(
-        (it) =>
-          html`<div class="bar" key=${it.id}>
-            <span class="bar__name">${it.label}</span>
-            <span class="bar__meta num"
-              >${`${it.when}${it.at ? ` · ${it.at}` : ""}${it.kind === "text" ? " · text" : ""}`}</span
-            >
-            <button
-              class="ghost"
-              aria-label=${`Remove ${it.label}`}
-              onClick=${() => onChange(remove(routine, it.id))}
-            >
-              REMOVE
-            </button>
-          </div>`,
-      )}
+          (it) =>
+            html`<div class="bar" key=${it.id}>
+              <span class="bar__name">${it.label}</span>
+              <span class="bar__meta num"
+                >${`${it.when}${it.at ? ` · ${it.at}` : ""}${it.kind === "text" ? " · text" : ""}`}</span
+              >
+              <button
+                class="ghost"
+                aria-label=${`Remove ${it.label}`}
+                onClick=${() => onChange(remove(routine, it.id))}
+              >
+                REMOVE
+              </button>
+            </div>`,
+        )}
       </div>`
     }
     <div class="field">
@@ -160,28 +162,32 @@ export function RoutineEditor({ routine, onChange, add, remove }) {
       />
     </div>
     <div class="chiprow" role="group" aria-label="Morning or evening">
-      ${/** @type {const} */ (["morning", "evening"]).map(
-        (w) =>
-          html`<button
-            key=${w}
-            class=${`chip ${when === w ? "is-on" : ""}`}
-            aria-pressed=${when === w}
-            onClick=${() => setWhen(w)}
-          >
-            ${w}
-          </button>`,
-      )}
-      ${/** @type {const} */ (["tick", "text"]).map(
-        (k) =>
-          html`<button
-            key=${k}
-            class=${`chip ${kind === k ? "is-on" : ""}`}
-            aria-pressed=${kind === k}
-            onClick=${() => setKind(k)}
-          >
-            ${k === "tick" ? "a tick" : "a line of text"}
-          </button>`,
-      )}
+      ${
+        /** @type {const} */ (["morning", "evening"]).map(
+          (w) =>
+            html`<button
+              key=${w}
+              class=${`chip ${when === w ? "is-on" : ""}`}
+              aria-pressed=${when === w}
+              onClick=${() => setWhen(w)}
+            >
+              ${w}
+            </button>`,
+        )
+      }
+      ${
+        /** @type {const} */ (["tick", "text"]).map(
+          (k) =>
+            html`<button
+              key=${k}
+              class=${`chip ${kind === k ? "is-on" : ""}`}
+              aria-pressed=${kind === k}
+              onClick=${() => setKind(k)}
+            >
+              ${k === "tick" ? "a tick" : "a line of text"}
+            </button>`,
+        )
+      }
     </div>
     <div class="act">
       <button

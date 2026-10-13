@@ -2423,3 +2423,28 @@ button.bar .bar__meta::after {
   line-height: 1.45;
   color: var(--dim);
 }
+
+/* a routine row: the name and its dose or time stack on the left and wrap, so
+   the tick on the right never leaves the screen (a long timing line pushed it
+   off a phone on 2026-10-12) */
+.routine__what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.routine__sub {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+
+.routine .knob {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
