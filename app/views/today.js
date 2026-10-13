@@ -364,11 +364,7 @@ export function TodayView({
           ${`${doneToday.length === 1 ? "One session" : `${doneToday.length} sessions`} already filed for ${relativeDayLabel(logDate, today)}. ${full ? `${full.name} is next whenever you train again.` : ""}`}
         </p>`
       }
-      ${
-        !template &&
-        html`<div class="void">${loading ? "loading" : "no programme loaded"}</div>`
-      }
-
+      ${!template && html`<div class="void">${loading ? "loading" : "no programme loaded"}</div>`}
       ${
         template &&
         html`
@@ -457,6 +453,13 @@ export function TodayView({
                   }
                   ${ex.cue && html`<div class="lift__note">${ex.cue}</div>`}
                   ${
+                    // P13 / tenet 2: the study behind the exercise, or an honest
+                    // line that only the general volume evidence backs it yet
+                    html`<div class="lift__src">
+                      ${ex.source ? `Source: ${ex.source}` : "Source: general volume evidence only; a study for this exercise is being checked."}
+                    </div>`
+                  }
+                  ${
                     logged &&
                     html`<div class="act">
                       <button class="ghost" onClick=${() => undoLast(ex.name)}>UNDO</button>
@@ -502,7 +505,9 @@ export function TodayView({
                           SAVE
                         </button>
                         <span class="strike__why">
-                          <b>${onTarget && prog ? prog.label : hasNumbers ? "your call" : "no history yet"}</b>
+                          <b
+                            >${onTarget && prog ? prog.label : hasNumbers ? "your call" : "no history yet"}</b
+                          >
                           ${hasNumbers ? ` Heaviest set: ${inp.w}×${inp.r}.` : " Put in your heaviest set."}
                         </span>
                       </div>

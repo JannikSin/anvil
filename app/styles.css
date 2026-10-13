@@ -2415,3 +2415,11 @@ button.bar .bar__meta::after {
   color: var(--on-arc);
   border-color: var(--arc);
 }
+
+/* the study behind an exercise (P13, 2026-10-12) */
+.lift__src {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dim);
+}

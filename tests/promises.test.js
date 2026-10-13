@@ -483,7 +483,7 @@ const UNBUILT = [
   {
     id: "P13",
     name: "P13 every exercise names its source and shows its cue beside the load",
-    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). program.json carries no source or cue fields yet.",
+    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). Every exercise has a cue; 19 of 39 slots carry a confirmed study (13 exercises) and the screen shows it; 14 exercises rest on general volume evidence only and are researched next, then kept or replaced.",
   },
   {
     id: "P15",

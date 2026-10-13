@@ -26,7 +26,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Bench at 30 degrees, shoulder blades pinned, lower to chest level for the stretch, press up and slightly in.",
-     "main": true
+     "main": true,
+     "evidence": "trial",
+     "source": "Chaves et al. 2020, Int J Exerc Sci: incline pressing grew the upper-chest measuring site more than flat (8 weeks, ultrasound); strength gains were similar."
     },
     {
      "name": "Machine Chest Press",
@@ -37,7 +39,9 @@
      "rest": 120,
      "increment": 5,
      "tier": 1,
-     "cue": "Handles at mid-chest, full stretch at the back, shoulders stay back at the top."
+     "cue": "Handles at mid-chest, full stretch at the back, shoulders stay back at the top.",
+     "evidence": "trial",
+     "source": "Haugen et al. 2023, BMC Sports Sci Med Rehabil (meta-analysis, 13 studies): machines and free weights build muscle equally."
     },
     {
      "name": "Cable Fly or Pec Deck",
@@ -61,7 +65,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Stand tall or lean 10-15 degrees, arms 30 degrees in front, lead with the elbows to shoulder height, no shrug.",
-     "superset": "Overhead Triceps Extension"
+     "superset": "Overhead Triceps Extension",
+     "evidence": "trial",
+     "source": "Larsen et al. 2025, Front Physiol: dumbbell and cable lateral raises grew the side delts equally in trained lifters (8 weeks, ultrasound)."
     },
     {
      "name": "Overhead Triceps Extension",
@@ -73,7 +79,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Elbows up and in, lower deep behind the head for the stretch, extend fully.",
-     "superset": "Lateral Raise"
+     "superset": "Lateral Raise",
+     "evidence": "trial",
+     "source": "Maeo et al. 2022, Eur J Sport Sci: overhead elbow extension grew the triceps about 1.4 times more than the neutral-arm version (12 weeks, MRI)."
     },
     {
      "name": "Pallof Press",
@@ -104,7 +112,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Chest up, let the weight pull the shoulders forward for the stretch, row to the lower ribs, torso still.",
-     "main": true
+     "main": true,
+     "evidence": "emg",
+     "source": "Fenwick, Brown and McGill 2009, J Strength Cond Res: cable rowing works the back and challenges the trunk to resist twisting."
     },
     {
      "name": "Weighted Pull-up or Lat Pulldown",
@@ -150,7 +160,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Elbow pinned to the side (towel under the arm), rotate the forearm outward, slow back.",
-     "superset": "Face Pull"
+     "superset": "Face Pull",
+     "evidence": "emg",
+     "source": "Reinold et al. 2004, J Orthop Sports Phys Ther: measured rotator cuff activity across common external rotation exercises."
     },
     {
      "name": "Hammer Curl",
@@ -195,7 +207,9 @@
      "increment": 10,
      "tier": 1,
      "cue": "High bar, brace first, sit down between the heels as deep as you stay tight, drive up fast.",
-     "main": true
+     "main": true,
+     "evidence": "trial",
+     "source": "Kubo et al. 2019, Eur J Appl Physiol: full-depth squats grew the glutes and adductors more than half squats; quads grew equally (10 weeks, MRI)."
     },
     {
      "name": "Bulgarian Split Squat",
@@ -206,7 +220,9 @@
      "rest": 90,
      "increment": 5,
      "tier": 1,
-     "cue": "Back foot on the bench, front knee roughly over the toes, drop straight down."
+     "cue": "Back foot on the bench, front knee roughly over the toes, drop straight down.",
+     "evidence": "trial",
+     "source": "Speirs et al. 2016, J Strength Cond Res: rear-foot-elevated split squats raised back squat strength as much as back squats did (5 weeks)."
     },
     {
      "name": "Single-Leg Extension",
@@ -230,7 +246,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Lean the torso forward: more hamstring stretch, more growth.",
-     "superset": "Single-Leg Extension"
+     "superset": "Single-Leg Extension",
+     "evidence": "trial",
+     "source": "Maeo et al. 2021, Med Sci Sports Exerc: seated leg curl grew the hamstrings more than lying (about 14% vs 9%, 12 weeks, MRI)."
     },
     {
      "name": "Leg Press",
@@ -242,7 +260,9 @@
      "increment": 10,
      "tier": 1,
      "cue": "Feet mid-platform, shoulder width, lower until the hips just start to curl off the pad.",
-     "cut": true
+     "cut": true,
+     "evidence": "trial",
+     "source": "Haugen et al. 2023, BMC Sports Sci Med Rehabil (meta-analysis, 13 studies): machines and free weights build muscle equally."
     },
     {
      "name": "Cable Woodchop",
@@ -273,7 +293,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Seated DB: bench upright or one notch back, start at ear height, press up and slightly in, no big arch.",
-     "main": true
+     "main": true,
+     "evidence": "emg",
+     "source": "Saeterbakken and Fimland 2013, J Strength Cond Res: standing and dumbbell overhead presses drew the most deltoid activity."
     },
     {
      "name": "Flat Bench Press",
@@ -296,7 +318,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Stand tall or lean 10-15 degrees, arms 30 degrees in front, lead with the elbows to shoulder height, no shrug.",
-     "superset": "Triceps Pushdown"
+     "superset": "Triceps Pushdown",
+     "evidence": "trial",
+     "source": "Larsen et al. 2025, Front Physiol: dumbbell and cable lateral raises grew the side delts equally in trained lifters (8 weeks, ultrasound)."
     },
     {
      "name": "Triceps Pushdown",
@@ -374,7 +398,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Lighter than Pull A. Strict, big stretch forward, pause at the ribs.",
-     "cut": true
+     "cut": true,
+     "evidence": "emg",
+     "source": "Fenwick, Brown and McGill 2009, J Strength Cond Res: cable rowing works the back and challenges the trunk to resist twisting."
     },
     {
      "name": "Incline DB Curl",
@@ -422,7 +448,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Elbow pinned to the side (towel under the arm), rotate the forearm outward, slow back.",
-     "superset": "Face Pull"
+     "superset": "Face Pull",
+     "evidence": "emg",
+     "source": "Reinold et al. 2004, J Orthop Sports Phys Ther: measured rotator cuff activity across common external rotation exercises."
     }
    ]
   },
@@ -441,7 +469,9 @@
      "rest": 180,
      "increment": 10,
      "tier": 1,
-     "cue": "Same lift as Legs A, lighter and more reps."
+     "cue": "Same lift as Legs A, lighter and more reps.",
+     "evidence": "trial",
+     "source": "Kubo et al. 2019, Eur J Appl Physiol: full-depth squats grew the glutes and adductors more than half squats; quads grew equally (10 weeks, MRI)."
     },
     {
      "name": "Romanian Deadlift",
@@ -453,7 +483,9 @@
      "increment": 10,
      "tier": 1,
      "cue": "Soft knees, hips back, bar slides down the thighs to a hard hamstring stretch, back flat, drive the hips forward.",
-     "main": true
+     "main": true,
+     "evidence": "emg",
+     "source": "McAllister et al. 2014, J Strength Cond Res: the Romanian deadlift drew among the highest hamstring activity of four hamstring lifts."
     },
     {
      "name": "Seated Leg Curl",
@@ -465,7 +497,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Lean the torso forward. Hamstring day: three sets.",
-     "superset": "Single-Leg Extension"
+     "superset": "Single-Leg Extension",
+     "evidence": "trial",
+     "source": "Maeo et al. 2021, Med Sci Sports Exerc: seated leg curl grew the hamstrings more than lying (about 14% vs 9%, 12 weeks, MRI)."
     },
     {
      "name": "Single-Leg Extension",
@@ -489,7 +523,9 @@
      "increment": 10,
      "tier": 1,
      "cue": "Feet high and wide: shifts it to glutes and hamstrings.",
-     "cut": true
+     "cut": true,
+     "evidence": "trial",
+     "source": "Haugen et al. 2023, BMC Sports Sci Med Rehabil (meta-analysis, 13 studies): machines and free weights build muscle equally."
     },
     {
      "name": "Cable Crunch",
@@ -512,7 +548,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Optional. Pause 2 seconds at the bottom stretch.",
-     "cut": true
+     "cut": true,
+     "evidence": "trial",
+     "source": "Kinoshita, Maeo et al. 2023, Front Physiol: standing calf raises grew the gastrocnemius far more than seated (12 weeks, MRI)."
     }
    ]
   }
@@ -605,5 +643,6 @@
   "lower": "Walk or bike. Never jog in before squats or deadlifts.",
   "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
  },
- "programVersion": "block1-2026-10-11"
+ "programVersion": "block1-2026-10-11",
+ "_sources": "Exercise sources added 2026-10-12 (Anvil tenet 2, Core Purpose P13). evidence 'trial' = a training study measured growth or strength with this exercise; 'emg' = a muscle-activation study only. An exercise with no source rests only on the general evidence: about 10 or more hard sets per muscle a week grow more muscle (Schoenfeld, Ogborn and Krieger 2016, J Sports Sci) and training each muscle twice a week beats once (Schoenfeld, Ogborn and Krieger 2016, Sports Med). Those are researched next, and kept or replaced."
 }
