@@ -160,3 +160,23 @@ export function clearDraft() {
     // nothing to clear if storage never worked
   }
 }
+
+/**
+ * Today only (decision 0012, David 2026-10-13: "if I missed a day, I missed a
+ * day, it's gone"). A draft left from an earlier day never comes back on the
+ * screen. If it holds sets, they were really lifted and really recorded, so
+ * they are filed under their own date, once, and the screen opens on today;
+ * an earlier draft with nothing in it is simply dropped.
+ * @param {Draft} d
+ * @param {string} today YYYY-MM-DD
+ * @returns {{ draft: Draft, file: Record<string, any> | null }}
+ */
+export function rollDraft(d, today) {
+  if (!d || typeof d.date !== "string" || d.date >= today) return { draft: d, file: null };
+  const s = d.session;
+  const exercises = Array.isArray(s?.exercises) ? s.exercises : [];
+  const hasSets = exercises.some(
+    (/** @type {any} */ e) => Array.isArray(e?.sets) && e.sets.length > 0,
+  );
+  return { draft: emptyDraft(today), file: hasSets ? { ...s, date: d.date } : null };
+}

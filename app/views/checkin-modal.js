@@ -1,6 +1,6 @@
 import { html } from "htm/preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
+import { relativeDayLabel } from "../lib/dates.js";
 
 /**
  * The once-a-day check-in.
@@ -19,10 +19,8 @@ import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
  * NEVER to the weigh-in, because the weigh-in's whole value is that it is
  * frictionless. So this dialog stays at three fields and does not grow.
  *
- * The date steps back, for the same reason the session's does: P4 says a late
- * entry is a first-class entry, and a weigh-in missed on Saturday is exactly
- * the gap the gain phase's 7-day average keeps failing to fill. It opens on
- * today and needs no interaction to stay there.
+ * Today only, since 2026-10-13 (decision 0012): a missed day stays missed.
+ * The back-step that was here (P4's late entry) was David's to retire.
  *
  * @param {{
  *   today: string,
@@ -33,7 +31,9 @@ import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
  * @returns {import("preact").VNode}
  */
 export function CheckinModal({ today, days, onSave, onClose }) {
-  const [date, setDate] = useState(today);
+  // today only (David, 2026-10-13: "if I missed a day, I missed a day, it is
+  // gone"; Anvil decision 0012)
+  const date = today;
   const row = (days ?? []).find((d) => d.date === date) ?? {};
   const [weight, setWeight] = useState(row.weight != null ? String(row.weight) : "");
   const [sleep, setSleep] = useState(row.sleepHours != null ? String(row.sleepHours) : "");
@@ -43,17 +43,6 @@ export function CheckinModal({ today, days, onSave, onClose }) {
   // newline where it touches a tag, and prettier rewraps a long line straight
   // back into that bug (CLAUDE.md, "htm whitespace, learned the hard way")
   const dayLabel = relativeDayLabel(date, today);
-
-  /** Stepping the date reloads the fields from that day's row, so the dialog
-   *  never shows Saturday's weight under Thursday's heading. */
-  const moveTo = (/** @type {string} */ next) => {
-    if (!next || next > today) return;
-    const r = (days ?? []).find((d) => d.date === next) ?? {};
-    setDate(next);
-    setWeight(r.weight != null ? String(r.weight) : "");
-    setSleep(r.sleepHours != null ? String(r.sleepHours) : "");
-    setPushups(r.pushups != null ? String(r.pushups) : "");
-  };
 
   // focus the weight field: it is the one number the gain phase is steered by,
   // and the only one whose absence has actually cost him anything
@@ -127,33 +116,6 @@ export function CheckinModal({ today, days, onSave, onClose }) {
         onClick=${(/** @type {any} */ e) => e.stopPropagation()}
       >
         <h2 class="band">Check-in<span class="band__sub">${dayLabel}</span></h2>
-        <div class="datepad">
-          <button
-            class="knob"
-            type="button"
-            aria-label="Check in for a day earlier"
-            onClick=${() => moveTo(shiftIsoDate(date, -1))}
-          >
-            ‹
-          </button>
-          <input
-            class="datepad__well"
-            type="date"
-            max=${today}
-            value=${date}
-            aria-label="Date these numbers are for"
-            onInput=${(/** @type {any} */ e) => moveTo(e.currentTarget.value)}
-          />
-          <button
-            class="knob"
-            type="button"
-            aria-label="Check in for a day later"
-            disabled=${date >= today}
-            onClick=${() => moveTo(shiftIsoDate(date, 1))}
-          >
-            ›
-          </button>
-        </div>
         <p class="note">Once a day, here only. Blank means skip that one.</p>
         <div>
           ${field("Weight", "lb", weight, setWeight, "0.1", true)}

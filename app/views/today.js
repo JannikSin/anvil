@@ -12,8 +12,7 @@ import {
   addSet,
   undoSet,
 } from "../lib/workouts.js";
-import { relativeDayLabel, shiftIsoDate } from "../lib/dates.js";
-import { draftSetCount } from "../lib/draft.js";
+import { relativeDayLabel } from "../lib/dates.js";
 import { hrRest } from "../lib/activities.js";
 import { ActivityLog } from "./activity-log.js";
 import { Ring } from "./ring.js";
@@ -115,10 +114,10 @@ export function TodayView({
   // otherwise, so a session trained on Tuesday and remembered on Thursday
   // could not be recorded at all — and the log's job is to be complete, not
   // to be live. logDate defaults to today and steps back a day at a tap.
-  const logDate = typeof draft.date === "string" ? draft.date : today;
-  const backdated = logDate !== today;
-  // one interpolation, one line, for the htm whitespace reason above
-  const whenSub = backdated ? "a late entry counts the same" : "logging live";
+  // Today only since 2026-10-13 (decision 0012, David: "if I missed recording
+  // a set, I missed recording the set"). A draft left from an earlier day is
+  // filed under its own date when the app opens (main.js), never shown here.
+  const logDate = today;
   // Today's session comes from the fixed rotation — nothing to pick.
   // draft.templateId is only set on an explicit override through the escape
   // hatch, and that pick wins over the schedule for this draft.
@@ -244,16 +243,6 @@ export function TodayView({
     setConfirmFinish(false);
   };
 
-  /** Move the whole in-progress session to another date. */
-  const setLogDate = (/** @type {string} */ next) => {
-    if (!next || next > today) return; // no logging into the future
-    onDraft({
-      ...draft,
-      date: next,
-      session: session ? { ...session, date: next } : null,
-    });
-  };
-
   return html`
     <div class="deck">
       ${
@@ -329,18 +318,6 @@ export function TodayView({
         ${scheduled && full && scheduled.id !== full.id ? `Logging ${full.name} instead of ${scheduled.name}. Tap ${scheduled.name} to go back.` : "Next in the queue. A missed day never skips one; the next session is just the next in line. Save your heaviest set per lift."}
       </p>
 
-      ${
-        // The draft survives a killed page (lib/draft.js), so a session logged
-        // and never filed comes back instead of vanishing. Worded as a held
-        // session rather than a missed one: P9 forbids rendering anyone as
-        // behind.
-        session &&
-        session.exercises.length > 0 &&
-        backdated &&
-        html`<p class="alarm">
-          ${`Held: ${draftSetCount(draft)} ${draftSetCount(draft) === 1 ? "set" : "sets"} logged for ${relativeDayLabel(logDate, today)}, still unfiled. They are saved on this device but they are not in your record until you file the session.`}
-        </p>`
-      }
       ${
         // ONE STORY, AND IT NAMES THE FIX: the reason from the last failed
         // push wins over a probe, because it is what actually happened.
@@ -527,34 +504,6 @@ export function TodayView({
             })}
           </div>
 
-          <h2 class="band">When<span class="band__sub">${whenSub}</span></h2>
-          <div class=${`datepad ${backdated ? "is-back" : ""}`}>
-            <button
-              class="knob"
-              type="button"
-              aria-label="File this session a day earlier"
-              onClick=${() => setLogDate(shiftIsoDate(logDate, -1))}
-            >
-              ‹
-            </button>
-            <input
-              class="datepad__well"
-              type="date"
-              max=${today}
-              value=${logDate}
-              aria-label="Date this session was trained"
-              onInput=${(/** @type {any} */ e) => setLogDate(e.currentTarget.value)}
-            />
-            <button
-              class="knob"
-              type="button"
-              aria-label="File this session a day later"
-              disabled=${logDate >= today}
-              onClick=${() => setLogDate(shiftIsoDate(logDate, 1))}
-            >
-              ›
-            </button>
-          </div>
           <div class="act">
             <button
               class=${`cta ${confirmFinish ? "is-armed" : ""}`}

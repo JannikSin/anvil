@@ -18,7 +18,7 @@ import { initRouter } from "./lib/router.js";
 import { initStore, read, write, getSyncStatus, onSyncChange } from "./lib/store.js";
 import { checkDataRepo, getToken, SHARED_DAILY, MISE_TARGETS, MISE_VITALS } from "./lib/github.js";
 import { localIsoDate } from "./lib/dates.js";
-import { clearDraft, readDraft, writeDraft } from "./lib/draft.js";
+import { clearDraft, readDraft, rollDraft, writeDraft } from "./lib/draft.js";
 import { upsertDay } from "./lib/daily.js";
 import { addActivity } from "./lib/activities.js";
 import { adoptProgram } from "./lib/workouts.js";
@@ -29,10 +29,7 @@ import { VitalsView } from "./views/vitals.js";
 import { SystemView } from "./views/system.js";
 import { CheckinModal } from "./views/checkin-modal.js";
 import { Glyph, Sigil } from "./views/glyphs.js";
-import { RoutineCard, RoutineEditor } from "./views/routine-card.js";
-
-/** The person's own routine items (Core Purpose P14), in anvil-data. */
-const ROUTINE_FILE = "routine.json";
+import { RoutineCard } from "./views/routine-card.js";
 
 // The bundled programme, fetched once. Both loaders wait on it: the cold-start
 // one renders it, and the repo one compares programVersion against it so a new
@@ -126,6 +123,8 @@ function App() {
     let alive = true;
     BUNDLE.then((prog) => {
       if (!alive || !prog) return;
+      // the one fixed daily routine ships with the programme (P14, 2026-10-13)
+      if (prog.routine) setRoutine(prog.routine);
       setWorkouts((cur) =>
         // never clobber the real thing, and never drop logged sessions.
         // `conditioning` rides along: it was omitted here when the bundle was
@@ -212,10 +211,6 @@ function App() {
       read(MISE_TARGETS).then((t) => {
         if (alive && t) setTargets(/** @type {any} */ (t));
       });
-      // the person's own routine items (P14), anvil-data
-      read(ROUTINE_FILE).then((r) => {
-        if (alive && r) setRoutine(/** @type {any} */ (r));
-      });
     };
     load();
     const unsub = onSyncChange(load);
@@ -288,16 +283,23 @@ function App() {
     clearDraft();
   }, []);
 
+  // TODAY ONLY (decision 0012, 2026-10-13): a draft from an earlier day is
+  // filed under its own date if it holds sets, and the screen opens on today
+  useEffect(() => {
+    const { draft: next, file } = rollDraft(draft, today);
+    if (next === draft) return;
+    if (file) handleSaveSession(file);
+    else {
+      setDraft(next);
+      clearDraft();
+    }
+  }, [today]);
+
   /**
    * Patch one day of the shared row. `date` defaults to today and is passed
    * explicitly when a check-in is being back-filled — P4 says a late entry is
    * a first-class entry, and that applies to the weigh-in as much as the bar.
    */
-  /** Save the person's own routine items (Settings, P14). anvil-data. */
-  const handleRoutine = useCallback((/** @type {import("./lib/routine.js").Routine} */ next) => {
-    setRoutine(next);
-    void write(ROUTINE_FILE, /** @type {any} */ (next));
-  }, []);
 
   const handlePatchDay = useCallback(
     (/** @type {Record<string, any>} */ patch, /** @type {string} */ date) => {
@@ -417,10 +419,6 @@ function App() {
         hasToken=${hasToken}
         onToken=${() => setHasToken(Boolean(getToken()))}
       />`
-    }
-    ${
-      route.view === "system" &&
-      html`<${RoutineEditor} routine=${routine} today=${today} onChange=${handleRoutine} />`
     }
 
     <nav class="dock" aria-label="Sections">

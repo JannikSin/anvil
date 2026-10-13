@@ -8,15 +8,15 @@
 //     ticked into the shared row's `supplements` field by the plan's own id,
 //     so the history Mise wrote before 2026-10-12 lines up;
 //   - water: one tick, when the profile tracks water;
-//   - everything else (kitchen closed, tomorrow's first line, reading, a
-//     reward): the person's own items, added from Settings and kept in
-//     anvil-data `routine.json`, ticked into the row's `routine` field.
+//   - everything else: the one fixed routine that ships with the programme
+//     (program.json `routine`, David 2026-10-13: "There is one set routine
+//     that I do, and that's it"), ticked into the row's `routine` field.
 //
 // The morning check-in stays at its three fields (weight, sleep, push-ups);
 // nothing here is ever added to it.
 
 /**
- * @typedef {{ id: string, label: string, when: "morning" | "evening", kind: "tick" | "text", at?: string, from?: string }} CustomItem
+ * @typedef {{ id: string, label: string, when: "morning" | "evening", kind: "tick" | "text", at?: string, from?: string, days?: number[] }} CustomItem
  * @typedef {{ items: CustomItem[], supplementAt?: { morning?: string, evening?: string } }} Routine
  * @typedef {{ id: string, label: string, sub: string, when: "morning" | "evening", kind: "tick" | "text", field: "supplements" | "routine", at?: string }} CardItem
  */
@@ -76,6 +76,13 @@ export function routineItems(targets, routine, date = undefined) {
   for (const it of routine?.items ?? []) {
     if (!it || typeof it.id !== "string" || !it.label) continue;
     if (date && it.from && it.from > date) continue;
+    if (
+      date &&
+      Array.isArray(it.days) &&
+      !it.days.includes(new Date(`${date}T12:00:00`).getDay())
+    ) {
+      continue;
+    }
     out.push({
       id: it.id,
       label: it.label,
@@ -137,55 +144,6 @@ export function recordedCount(day, items) {
 }
 
 /**
- * Add one of the person's own items. Ids are `r-` plus a slug of the label,
- * unique within the routine, and never reused for a different label.
- * @param {Routine | null | undefined} routine
- * @param {{ label: string, when?: string, kind?: string, at?: string, from?: string }} input
- * @returns {Routine}
- */
-export function addRoutineItem(routine, input) {
-  const items = [...(routine?.items ?? [])];
-  const label = String(input.label ?? "")
-    .trim()
-    .slice(0, 60);
-  if (!label) return { ...(routine ?? {}), items };
-  const base =
-    "r-" +
-    (label
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 30) || "item");
-  const taken = new Set(items.map((x) => x.id));
-  let id = base;
-  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
-  /** @type {CustomItem} */
-  const item = {
-    id,
-    label,
-    when: input.when === "evening" ? "evening" : "morning",
-    kind: input.kind === "text" ? "text" : "tick",
-  };
-  const at = String(input.at ?? "")
-    .trim()
-    .slice(0, 20);
-  if (at) item.at = at;
-  if (typeof input.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.from)) {
-    item.from = input.from;
-  }
-  return { ...(routine ?? {}), items: [...items, item] };
-}
-
-/**
- * @param {Routine | null | undefined} routine
- * @param {string} id
- * @returns {Routine}
- */
-export function removeRoutineItem(routine, id) {
-  return { ...(routine ?? {}), items: (routine?.items ?? []).filter((x) => x.id !== id) };
-}
-
-/**
  * Minutes after midnight for "6:35 am", "11:30 pm", "22:45" or an <input
  * type=time> value; null when it cannot be read.
  * @param {string | undefined} t
@@ -203,60 +161,3 @@ export function minutesOf(t) {
   return h * 60 + min;
 }
 
-/**
- * "6:35 am" from minutes after midnight (wrapping past midnight).
- * @param {number} mins
- */
-export function clockOf(mins) {
-  const m = ((mins % 1440) + 1440) % 1440;
-  const h = Math.floor(m / 60);
-  const mm = String(m % 60).padStart(2, "0");
-  return `${h % 12 === 0 ? 12 : h % 12}:${mm} ${h < 12 ? "am" : "pm"}`;
-}
-
-/**
- * The daily routine's spine, built from three times the person gives
- * (Settings > START FROM THE DAILY ROUTINE). Nothing personal is written in
- * code: the clock comes from the person, and the rows are the routine every
- * profile starts from (decision 0003). Supplements come from the profile and
- * take the breakfast and evening times; the check-in keeps its three fields.
- * @param {{ wake: string, breakfast: string, lightsOut: string }} times
- * @returns {Routine | null} null when a time cannot be read
- */
-export function starterRoutine({ wake, breakfast, lightsOut }) {
-  const w = minutesOf(wake);
-  const b = minutesOf(breakfast);
-  const l = minutesOf(lightsOut);
-  if (w == null || b == null || l == null) return null;
-  /** @type {[string, "morning" | "evening", "tick" | "text", number][]} */
-  const spine = [
-    ["Wake up", "morning", "tick", w],
-    ["Weigh in, then the check-in", "morning", "tick", w + 5],
-    ["Push-ups and abs, one set", "morning", "tick", w + 10],
-    ["Shower", "morning", "tick", b + 10],
-    ["Last plate, kitchen closed", "evening", "tick", l - 90],
-    ["Tomorrow's first line", "evening", "text", l - 45],
-    ["Phone on its charger, away from the bed", "evening", "tick", l - 45],
-    ["Read 20 to 30 min, no phone: a paper or a book, printed", "evening", "tick", l - 25],
-    ["Lights out", "evening", "tick", l],
-  ];
-  /** @type {Routine} */
-  let r = { items: [] };
-  for (const [label, when, kind, at] of spine) {
-    r = addRoutineItem(r, { label, when, kind, at: clockOf(at) });
-  }
-  return { ...r, supplementAt: { morning: clockOf(b), evening: clockOf(l - 45) } };
-}
-
-/**
- * The Sunday after a date: when a queued habit starts (the habit ramp, one
- * new habit a week, ratified on Sundays).
- * @param {string} iso
- */
-export function nextSundayFrom(iso) {
-  const [y, mo, d] = iso.split("-").map(Number);
-  const dt = new Date(Number(y), Number(mo) - 1, Number(d));
-  dt.setDate(dt.getDate() + ((7 - dt.getDay()) % 7 || 7));
-  const p = (/** @type {number} */ n) => String(n).padStart(2, "0");
-  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
-}
