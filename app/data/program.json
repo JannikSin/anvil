@@ -574,67 +574,12 @@
  },
  "_conditioningRest": "Cut to ONE session a week on 2026-10-12 (Anvil decision 0011, tenet 4: attendance before perfection): three a week were written and none happened. The 2026-08-24 prescription (two Zone 2 runs plus one interval block, 120 to 150 aerobic minutes a week) is in git history and is the target to grow back toward once one session a week is routine. The session stays later in the day, at least 6 hours after the lift, because the explosive-strength cost of concurrent training is concentrated when cardio and lifting share a session.",
  "_scheduleNote": "Six-day A/B push/pull/legs, completion-based: the weekday keys only fix the ORDER of the queue. Block 1 runs 2026-10-11 to 2026-12-05, deload 2026-12-07 to 2026-12-13. Log the top set only.",
- "_quality": "Pre-lift quality work, from the owner's Training-Rebuild plan, ratified 2026-08-24. It runs AFTER the warm-up and BEFORE the lifting, fresh, because explosive qualities are the first thing fatigue erases. It is NOT counted as working sets and never enters the double progression: this is rate of force development, not volume. Plyometric doses are NSCA coaching convention rather than meta-analytic, and are labelled as such.",
- "quality": {
-  "mon": {
-   "id": "plyo",
-   "name": "Plyometrics",
-   "minutes": 8,
-   "work": "Pogo hops, low box jumps, broad jumps. 40 to 60 foot contacts total.",
-   "fallback": "Pogo hops and broad jumps only, 30 contacts.",
-   "cue": "Step DOWN off the box, never jump down. Quality over count, and stop the moment ground contact starts getting slow.",
-   "why": "Novice dose is 50 to 80 contacts, 1 to 2 sessions a week, 48 to 72 hours apart. Weeks 1 to 3 start at 40 to 60 and progress no more than 10 to 20 percent a week. NSCA coaching convention, not meta-analytic."
-  },
-  "tue": {
-   "id": "rope",
-   "name": "Jump rope",
-   "minutes": 3,
-   "work": "3 minutes, easy, unbroken if you can.",
-   "fallback": "90 seconds.",
-   "cue": "Stiff ankles, quiet feet, minimal knee bend.",
-   "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
-  },
-  "wed": {
-   "id": "rope",
-   "name": "Jump rope",
-   "minutes": 3,
-   "work": "3 minutes, easy, unbroken if you can.",
-   "fallback": "90 seconds.",
-   "cue": "Stiff ankles, quiet feet, minimal knee bend.",
-   "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
-  },
-  "thu": {
-   "id": "sprint",
-   "name": "Sprints and change of direction",
-   "minutes": 12,
-   "work": "6 to 8 x 25 m at 90 to 95 percent, walk back, 60 to 90 s. Then 5-10-5 shuttle x 6.",
-   "fallback": "4 x 25 m, no shuttle.",
-   "cue": "Short reps keep the fatigue cost near zero. If the times fall off, you are done.",
-   "why": "The purest fast-twitch stimulus and the cheapest in fatigue, as long as the reps stay short. Skip the shuttle on a tennis day, tennis already supplies plenty of change of direction."
-  },
-  "fri": {
-   "id": "medball",
-   "name": "Med ball",
-   "minutes": 6,
-   "work": "Rotational scoop throws 3 x 5 each side, overhead slams 3 x 5.",
-   "fallback": "Slams only, 2 x 5.",
-   "cue": "Throw it hard. Do not grind it, this is speed work.",
-   "why": "Low load, high speed, which is exactly why it suits a cranky shoulder. It is also the transverse plane that nothing else in the week trains."
-  },
-  "sat": {
-   "id": "rope",
-   "name": "Jump rope",
-   "minutes": 3,
-   "work": "3 minutes, easy, unbroken if you can.",
-   "fallback": "90 seconds.",
-   "cue": "Stiff ankles, quiet feet, minimal knee bend.",
-   "why": "Leg stiffness is what lets a player leave the ground later on the split step and still recover. Counts at roughly a third value toward plyometric contacts."
-  }
- },
+ "_quality": "Dropped for Block 1 on 2026-10-12 (the pre-lift plyometrics, sprints, jump rope and med ball work were never done, and the Block 1 recipe has none). The 2026-08-24 blocks are in git history; revisit at the Block 2 review after Sat 12/5.",
+ "quality": {},
  "restDay": {
   "name": "Rest",
   "job": "One easy 20 to 30 minute walk or jog, OR 20 minutes of mobility on ankle dorsiflexion and the shoulder. Pick one, or neither.",
-  "why": "No alarm. This day exists to pay the sleep debt: you get 6 to 7 hours against a 7.5 to 8 target while waking early six mornings, and restricted sleep measurably cuts myofibrillar protein synthesis. The tiny job is an adherence device, not training. An unscheduled day is where a six-day habit breaks, so day seven gets a named job precisely to protect the other six.",
+  "why": "Alarm at 7:00 am, like every day (2026-10-12): one wake time all week keeps the clock steady. This day still pays the sleep debt: you get 6 to 7 hours against a 7.5 to 8 target while waking early six mornings, and restricted sleep measurably cuts myofibrillar protein synthesis. The tiny job is an adherence device, not training. An unscheduled day is where a six-day habit breaks, so day seven gets a named job precisely to protect the other six.",
   "notRest": "Tennis and bouldering are not rest, and they belong on lifting days."
  },
  "commute": {
