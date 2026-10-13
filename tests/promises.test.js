@@ -19,6 +19,7 @@ import {
 import { upsertDay, ANVIL_FIELDS } from "../app/lib/daily.js";
 import { shiftIsoDate } from "../app/lib/dates.js";
 import { draftSetCount, emptyDraft, normalizeDraft } from "../app/lib/draft.js";
+import { routineItems, tickPatch } from "../app/lib/routine.js";
 
 // Read rather than `import ... with { type: "json" }`: Node 24 accepts the
 // import attribute but the eslint parser does not, and the rest of the suite
@@ -69,6 +70,35 @@ const temps = program.templates;
 
 /** @type {{ id: string, name: string, fn: () => void }[]} */
 const PROMISES = [
+  {
+    id: "P14",
+    name: "P14 the routine card ticks each item in one tap, by its stable id, on any recent date",
+    fn: () => {
+      const targets = {
+        tracks: ["water"],
+        supplementPlan: [
+          { id: "creatine", name: "Creatine", timing: "anytime" },
+          { id: "magnesium", name: "Magnesium", timing: "before bed" },
+        ],
+      };
+      const items = routineItems(targets, { items: [] });
+      assert.deepEqual(
+        items.map((i) => i.id),
+        ["creatine", "water", "magnesium"],
+        "the card comes from the profile, morning first",
+      );
+      // one tap = one patch; the plan's own id is the key, so old history lines up
+      let daily = { days: [{ date: "2026-10-12", weight: 186 }] };
+      daily = upsertDay(daily, "2026-10-12", tickPatch(daily.days[0], items[0], true));
+      assert.deepEqual(daily.days[0].supplements, { creatine: true });
+      assert.equal(daily.days[0].weight, 186, "the check-in field is untouched");
+      // a late tick files against its own date
+      daily = upsertDay(daily, "2026-10-10", tickPatch(null, items[2], true));
+      assert.deepEqual(daily.days.find((d) => d.date === "2026-10-10")?.supplements, {
+        magnesium: true,
+      });
+    },
+  },
   {
     id: "P1",
     name: "P1 opening the app resolves a session with zero taps",
@@ -454,11 +484,6 @@ const UNBUILT = [
     id: "P13",
     name: "P13 every exercise names its source and shows its cue beside the load",
     why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). program.json carries no source or cue fields yet.",
-  },
-  {
-    id: "P14",
-    name: "P14 the day's routine and session sit on one screen, one tap each",
-    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0003, shrike's twelve requirements). Supplements and water are still ticked in Mise and the Crystal brief.",
   },
   {
     id: "P15",

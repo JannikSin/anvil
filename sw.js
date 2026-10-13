@@ -14,7 +14,7 @@
 // per path: a name that collides with a sibling app's, or a cleanup pass that
 // deletes by anything looser than this prefix, evicts that sibling.
 const CACHE_PREFIX = "anvil-shell-";
-const CACHE_VERSION = `${CACHE_PREFIX}v29`;
+const CACHE_VERSION = `${CACHE_PREFIX}v30`;
 
 const SHELL = [
   "./suggest.js",
@@ -54,6 +54,8 @@ const SHELL = [
   "./app/views/spark.js",
   "./app/views/system.js",
   "./app/views/today.js",
+  "./app/views/routine-card.js",
+  "./app/lib/routine.js",
   "./app/views/vitals.js",
   "./vendor/preact/preact.module.js",
   "./vendor/preact/hooks.module.js",

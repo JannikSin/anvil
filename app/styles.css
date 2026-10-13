@@ -2403,3 +2403,15 @@ button.bar .bar__meta::after {
     height: 48px;
   }
 }
+
+/* ---- the routine card (P14, 2026-10-12) ---- */
+
+.routine {
+  margin: 8px 0 22px;
+}
+
+.knob.is-on {
+  background: var(--arc);
+  color: var(--on-arc);
+  border-color: var(--arc);
+}

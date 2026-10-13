@@ -29,6 +29,11 @@ import { VitalsView } from "./views/vitals.js";
 import { SystemView } from "./views/system.js";
 import { CheckinModal } from "./views/checkin-modal.js";
 import { Glyph, Sigil } from "./views/glyphs.js";
+import { RoutineCard, RoutineEditor } from "./views/routine-card.js";
+import { routineItems, addRoutineItem, removeRoutineItem } from "./lib/routine.js";
+
+/** The person's own routine items (Core Purpose P14), in anvil-data. */
+const ROUTINE_FILE = "routine.json";
 
 // The bundled programme, fetched once. Both loaders wait on it: the cold-start
 // one renders it, and the repo one compares programVersion against it so a new
@@ -106,6 +111,9 @@ function App() {
   );
   const [vitals, setVitals] = useState(/** @type {Record<string, any> | null} */ (null));
   const [targets, setTargets] = useState(/** @type {Record<string, any> | null} */ (null));
+  const [routine, setRoutine] = useState(
+    /** @type {import("./lib/routine.js").Routine} */ ({ items: [] }),
+  );
   const [loaded, setLoaded] = useState(false);
   const [vitalsLoaded, setVitalsLoaded] = useState(false);
 
@@ -118,36 +126,36 @@ function App() {
   useEffect(() => {
     let alive = true;
     BUNDLE.then((prog) => {
-        if (!alive || !prog) return;
-        setWorkouts((cur) =>
-          // never clobber the real thing, and never drop logged sessions.
-          // `conditioning` rides along: it was omitted here when the bundle was
-          // built on 2026-08-18 and it is not in the data repo either, so the
-          // two hard interval sessions a week written on 2026-08-19 have never
-          // once reached a screen. tests/conditioning.test.js passed the whole
-          // time because it asserts against program.json rather than against
-          // anything the app renders. Same shape as the unreachable token
-          // warning: covered by a test, invisible to the user.
-          cur.schedule === undefined && cur.templates.length === 0
-            ? {
-                ...cur,
-                schedule: prog.schedule,
-                templates: prog.templates,
-                conditioning: prog.conditioning,
-                // the rebuilt week, 2026-08-24: pre-lift quality work, the
-                // commute rule, and the seventh day's named job. Every one of
-                // these is bundle-only, exactly like conditioning was, so the
-                // guard below has to preserve them across a repo sync too.
-                quality: prog.quality,
-                commute: prog.commute,
-                restDay: prog.restDay,
-                programVersion: prog.programVersion,
-                bundled: true,
-              }
-            : cur,
-        );
-        setLoaded(true);
-      });
+      if (!alive || !prog) return;
+      setWorkouts((cur) =>
+        // never clobber the real thing, and never drop logged sessions.
+        // `conditioning` rides along: it was omitted here when the bundle was
+        // built on 2026-08-18 and it is not in the data repo either, so the
+        // two hard interval sessions a week written on 2026-08-19 have never
+        // once reached a screen. tests/conditioning.test.js passed the whole
+        // time because it asserts against program.json rather than against
+        // anything the app renders. Same shape as the unreachable token
+        // warning: covered by a test, invisible to the user.
+        cur.schedule === undefined && cur.templates.length === 0
+          ? {
+              ...cur,
+              schedule: prog.schedule,
+              templates: prog.templates,
+              conditioning: prog.conditioning,
+              // the rebuilt week, 2026-08-24: pre-lift quality work, the
+              // commute rule, and the seventh day's named job. Every one of
+              // these is bundle-only, exactly like conditioning was, so the
+              // guard below has to preserve them across a repo sync too.
+              quality: prog.quality,
+              commute: prog.commute,
+              restDay: prog.restDay,
+              programVersion: prog.programVersion,
+              bundled: true,
+            }
+          : cur,
+      );
+      setLoaded(true);
+    });
     return () => {
       alive = false;
     };
@@ -204,6 +212,10 @@ function App() {
       // read-only: Mise owns this file, github.js refuses to write it
       read(MISE_TARGETS).then((t) => {
         if (alive && t) setTargets(/** @type {any} */ (t));
+      });
+      // the person's own routine items (P14), anvil-data
+      read(ROUTINE_FILE).then((r) => {
+        if (alive && r) setRoutine(/** @type {any} */ (r));
       });
     };
     load();
@@ -282,6 +294,12 @@ function App() {
    * explicitly when a check-in is being back-filled — P4 says a late entry is
    * a first-class entry, and that applies to the weigh-in as much as the bar.
    */
+  /** Save the person's own routine items (Settings, P14). anvil-data. */
+  const handleRoutine = useCallback((/** @type {import("./lib/routine.js").Routine} */ next) => {
+    setRoutine(next);
+    void write(ROUTINE_FILE, /** @type {any} */ (next));
+  }, []);
+
   const handlePatchDay = useCallback(
     (/** @type {Record<string, any>} */ patch, /** @type {string} */ date) => {
       const next = upsertDay(
@@ -345,6 +363,15 @@ function App() {
 
     ${
       route.view === "today" &&
+      html`<${RoutineCard}
+        items=${routineItems(targets, routine)}
+        daily=${daily}
+        today=${today}
+        onPatch=${handlePatchDay}
+      />`
+    }
+    ${
+      route.view === "today" &&
       html`<${TodayView}
         workouts=${workouts}
         daily=${daily}
@@ -389,6 +416,15 @@ function App() {
         repo=${repo}
         hasToken=${hasToken}
         onToken=${() => setHasToken(Boolean(getToken()))}
+      />`
+    }
+    ${
+      route.view === "system" &&
+      html`<${RoutineEditor}
+        routine=${routine}
+        onChange=${handleRoutine}
+        add=${addRoutineItem}
+        remove=${removeRoutineItem}
       />`
     }
 

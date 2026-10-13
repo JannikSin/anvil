@@ -19,22 +19,16 @@ const FRI = "2026-08-21";
 const SAT = "2026-08-22";
 const SUN = "2026-08-23";
 
-test("two easy aerobic sessions a week, plus exactly one hard block", () => {
-  // Rebuilt 2026-08-24 to the Training-Rebuild prescription: 120 to 150 min of
-  // aerobic work a week, 100 to 120 of it true Zone 2 across 2 to 3 runs, plus
-  // ONE 10 to 12 minute interval block. It replaced 4x4 + 10-20-30 + an
-  // alternating day, which was three hard sessions against a curve that
-  // flattens after two.
-  const hard = [MON, TUE, WED, THU, FRI, SAT, SUN]
+test("one conditioning session a week to start, tennis or a run", () => {
+  // Cut 2026-10-12 (David: three a week was written and none happened; start
+  // at one and grow it). The 2026-08-24 two-runs-plus-intervals week is in git
+  // history as the target to grow back toward.
+  const days = [MON, TUE, WED, THU, FRI, SAT, SUN]
     .map((d) => conditioningForDate(cond, d))
     .filter(Boolean);
-  assert.equal(hard.length, 3, "three conditioning days: two Zone 2, one interval block");
-  assert.deepEqual(
-    hard.map((h) => h.id),
-    ["z2a", "z2b", "int"],
-  );
-  const intervals = hard.filter((h) => h.id === "int");
-  assert.equal(intervals.length, 1, "exactly one hard block, never two");
+  assert.equal(days.length, 1, "exactly one conditioning session a week");
+  assert.match(days[0].name, /tennis/i);
+  assert.match(days[0].name, /run/i);
 });
 
 test("every conditioning session says WHEN, because same-session is the cost", () => {
@@ -42,7 +36,7 @@ test("every conditioning session says WHEN, because same-session is the cost", (
   // cardio and lifting share a session. A prescription that does not say "later
   // in the day" will be done straight after the lift, which is the one
   // arrangement the evidence argues against.
-  for (const day of [TUE, FRI, SAT]) {
+  for (const day of [SAT]) {
     const c = conditioningForDate(cond, day);
     assert.ok(c.when, `${day} conditioning does not say when to do it`);
     assert.match(c.when, /later in the day/i, `${day} must be placed away from the lift`);
@@ -63,14 +57,12 @@ test("conditioning never lands on a heavy or technical lower day", () => {
   }
   assert.equal(conditioningForDate(cond, WED), null, "Wednesday stays clear for a missed session");
   // and the one HARD block must sit at least a day clear of both lower days
-  const hardDay = [MON, TUE, WED, THU, FRI, SAT, SUN].find(
-    (d) => conditioningForDate(cond, d)?.id === "int",
-  );
-  assert.equal(hardDay, SAT, "the interval block belongs on Saturday, two days clear of Thursday");
+  const condDay = [MON, TUE, WED, THU, FRI, SAT, SUN].find((d) => conditioningForDate(cond, d));
+  assert.equal(condDay, SAT, "the one session sits on Saturday, two days clear of both lower days");
 });
 
 test("every conditioning day has a 20-minute version that is genuinely shorter", () => {
-  for (const day of [TUE, FRI, SAT]) {
+  for (const day of [SAT]) {
     const full = conditioningForDate(cond, day);
     const short = conditioningForDate(cond, day, true);
     assert.ok(short.reduced, `${day} short version is not flagged reduced`);
@@ -86,14 +78,14 @@ test("every conditioning day has a 20-minute version that is genuinely shorter",
 test("the prescribed week does not trip the app's own interference guard", () => {
   // A programme the app then warns about is a programme the app does not
   // believe in. The guard exists for the weeks he overreaches, not for the plan.
-  const total = [TUE, FRI, SAT]
+  const total = [SAT]
     .map((d) => conditioningForDate(cond, d).minutes)
     .reduce((a, b) => a + b, 0);
   assert.ok(
     total < WEEKLY_MINUTES_MAX,
     `the prescription is ${total} aerobic min against a ${WEEKLY_MINUTES_MAX} min guard`,
   );
-  const asLogged = [TUE, FRI, SAT].map((date, i) => ({
+  const asLogged = [SAT].map((date, i) => ({
     id: `c${i}`,
     date,
     type: "run",
@@ -111,7 +103,7 @@ test("the Apple Watch outdoor rule is stated where it can be read", () => {
   // indoor intervals moves the number not at all, which reads as a stalled
   // programme when the opposite is true. At least one session must say outdoor.
   assert.match(cond.watchRule, /Outdoor Run/);
-  const outdoor = [TUE, FRI, SAT].filter((d) => conditioningForDate(cond, d).outdoor);
+  const outdoor = [SAT].filter((d) => conditioningForDate(cond, d).outdoor);
   assert.ok(outdoor.length >= 1, "no session is marked outdoor, so the watch will never update");
 });
 
