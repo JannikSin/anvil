@@ -8,6 +8,10 @@ import {
   routineItems,
   supplementWhen,
   tickPatch,
+  starterRoutine,
+  minutesOf,
+  clockOf,
+  nextSundayFrom,
 } from "../app/lib/routine.js";
 import { upsertDay } from "../app/lib/daily.js";
 
@@ -92,4 +96,44 @@ test("the person's own items: added from Settings, unique ids, text items record
     removeRoutineItem(r, "r-read-20-min-2").items.map((i) => i.id),
     ["r-read-20-min", "r-tomorrow-s-first-line"],
   );
+});
+
+test("the starter routine builds the whole spine from three times, in clock order", () => {
+  const r = starterRoutine({ wake: "6:35 am", breakfast: "7:45 am", lightsOut: "11:30 pm" });
+  assert.ok(r);
+  const items = routineItems(TARGETS, r, "2026-10-13");
+  const morning = items.filter((i) => i.when === "morning").map((i) => `${i.at ?? "-"} ${i.label}`);
+  assert.deepEqual(morning.slice(0, 4), [
+    "6:35 am Wake up",
+    "6:40 am Weigh in, then the check-in",
+    "6:45 am Push-ups and abs, one set",
+    "7:45 am Creatine",
+  ]);
+  assert.ok(morning.includes("7:55 am Shower"));
+  const evening = items.filter((i) => i.when === "evening").map((i) => `${i.at ?? "-"} ${i.label}`);
+  assert.equal(evening[0], "10:00 pm Last plate, kitchen closed");
+  assert.equal(evening[evening.length - 1], "11:30 pm Lights out");
+  assert.ok(
+    evening.includes("10:45 pm Magnesium"),
+    "the evening supplement takes the evening time",
+  );
+  assert.equal(
+    items.find((i) => i.label === "Tomorrow's first line")?.kind,
+    "text",
+    "the first line is written, not ticked",
+  );
+  assert.equal(starterRoutine({ wake: "", breakfast: "7:45 am", lightsOut: "11:30 pm" }), null);
+});
+
+test("times read in 12-hour and 24-hour forms; a habit queued for Sunday is not on the card before it", () => {
+  assert.equal(minutesOf("6:35 am"), 395);
+  assert.equal(minutesOf("12:05 am"), 5);
+  assert.equal(minutesOf("23:30"), 1410);
+  assert.equal(minutesOf("13:00 pm"), null);
+  assert.equal(clockOf(1410), "11:30 pm");
+  assert.equal(nextSundayFrom("2026-10-13"), "2026-10-18");
+  assert.equal(nextSundayFrom("2026-10-18"), "2026-10-25", "on a Sunday, the next one");
+  const r = addRoutineItem({ items: [] }, { label: "Mobility, 10 min", from: "2026-10-18" });
+  assert.equal(routineItems(null, r, "2026-10-17").length, 0);
+  assert.equal(routineItems(null, r, "2026-10-18").length, 1);
 });

@@ -30,7 +30,6 @@ import { SystemView } from "./views/system.js";
 import { CheckinModal } from "./views/checkin-modal.js";
 import { Glyph, Sigil } from "./views/glyphs.js";
 import { RoutineCard, RoutineEditor } from "./views/routine-card.js";
-import { routineItems, addRoutineItem, removeRoutineItem } from "./lib/routine.js";
 
 /** The person's own routine items (Core Purpose P14), in anvil-data. */
 const ROUTINE_FILE = "routine.json";
@@ -364,7 +363,8 @@ function App() {
     ${
       route.view === "today" &&
       html`<${RoutineCard}
-        items=${routineItems(targets, routine)}
+        targets=${targets}
+        routine=${routine}
         daily=${daily}
         today=${today}
         onPatch=${handlePatchDay}
@@ -420,12 +420,7 @@ function App() {
     }
     ${
       route.view === "system" &&
-      html`<${RoutineEditor}
-        routine=${routine}
-        onChange=${handleRoutine}
-        add=${addRoutineItem}
-        remove=${removeRoutineItem}
-      />`
+      html`<${RoutineEditor} routine=${routine} today=${today} onChange=${handleRoutine} />`
     }
 
     <nav class="dock" aria-label="Sections">
