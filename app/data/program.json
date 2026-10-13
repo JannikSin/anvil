@@ -588,7 +588,7 @@
   "lower": "Walk or bike. Never jog in before squats or deadlifts.",
   "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
  },
- "programVersion": "block1-2026-10-11",
+ "programVersion": "block1-2026-10-13",
  "_sources": "Exercise sources added 2026-10-12 (Anvil tenet 2, Core Purpose P13). evidence 'trial' = a training study measured growth or strength with this exercise; 'emg' = a muscle-activation study only. An exercise with no source rests only on the general evidence: about 10 or more hard sets per muscle a week grow more muscle (Schoenfeld, Ogborn and Krieger 2016, J Sports Sci) and training each muscle twice a week beats once (Schoenfeld, Ogborn and Krieger 2016, Sports Med). Those are researched next, and kept or replaced.",
  "routine": {
   "_note": "The daily routine (Crystal Life/Daily-Routine and the 2026-10-12 routine handoff), fixed: one routine, read first and ticked second, ruled 2026-10-13 (\"There is one set routine that I do\"). Supplements come from the profile and take the supplementAt times. Weekends wake at 7:00 am; Friday and Saturday nights have no clock rule.",
