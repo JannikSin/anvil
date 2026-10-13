@@ -64,6 +64,7 @@ Absolute, testable, each with its cause and the thing that enforces it.
 | One profile per person; Anvil writes only the training section | two apps writing one number (decision 0002) | not yet; owed by the redo |
 | A reminder never fires for an item already recorded | the reason "No notifications" existed (decision 0004) | not yet; gate register P15 |
 | A reminder never breaks through Do Not Disturb | David's ruling, 2026-10-12 (decision 0004) | not yet; gate register P15 |
+| Every view, module, route and worker route traces to a document (a promise, decision, tenet or invariant), or is listed as unforced for David to rule on | the app and the documents drifted with no check in that direction (2026-10-13, decision 0015) | `docs/features.json`; `tests/features.test.js` fails on anything unregistered |
 
 ## Amending this doctrine
 

@@ -1,0 +1,241 @@
+{
+  "_about": "The feature register (David, 2026-10-13: the app and the documents drifted because nothing checked that every feature traces to a document). Every view, library module, route and worker route is listed with what forces it: a Core Purpose promise (P1...), a decision (D0001...), a tenet (T1...T7), or an invariant (INV). status: 'forced' needs at least one trace; 'support' is plumbing a forced feature runs on (name what); 'unforced' is carried with no document behind it and stays on the register as an open question for David until it is traced, parked or cut. tests/features.test.js fails the build on anything unregistered or on a trace that does not exist.",
+  "entries": [
+    {
+      "path": "app/main.js",
+      "status": "support",
+      "traces": [],
+      "note": "app shell: loads data, routes, wires every forced view"
+    },
+
+    {
+      "path": "app/views/today.js",
+      "status": "forced",
+      "traces": ["P1", "P2", "P3", "P4", "P13", "T6", "D0012"],
+      "note": "the one page: today's session, prefilled sets, cues and sources, today only"
+    },
+    {
+      "path": "app/views/routine-card.js",
+      "status": "forced",
+      "traces": ["P14", "T6", "D0003", "D0012"],
+      "note": "the fixed daily routine, one tap each"
+    },
+    {
+      "path": "app/views/checkin-modal.js",
+      "status": "forced",
+      "traces": ["P6", "D0003", "D0012"],
+      "note": "three fields, once a day, today only"
+    },
+    {
+      "path": "app/views/activity-log.js",
+      "status": "forced",
+      "traces": ["P5", "D0011"],
+      "note": "runs, tennis and other training from the day screen"
+    },
+    {
+      "path": "app/views/system.js",
+      "status": "forced",
+      "traces": ["D0001", "INV"],
+      "note": "token, data repo and sync state; nothing logged lives only in memory"
+    },
+    {
+      "path": "app/views/core.js",
+      "status": "unforced",
+      "traces": ["T1"],
+      "note": "timed core sessions; tenet 1 covers core, but NO tab, button or link opens this screen (#/core only by typing it), and Block 1 already trains abs inside the sessions"
+    },
+    {
+      "path": "app/views/core-figure.js",
+      "status": "support",
+      "traces": [],
+      "note": "animated figures for the core screen"
+    },
+    {
+      "path": "app/views/core-workout.js",
+      "status": "support",
+      "traces": [],
+      "note": "the core screen's timer"
+    },
+    {
+      "path": "app/views/progress.js",
+      "status": "unforced",
+      "traces": [],
+      "note": "lift history and record book; no promise asks for it, and NO tab, button or link opens it (#/progress only by typing it)"
+    },
+    {
+      "path": "app/views/spark.js",
+      "status": "support",
+      "traces": [],
+      "note": "sparklines for the progress screen"
+    },
+    {
+      "path": "app/views/vitals.js",
+      "status": "unforced",
+      "traces": [],
+      "note": "Watch gauges; the 10/13 council found no decision reads them (P7), and NO tab, button or link opens the screen"
+    },
+    {
+      "path": "app/views/ring.js",
+      "status": "forced",
+      "traces": ["D0008"],
+      "note": "the ring: anything measured or timed"
+    },
+    {
+      "path": "app/views/glyphs.js",
+      "status": "forced",
+      "traces": ["D0008"],
+      "note": "the icon set of Anvil's own look"
+    },
+    {
+      "path": "app/views/confirm-modal.js",
+      "status": "support",
+      "traces": [],
+      "note": "in-app confirm used by forced views"
+    },
+
+    {
+      "path": "app/lib/workouts.js",
+      "status": "forced",
+      "traces": ["P1", "P2", "P3", "P9"],
+      "note": "the rotation, the progression, supersets as lettered pairs"
+    },
+    {
+      "path": "app/lib/routine.js",
+      "status": "forced",
+      "traces": ["P14", "D0012"],
+      "note": "the routine card's items and ticks"
+    },
+    {
+      "path": "app/lib/routines.js",
+      "status": "forced",
+      "traces": ["T1", "D0003"],
+      "note": "warm-ups and the mobility block"
+    },
+    {
+      "path": "app/lib/core.js",
+      "status": "support",
+      "traces": [],
+      "note": "the core screen's sessions (follows core.js's status)"
+    },
+    {
+      "path": "app/lib/activities.js",
+      "status": "forced",
+      "traces": ["P5", "P8", "P10"],
+      "note": "other training, heart-rate rest, the interference guard"
+    },
+    {
+      "path": "app/lib/draft.js",
+      "status": "forced",
+      "traces": ["INV", "D0012"],
+      "note": "nothing logged lives only in memory; a stale draft is filed under its own date"
+    },
+    {
+      "path": "app/lib/daily.js",
+      "status": "forced",
+      "traces": ["INV", "D0002"],
+      "note": "the shared daily row, patched field by field"
+    },
+    {
+      "path": "app/lib/weight.js",
+      "status": "forced",
+      "traces": ["P10"],
+      "note": "bodyweight trend against its declared rate"
+    },
+    {
+      "path": "app/lib/vitals.js",
+      "status": "support",
+      "traces": [],
+      "note": "read helpers for the Watch screen (follows vitals.js's status)"
+    },
+    {
+      "path": "app/lib/github.js",
+      "status": "forced",
+      "traces": ["D0001", "D0006"],
+      "note": "the one door to the data repos, routed by path"
+    },
+    {
+      "path": "app/lib/store.js",
+      "status": "support",
+      "traces": [],
+      "note": "offline-first store every view reads"
+    },
+    {
+      "path": "app/lib/sync.js",
+      "status": "support",
+      "traces": [],
+      "note": "conflict-safe push of queued writes"
+    },
+    {
+      "path": "app/lib/merge.js",
+      "status": "support",
+      "traces": [],
+      "note": "field-wise merge on conflict"
+    },
+    {
+      "path": "app/lib/db.js",
+      "status": "support",
+      "traces": [],
+      "note": "IndexedDB wrapper under the store"
+    },
+    { "path": "app/lib/router.js", "status": "support", "traces": [], "note": "hash router" },
+    { "path": "app/lib/dates.js", "status": "support", "traces": [], "note": "date helpers" },
+    {
+      "path": "app/lib/awake.js",
+      "status": "forced",
+      "traces": ["P4"],
+      "note": "keeps the screen on mid-session, so logging costs no unlock"
+    },
+    {
+      "path": "app/lib/music.js",
+      "status": "unforced",
+      "traces": [],
+      "note": "plays music during core sessions; no document asks for it (a July request)"
+    },
+
+    { "path": "route:today", "status": "forced", "traces": ["T6"], "note": "the Gym tab" },
+    { "path": "route:system", "status": "forced", "traces": ["D0001"], "note": "the Setup tab" },
+    {
+      "path": "route:core",
+      "status": "unforced",
+      "traces": [],
+      "note": "reachable only by typing #/core"
+    },
+    {
+      "path": "route:progress",
+      "status": "unforced",
+      "traces": [],
+      "note": "reachable only by typing #/progress"
+    },
+    {
+      "path": "route:vitals",
+      "status": "unforced",
+      "traces": [],
+      "note": "reachable only by typing #/vitals"
+    },
+
+    {
+      "path": "worker/src/index.js",
+      "status": "unforced",
+      "traces": [],
+      "note": "the Watch upload server; deployed 10/13 but on hold until a sleep rule is ratified (council 10/13)"
+    },
+    {
+      "path": "worker/src/lib.js",
+      "status": "support",
+      "traces": [],
+      "note": "the worker's parser (follows index.js's status)"
+    },
+    {
+      "path": "worker:/vitals",
+      "status": "unforced",
+      "traces": [],
+      "note": "Health Auto Export upload; on hold (council 10/13)"
+    },
+    {
+      "path": "worker:/health",
+      "status": "support",
+      "traces": [],
+      "note": "liveness probe for the worker"
+    }
+  ]
+}
