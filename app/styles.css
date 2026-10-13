@@ -49,21 +49,21 @@
 
 :root {
   /* ground, coldest to warmest */
-  --void: #04060d;
-  --deep: #070b16;
-  --plate: #0c1322;
-  --plate-hi: #111a2d;
-  --plate-lo: #080d19;
+  --void: #0e1b38;
+  --deep: #13234a;
+  --plate: #182b54;
+  --plate-hi: #1f3563;
+  --plate-lo: #122347;
 
   /* structure */
-  --edge: #1b2740;
-  --edge-hot: #2b3f66;
-  --edge-cold: #131d31;
+  --edge: #2c4170;
+  --edge-hot: #3d5a92;
+  --edge-cold: #22355e;
 
   /* ink */
   --text: #e7eefc;
   --dim: #8494b0;
-  --faint: #5b6a86;
+  --faint: #7383a3;
 
   /* the arc */
   --arc: #2f6bff;
