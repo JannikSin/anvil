@@ -32,7 +32,7 @@
     },
     {
      "name": "Machine Chest Press",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "8-12",
      "load": "moderate",
      "effort": "last set to failure",
@@ -57,7 +57,7 @@
     },
     {
      "name": "Lateral Raise",
-     "targetSets": 4,
+     "targetSets": 5,
      "targetReps": "12-20",
      "load": "light",
      "effort": "last set to failure, then half reps at the stretch",
@@ -71,7 +71,7 @@
     },
     {
      "name": "Overhead Triceps Extension",
-     "targetSets": 3,
+     "targetSets": 4,
      "targetReps": "10-15",
      "load": "moderate",
      "effort": "last set to failure",
@@ -166,7 +166,7 @@
     },
     {
      "name": "Hammer Curl",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "10-15",
      "load": "moderate",
      "effort": "last set to failure",
@@ -213,7 +213,7 @@
     },
     {
      "name": "Bulgarian Split Squat",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "8-10 each leg",
      "load": "moderate-heavy",
      "effort": "stop 1-2 reps short",
@@ -226,7 +226,7 @@
     },
     {
      "name": "Single-Leg Extension",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "12-15 each leg",
      "load": "moderate",
      "effort": "last set to failure, then half reps at the stretch",
@@ -251,20 +251,6 @@
      "source": "Maeo et al. 2021, Med Sci Sports Exerc: seated leg curl grew the hamstrings more than lying (about 14% vs 9%, 12 weeks, MRI)."
     },
     {
-     "name": "Leg Press",
-     "targetSets": 2,
-     "targetReps": "10-15",
-     "load": "moderate",
-     "effort": "stop 1 rep short",
-     "rest": 90,
-     "increment": 10,
-     "tier": 1,
-     "cue": "Feet mid-platform, shoulder width, lower until the hips just start to curl off the pad.",
-     "cut": true,
-     "evidence": "trial",
-     "source": "Haugen et al. 2023, BMC Sports Sci Med Rehabil (meta-analysis, 13 studies): machines and free weights build muscle equally."
-    },
-    {
      "name": "Cable Woodchop",
      "targetSets": 2,
      "targetReps": "10 each side",
@@ -274,6 +260,20 @@
      "increment": 5,
      "tier": 1,
      "cue": "High to low across the body, turn through hips and upper back together, arms long."
+    },
+    {
+     "name": "Standing Calf Raise",
+     "targetSets": 3,
+     "targetReps": "10-15",
+     "load": "moderate",
+     "effort": "last set to failure",
+     "rest": 60,
+     "increment": 5,
+     "tier": 1,
+     "cue": "Optional. Pause 2 seconds at the bottom stretch.",
+     "cut": true,
+     "evidence": "trial",
+     "source": "Kinoshita, Maeo et al. 2023, Front Physiol: standing calf raises grew the gastrocnemius far more than seated (12 weeks, MRI)."
     }
    ]
   },
@@ -310,7 +310,7 @@
     },
     {
      "name": "Lateral Raise",
-     "targetSets": 4,
+     "targetSets": 5,
      "targetReps": "12-20",
      "load": "light",
      "effort": "last set to failure, then half reps at the stretch",
@@ -324,7 +324,7 @@
     },
     {
      "name": "Triceps Pushdown",
-     "targetSets": 3,
+     "targetSets": 4,
      "targetReps": "12-15",
      "load": "moderate",
      "effort": "last set to failure",
@@ -336,7 +336,7 @@
     },
     {
      "name": "Cable Fly or Pec Deck",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "12-15",
      "load": "light",
      "effort": "last set to failure",
@@ -379,7 +379,7 @@
     },
     {
      "name": "Lat Pulldown",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "10-12",
      "load": "moderate",
      "effort": "last set to failure",
@@ -503,7 +503,7 @@
     },
     {
      "name": "Single-Leg Extension",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "12-15 each leg",
      "load": "moderate",
      "effort": "last set to failure, then half reps at the stretch",
@@ -540,7 +540,7 @@
     },
     {
      "name": "Standing Calf Raise",
-     "targetSets": 2,
+     "targetSets": 3,
      "targetReps": "10-15",
      "load": "moderate",
      "effort": "last set to failure",
@@ -588,7 +588,7 @@
   "lower": "Walk or bike. Never jog in before squats or deadlifts.",
   "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
  },
- "programVersion": "block1-2026-10-13",
+ "programVersion": "block1-2026-10-13b",
  "_sources": "Exercise sources added 2026-10-12 (Anvil tenet 2, Core Purpose P13). evidence 'trial' = a training study measured growth or strength with this exercise; 'emg' = a muscle-activation study only. An exercise with no source rests only on the general evidence: about 10 or more hard sets per muscle a week grow more muscle (Schoenfeld, Ogborn and Krieger 2016, J Sports Sci) and training each muscle twice a week beats once (Schoenfeld, Ogborn and Krieger 2016, Sports Med). Those are researched next, and kept or replaced.",
  "routine": {
   "_note": "The daily routine (Crystal Life/Daily-Routine and the 2026-10-12 routine handoff), fixed: one routine, read first and ticked second, ruled 2026-10-13 (\"There is one set routine that I do\"). Supplements come from the profile and take the supplementAt times. Weekends wake at 7:00 am; Friday and Saturday nights have no clock rule.",
@@ -688,5 +688,5 @@
    }
   ]
  },
- "_volume": "Weekly hard sets per muscle, set 2026-10-13 from the evidence review (Pelland et al. 2026 Sports Med volume meta-regression; Schoenfeld 2017; Refalo 2023/2024; Singer 2024 rest): aim 10 to 20 fractional sets a week per muscle, about 12 to 16 on the priority muscles. Block 1 now: chest 12, back 14 plus 4 rear-delt, side delts 8, quads 15, hamstrings 10, biceps 5 direct (about 12.5 counting rows), triceps 6 direct (about 12 counting presses). Goal lifts keep 3 sets (incline DB, heavy squat, flat bench, overhead press, heavy row). Machine rests 90 s (no detectable size benefit past 90 s); heavy compounds keep 2.5 to 3 min."
+ "_volume": "Weekly hard sets per muscle, settled 2026-10-13 (decision 0014): toward about 16 on the priority muscles, inside the 10 to 20 range (Pelland et al. 2026). Direct sets: chest 14, back 16, side delts 11.5, rear delts 4, triceps 8, biceps 6, quads 16, hamstrings 10, calves 6, abs 14. Side delts also get half credit from overhead pressing (counted); biceps and triceps get about 6 more each from rows and presses. Per session no muscle passes 9 hard sets. Incline (Push A, upper chest) and flat (Push B, mid chest) are on different days. Legs A dropped its leg press (a third quad press after squat and split squat). Machine rests 90 s; heavy compounds 2.5 to 3 min."
 }

@@ -626,3 +626,37 @@ export function adoptProgram(repo, bundle) {
     templates: bundle.templates,
   };
 }
+
+/**
+ * Superset labels for one session (David, 2026-10-13: the bare arrow was
+ * ambiguous). Lifts that name each other as `superset` become a lettered
+ * pair, A1 and A2, B1 and B2, in the order they appear. Each label says what
+ * to do in words: one set of each back to back, then the pair's rest; when
+ * the two lifts carry different set counts, the extra sets are done alone.
+ * @param {Record<string, any> | null | undefined} template
+ * @returns {Map<string, { code: string, partner: string, partnerCode: string, text: string }>}
+ */
+export function supersetLabels(template) {
+  /** @type {Map<string, { code: string, partner: string, partnerCode: string, text: string }>} */
+  const out = new Map();
+  const list = template?.exercises ?? [];
+  let letter = 0;
+  for (const a of list) {
+    if (!a?.superset || out.has(a.name)) continue;
+    const b = list.find((/** @type {any} */ x) => x.name === a.superset && x.superset === a.name);
+    if (!b) continue;
+    const L = String.fromCharCode(65 + letter++);
+    const rest = Number(b.rest) > 0 ? Number(b.rest) : Number(a.rest) || 0;
+    const restWords = rest >= 60 ? `${Math.round((rest / 60) * 10) / 10} min` : `${rest} s`;
+    const sa = Number(a.targetSets) || 0;
+    const sb = Number(b.targetSets) || 0;
+    const extra =
+      sa === sb
+        ? ""
+        : ` ${sa > sb ? `${L}1` : `${L}2`} has ${Math.abs(sa - sb)} more ${Math.abs(sa - sb) === 1 ? "set" : "sets"}: do ${Math.abs(sa - sb) === 1 ? "it" : "them"} alone at the end.`;
+    const text = `Superset ${L}: one set of ${L}1 ${a.name}, then straight into ${L}2 ${b.name}, then rest ${restWords}. Repeat.${extra}`;
+    out.set(a.name, { code: `${L}1`, partner: b.name, partnerCode: `${L}2`, text });
+    out.set(b.name, { code: `${L}2`, partner: a.name, partnerCode: `${L}1`, text });
+  }
+  return out;
+}

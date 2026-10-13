@@ -11,6 +11,7 @@ import {
   sessionsOn,
   addSet,
   undoSet,
+  supersetLabels,
 } from "../lib/workouts.js";
 import { relativeDayLabel } from "../lib/dates.js";
 import { hrRest } from "../lib/activities.js";
@@ -139,6 +140,8 @@ export function TodayView({
   // Tiers were cut with Block 1: the session is the session as written, and
   // the lifts marked first cut are what goes when a day runs long.
   const template = full ?? null;
+  // superset pairs as A1/A2 with their rule in words (2026-10-13)
+  const pairs = supersetLabels(template);
   const order = rotationOrder(workouts.schedule);
   const tokenBad = tokenBroken(repo?.auth);
   // The reason from the last FAILED PUSH beats the reason from a probe: one is
@@ -372,8 +375,12 @@ export function TodayView({
               const onTarget = seed && inp.w === String(seed.weight) && inp.r === String(seed.reps);
               const hasNumbers = inp.w.trim() !== "" && inp.r.trim() !== "";
               const restFor = ex.rest === 0 ? 0 : Number(ex.rest) || REST_FALLBACK;
-              const restText =
-                restFor === 0 ? `straight into ${ex.superset}` : `rest ${fmtRest(restFor)}`;
+              const pair = pairs.get(ex.name);
+              const restText = pair
+                ? `superset ${pair.code}`
+                : restFor === 0
+                  ? `straight into ${ex.superset}`
+                  : `rest ${fmtRest(restFor)}`;
               const set = (/** @type {Record<string, string>} */ patch) =>
                 onDraft({ ...draft, inputs: { ...inputs, [ex.name]: { ...inp, ...patch } } });
               const nudge = (/** @type {"w" | "r"} */ field, /** @type {number} */ by) => {
@@ -398,7 +405,7 @@ export function TodayView({
               `;
               const tags = [
                 ex.main ? "MAIN LIFT" : null,
-                ex.superset ? `⇄ ${ex.superset}` : null,
+                pair ? `${pair.code} WITH ${pair.partnerCode} ${pair.partner.toUpperCase()}` : null,
                 ex.cut ? "FIRST CUT" : null,
               ].filter(Boolean);
               const restBtn =
@@ -410,13 +417,14 @@ export function TodayView({
               return html`
                 <div class=${`lift ${done ? "is-logged" : ""}`} key=${ex.name}>
                   <div class="lift__head">
-                    <span class="lift__name">${ex.name}</span>
+                    <span class="lift__name">${pair ? `${pair.code} · ${ex.name}` : ex.name}</span>
                     <span class="lift__pres num">${`${ex.targetSets}×${ex.targetReps}`}</span>
                   </div>
                   <div class="lift__rx num">
                     ${`${String(ex.load ?? "").toUpperCase()} · ${ex.effort ?? ""} · ${restText}`}
                   </div>
                   ${tags.length > 0 && html`<div class="lift__tags num">${tags.join("   ")}</div>`}
+                  ${pair && pair.code.endsWith("1") && html`<div class="lift__note">${pair.text}</div>`}
                   <div class="lift__last num">
                     ${logged ? `top set: ${formatSets(logged.sets)}` : top ? `last top set: ${formatSets([top])}` : baseline ? `plan: ${baseline.weight}×${baseline.reps}` : "last top set: none yet"}
                   </div>
