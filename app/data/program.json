@@ -32,11 +32,11 @@
     },
     {
      "name": "Machine Chest Press",
-     "targetSets": 3,
+     "targetSets": 2,
      "targetReps": "8-12",
      "load": "moderate",
      "effort": "last set to failure",
-     "rest": 120,
+     "rest": 90,
      "increment": 5,
      "tier": 1,
      "cue": "Handles at mid-chest, full stretch at the back, shoulders stay back at the top.",
@@ -57,7 +57,7 @@
     },
     {
      "name": "Lateral Raise",
-     "targetSets": 3,
+     "targetSets": 4,
      "targetReps": "12-20",
      "load": "light",
      "effort": "last set to failure, then half reps at the stretch",
@@ -129,11 +129,11 @@
     },
     {
      "name": "Chest-Supported High Row",
-     "targetSets": 3,
+     "targetSets": 2,
      "targetReps": "8-12",
      "load": "moderate",
      "effort": "last set to failure",
-     "rest": 120,
+     "rest": 90,
      "increment": 5,
      "tier": 1,
      "cue": "Hammer Strength Iso-Lateral High Row: chest on the pad, let the shoulders rise for the stretch, pull down and back."
@@ -213,7 +213,7 @@
     },
     {
      "name": "Bulgarian Split Squat",
-     "targetSets": 3,
+     "targetSets": 2,
      "targetReps": "8-10 each leg",
      "load": "moderate-heavy",
      "effort": "stop 1-2 reps short",
@@ -256,7 +256,7 @@
      "targetReps": "10-15",
      "load": "moderate",
      "effort": "stop 1 rep short",
-     "rest": 120,
+     "rest": 90,
      "increment": 10,
      "tier": 1,
      "cue": "Feet mid-platform, shoulder width, lower until the hips just start to curl off the pad.",
@@ -367,7 +367,7 @@
    "exercises": [
     {
      "name": "Weighted Pull-up or Lat Pulldown",
-     "targetSets": 4,
+     "targetSets": 3,
      "targetReps": "5-8",
      "load": "heavy",
      "effort": "stop 1-2 reps short",
@@ -379,11 +379,11 @@
     },
     {
      "name": "Lat Pulldown",
-     "targetSets": 3,
+     "targetSets": 2,
      "targetReps": "10-12",
      "load": "moderate",
      "effort": "last set to failure",
-     "rest": 120,
+     "rest": 90,
      "increment": 5,
      "tier": 1,
      "cue": "Wide or single-arm cable. Lean back slightly, elbows to the back pockets, bar all the way up for the stretch."
@@ -394,7 +394,7 @@
      "targetReps": "10-12",
      "load": "moderate",
      "effort": "stop 1 rep short",
-     "rest": 120,
+     "rest": 90,
      "increment": 5,
      "tier": 1,
      "cue": "Lighter than Pull A. Strict, big stretch forward, pause at the ribs.",
@@ -462,7 +462,7 @@
    "exercises": [
     {
      "name": "Back Squat",
-     "targetSets": 3,
+     "targetSets": 2,
      "targetReps": "8-10",
      "load": "moderate",
      "effort": "stop 2 reps short, about 10-15% under Legs A",
@@ -489,7 +489,7 @@
     },
     {
      "name": "Seated Leg Curl",
-     "targetSets": 3,
+     "targetSets": 4,
      "targetReps": "10-15",
      "load": "moderate",
      "effort": "last set to failure, then half reps at the stretch",
@@ -519,7 +519,7 @@
      "targetReps": "12-15",
      "load": "moderate",
      "effort": "stop 1 rep short",
-     "rest": 120,
+     "rest": 90,
      "increment": 10,
      "tier": 1,
      "cue": "Feet high and wide: shifts it to glutes and hamstrings.",
@@ -687,5 +687,6 @@
     "at": "11:30 pm"
    }
   ]
- }
+ },
+ "_volume": "Weekly hard sets per muscle, set 2026-10-13 from the evidence review (Pelland et al. 2026 Sports Med volume meta-regression; Schoenfeld 2017; Refalo 2023/2024; Singer 2024 rest): aim 10 to 20 fractional sets a week per muscle, about 12 to 16 on the priority muscles. Block 1 now: chest 12, back 14 plus 4 rear-delt, side delts 8, quads 15, hamstrings 10, biceps 5 direct (about 12.5 counting rows), triceps 6 direct (about 12 counting presses). Goal lifts keep 3 sets (incline DB, heavy squat, flat bench, overhead press, heavy row). Machine rests 90 s (no detectable size benefit past 90 s); heavy compounds keep 2.5 to 3 min."
 }
