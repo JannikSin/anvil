@@ -1,5 +1,9 @@
 # Anvil
 
+**Governing document: [`DOCTRINE.md`](DOCTRINE.md).** It outranks this file where they
+disagree, and holds what is true regardless of the code: the job, the prohibitions, the
+settled decisions and their reasons, the armed failure modes, and the kill conditions.
+
 > **READ FIRST, EVERY SESSION: `C:\Users\DATar\Sanity\Obsidian\Crystal\Lanes\Anvil-Core-Purpose.md`.**
 > It is the authority on what this app is for. Eleven promises in four acts,
 > each with a done test. A change that serves no promise number does not get
@@ -19,6 +23,8 @@
 The lifting half of Mise, on its own two feet. Split out on 2026-08-18; the
 plan of record is Crystal `Lanes/Fitness-App-Build.md`.
 
+> as-of: 2026-10-02 (fast; repo routing, SW prefixes, live site and worker routes re-checked by prandtl). The live-state facts in this file (what is deployed, which repo holds what, what the worker accepts, what the sibling apps do) were last written on that date; the Crystal doctor files a ticket when this line is fourteen days old. Move the date when you re-verify them. The rules are stable and carry no date. This file is the plan's founding example: a claim about Mise below stayed wrong for eleven days because nothing said as of when. Rule: Crystal `System/Initial-Conditions`.
+
 Live at `janniksin.github.io/anvil`. Data in the private `JannikSin/anvil-data`.
 Zero build: static HTML, CSS and ES modules, `preact` + `htm` vendored, an
 import map in `index.html`. There is nothing to compile and nothing to bundle.
@@ -34,19 +40,26 @@ ORIGIN, not per path. That means:
 - `DB_NAME` is `"anvil"`.
 - The service worker cache is `anvil-shell-vN`, registered with scope `./`,
   never at the origin root.
-- `activate` deletes only caches starting with `anvil-shell-`. Mise still ships
-  `keys.filter((k) => k !== CACHE_VERSION)`, which deletes every cache on the
-  origin; Tally, Finesse, Bonmot, Grandstand and AIMap were prefix-scoped on
-  2026-07-27, so Mise is the one app still evicting its siblings on every
-  deploy. `tests/origin.test.js` guards all of this.
+- `activate` deletes only caches starting with `anvil-shell-`.
+  `tests/origin.test.js` guards all of this.
+  **Corrected 2026-08-29 (trinity):** this paragraph used to say Mise still
+  ships `keys.filter((k) => k !== CACHE_VERSION)` and is "the one app still
+  evicting its siblings on every deploy". That was true when written and is
+  **no longer true**. Mise was prefix-scoped on 2026-08-18 and now filters by
+  `mise-`, verified in its `sw.js` on 2026-08-29. Every app on the origin is
+  prefix-scoped. The rule for Anvil is unchanged; only the claim about the
+  sibling was stale, and it stayed wrong for eleven days because nothing in
+  this setup can mark an assertion superseded. That gap is the argument for
+  the `decisions/` folder in Crystal `System/App-Doctrine.md`.
 
-**2. Two data repos.** `lib/github.js` `repoFor()` routes by path:
+**2. Two data repos.** `app/lib/github.js` `repoFor()` routes by path:
 
 | Path | Repo | Access |
 |---|---|---|
 | `workouts.json`, `vitals.json`, `activities.json` | `anvil-data` | read + write |
 | `fitness/daily.json` | `mise-data` | read + write, SHARED with Mise |
 | `fitness/targets.json` | `mise-data` | read only, enforced in `writeFile` |
+| `health/vitals.json` | `mise-data` | read only, enforced in `writeFile`. Apple Health rows still land here through MISE's worker until David re-points Health Auto Export at anvil's worker (a phone step); then anvil's own `vitals.json` wins (checked 2026-10-02) |
 
 The PAT must be scoped to both repos or half the app silently does nothing.
 
