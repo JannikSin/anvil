@@ -483,7 +483,7 @@ const UNBUILT = [
   {
     id: "P13",
     name: "P13 every exercise names its source and shows its cue beside the load",
-    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). Every exercise has a cue; 19 of 39 slots carry a confirmed study (13 exercises) and the screen shows it; 14 exercises rest on general volume evidence only and are researched next, then kept or replaced.",
+    why: "unbuilt, owner tweener, added 2026-10-12 (decision 0005). Every exercise has a cue and every one of the 39 slots shows a source line. Researched 2026-10-13: 24 of 27 exercises carry a verified study (trial or EMG); Pallof press, face pull and cable woodchop have none in the literature and say so on screen until David keeps or replaces them. Still unbuilt: the test that reads program.json and fails when a slot loses its source.",
   },
   {
     id: "P15",

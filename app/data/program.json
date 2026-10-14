@@ -53,7 +53,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Arms softly bent and locked there, open wide until the chest stretches, hug back in.",
-     "cut": true
+     "cut": true,
+     "evidence": "trial",
+     "source": "Pinto et al. 2025, J Strength Cond Res: 12 weeks of pec deck alone grew upper and lower chest thickness about 17 to 21 percent (ultrasound) and raised 1RM about 45 percent; 1 set and 3 sets gave the same result."
     },
     {
      "name": "Lateral Raise",
@@ -92,7 +94,9 @@
      "rest": 60,
      "increment": 5,
      "tier": 1,
-     "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you."
+     "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you.",
+     "evidence": "none",
+     "source": "No published study tests this exercise (checked 2026-10-13; the only record is a 4-person conference abstract). It stays on the general core evidence until it is kept or replaced."
     }
    ]
   },
@@ -125,7 +129,9 @@
      "rest": 150,
      "increment": 5,
      "tier": 1,
-     "cue": "Dead hang at the bottom every rep, chest to the bar. Bodyweight logs as 0."
+     "cue": "Dead hang at the bottom every rep, chest to the bar. Bodyweight logs as 0.",
+     "evidence": "trial",
+     "source": "Wolf et al. 2025, PeerJ: 8 weeks of lat pulldowns in trained lifters raised pulldown 10RM and arm thickness (ultrasound) the same whether reps were full range or lengthened partials. Andersen et al. 2014, J Strength Cond Res: lat activation is the same at narrow, medium and wide grip. No study measures growth from pull-ups themselves."
     },
     {
      "name": "Chest-Supported High Row",
@@ -136,7 +142,9 @@
      "rest": 90,
      "increment": 5,
      "tier": 1,
-     "cue": "Hammer Strength Iso-Lateral High Row: chest on the pad, let the shoulders rise for the stretch, pull down and back."
+     "cue": "Hammer Strength Iso-Lateral High Row: chest on the pad, let the shoulders rise for the stretch, pull down and back.",
+     "evidence": "emg",
+     "source": "Fischer et al. 2025, J Electromyogr Kinesiol: in a prone (chest-down) barbell row at 10RM, lat activation was highest in the top half of the pull; rear delt and biceps did not change with range. The closest study to a supported row; none tests the Hammer Strength high row itself."
     },
     {
      "name": "Face Pull",
@@ -148,7 +156,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Rope at forehead height, pull to the eyes, hands finish beside the ears, thumbs back.",
-     "superset": "Cable External Rotation"
+     "superset": "Cable External Rotation",
+     "evidence": "none",
+     "source": "No published study tests this exercise (checked 2026-10-13). It stays on the general rear-delt and rotator-cuff evidence until it is kept or replaced."
     },
     {
      "name": "Cable External Rotation",
@@ -175,7 +185,9 @@
      "tier": 1,
      "cue": "Neutral grip, elbows still, all the way down each rep.",
      "superset": "Hanging Leg Raise",
-     "cut": true
+     "cut": true,
+     "evidence": "emg",
+     "source": "Coratella et al. 2023, Sports (Basel): in bodybuilders at 8RM, the palms-up curl gave 12 percent more biceps and 6 percent more brachioradialis activation than the hammer grip on the way up; the hammer grip did not win on brachioradialis."
     },
     {
      "name": "Hanging Leg Raise",
@@ -187,7 +199,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
-     "superset": "Hammer Curl"
+     "superset": "Hammer Curl",
+     "evidence": "emg",
+     "source": "Escamilla et al. 2006, Phys Ther: the hanging knee-up with straps was among the highest of 12 exercises for upper and lower rectus abdominis and the obliques, and the highest for the external oblique together with the Power Wheel (21 adults, surface EMG)."
     }
    ]
   },
@@ -234,7 +248,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Knee lined up with the pivot, pause 1 second at the top, control down. One leg at a time.",
-     "superset": "Seated Leg Curl"
+     "superset": "Seated Leg Curl",
+     "evidence": "trial",
+     "source": "Pedrosa et al. 2022, Eur J Sport Sci: of four leg-extension ranges, training only the stretched (knee-bent) half grew the rectus femoris and vastus lateralis cross-section the most (45 untrained women)."
     },
     {
      "name": "Seated Leg Curl",
@@ -259,7 +275,9 @@
      "rest": 60,
      "increment": 5,
      "tier": 1,
-     "cue": "High to low across the body, turn through hips and upper back together, arms long."
+     "cue": "High to low across the body, turn through hips and upper back together, arms long.",
+     "evidence": "none",
+     "source": "No published study tests this exercise (checked 2026-10-13; one 2023 paper used it only as a strength test). It stays on the general core evidence until it is kept or replaced."
     },
     {
      "name": "Standing Calf Raise",
@@ -306,7 +324,9 @@
      "rest": 150,
      "increment": 5,
      "tier": 1,
-     "cue": "Shoulder blades pinned, touch the lower chest, press back toward the face. Bar or DBs."
+     "cue": "Shoulder blades pinned, touch the lower chest, press back toward the face. Bar or DBs.",
+     "evidence": "trial",
+     "source": "Chaves et al. 2020, Int J Exerc Sci: 8 weeks of flat, incline or both grew the chest (ultrasound) and strength equally; the only regional difference was incline beating flat at the upper-chest site by 0.62 cm. Ogasawara et al. 2013, Eur J Appl Physiol: 24 weeks of bench press 3x10 grew the pec major and triceps on MRI."
     },
     {
      "name": "Lateral Raise",
@@ -332,7 +352,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Elbows pinned at the sides, full lockout, hands rise to the chest on the way up.",
-     "superset": "Lateral Raise"
+     "superset": "Lateral Raise",
+     "evidence": "trial",
+     "source": "Maeo et al. 2023, Eur J Sport Sci: 12 weeks of cable elbow extensions, one arm overhead and the other at the side (the pushdown position), grew the triceps on MRI in both arms; the overhead arm grew about 1.4 times more, mostly in the long head."
     },
     {
      "name": "Cable Fly or Pec Deck",
@@ -344,7 +366,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Low to high or flat. Lighter second chest hit; stretch wide, hug in.",
-     "cut": true
+     "cut": true,
+     "evidence": "trial",
+     "source": "Pinto et al. 2025, J Strength Cond Res: 12 weeks of pec deck alone grew upper and lower chest thickness about 17 to 21 percent (ultrasound) and raised 1RM about 45 percent; 1 set and 3 sets gave the same result."
     },
     {
      "name": "Pallof Press",
@@ -355,7 +379,9 @@
      "rest": 60,
      "increment": 5,
      "tier": 1,
-     "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you."
+     "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you.",
+     "evidence": "none",
+     "source": "No published study tests this exercise (checked 2026-10-13; the only record is a 4-person conference abstract). It stays on the general core evidence until it is kept or replaced."
     }
    ]
   },
@@ -375,7 +401,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Full dead hang, chest to the bar. Muscle-up groundwork. Bodyweight logs as 0.",
-     "main": true
+     "main": true,
+     "evidence": "trial",
+     "source": "Wolf et al. 2025, PeerJ: 8 weeks of lat pulldowns in trained lifters raised pulldown 10RM and arm thickness (ultrasound) the same whether reps were full range or lengthened partials. Andersen et al. 2014, J Strength Cond Res: lat activation is the same at narrow, medium and wide grip. No study measures growth from pull-ups themselves."
     },
     {
      "name": "Lat Pulldown",
@@ -386,7 +414,9 @@
      "rest": 90,
      "increment": 5,
      "tier": 1,
-     "cue": "Wide or single-arm cable. Lean back slightly, elbows to the back pockets, bar all the way up for the stretch."
+     "cue": "Wide or single-arm cable. Lean back slightly, elbows to the back pockets, bar all the way up for the stretch.",
+     "evidence": "trial",
+     "source": "Wolf et al. 2025, PeerJ: 8 weeks of lat pulldowns in trained lifters raised pulldown 10RM and arm thickness (ultrasound) the same whether reps were full range or lengthened partials. Andersen et al. 2014, J Strength Cond Res: lat activation is the same at narrow, medium and wide grip; narrow and medium grips lift about 3 kg more."
     },
     {
      "name": "Cable Row",
@@ -412,7 +442,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Bench at 45-60 degrees, arms hang behind the body, curl without the elbows swinging forward.",
-     "superset": "Hanging Leg Raise"
+     "superset": "Hanging Leg Raise",
+     "evidence": "trial",
+     "source": "Kassiano et al. 2025, Int J Sports Med: 8 weeks of incline curls grew the upper (proximal) biceps more and preacher curls the lower (distal) region more (63 untrained women, ultrasound); each group gained the most strength on its own exercise."
     },
     {
      "name": "Hanging Leg Raise",
@@ -424,7 +456,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
-     "superset": "Incline DB Curl"
+     "superset": "Incline DB Curl",
+     "evidence": "emg",
+     "source": "Escamilla et al. 2006, Phys Ther: the hanging knee-up with straps was among the highest of 12 exercises for upper and lower rectus abdominis and the obliques, and the highest for the external oblique together with the Power Wheel (21 adults, surface EMG)."
     },
     {
      "name": "Face Pull",
@@ -436,7 +470,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Rope at forehead height, pull to the eyes, hands finish beside the ears, thumbs back.",
-     "superset": "Cable External Rotation"
+     "superset": "Cable External Rotation",
+     "evidence": "none",
+     "source": "No published study tests this exercise (checked 2026-10-13). It stays on the general rear-delt and rotator-cuff evidence until it is kept or replaced."
     },
     {
      "name": "Cable External Rotation",
@@ -511,7 +547,9 @@
      "increment": 5,
      "tier": 1,
      "cue": "Knee lined up with the pivot, pause 1 second at the top, control down. One leg at a time.",
-     "superset": "Seated Leg Curl"
+     "superset": "Seated Leg Curl",
+     "evidence": "trial",
+     "source": "Pedrosa et al. 2022, Eur J Sport Sci: of four leg-extension ranges, training only the stretched (knee-bent) half grew the rectus femoris and vastus lateralis cross-section the most (45 untrained women)."
     },
     {
      "name": "Leg Press",
@@ -536,7 +574,9 @@
      "rest": 60,
      "increment": 5,
      "tier": 1,
-     "cue": "Kneel, rope beside the head, curl the ribs toward the hips (round the spine), not a hip hinge."
+     "cue": "Kneel, rope beside the head, curl the ribs toward the hips (round the spine), not a hip hinge.",
+     "evidence": "emg",
+     "source": "Moraes et al. 2009, Phys Ther Sport: in loaded crunches from 20 to 100 percent of 1RM, abdominal activation rose with load and was highest at the top load (13 people). Measured on a weighted crunch, not the kneeling cable version."
     },
     {
      "name": "Standing Calf Raise",
@@ -588,8 +628,8 @@
   "lower": "Walk or bike. Never jog in before squats or deadlifts.",
   "why": "Prior aerobic work degrades the lifting that follows, the impairment is localised to the muscles you just used, and it scales with volume. Under about 10 minutes easy is a general warm-up and costs nothing. Twenty to thirty minutes before squats is a leg pre-fatigue protocol wearing a warm-up costume."
  },
- "programVersion": "block1-2026-10-13b",
- "_sources": "Exercise sources added 2026-10-12 (Anvil tenet 2, Core Purpose P13). evidence 'trial' = a training study measured growth or strength with this exercise; 'emg' = a muscle-activation study only. An exercise with no source rests only on the general evidence: about 10 or more hard sets per muscle a week grow more muscle (Schoenfeld, Ogborn and Krieger 2016, J Sports Sci) and training each muscle twice a week beats once (Schoenfeld, Ogborn and Krieger 2016, Sports Med). Those are researched next, and kept or replaced.",
+ "programVersion": "block1-2026-10-13c",
+ "_sources": "Exercise sources added 2026-10-12, completed 2026-10-13 (Anvil tenet 2, Core Purpose P13). evidence 'trial' = a training study measured growth or strength with this exercise; 'emg' = a muscle-activation study only; 'none' = the literature was searched on 2026-10-13 and no study tests the movement, so it rests on the general evidence until kept or replaced. The general evidence: about 10 or more hard sets per muscle a week grow more muscle (Schoenfeld, Ogborn and Krieger 2016, J Sports Sci) and training each muscle twice a week beats once (Schoenfeld, Ogborn and Krieger 2016, Sports Med). Every citation was checked against a PubMed, PMC or journal record on the day it was added; none is from memory.",
  "routine": {
   "_note": "The daily routine (Crystal Life/Daily-Routine and the 2026-10-12 routine handoff), fixed: one routine, read first and ticked second, ruled 2026-10-13 (\"There is one set routine that I do\"). Supplements come from the profile and take the supplementAt times. Weekends wake at 7:00 am; Friday and Saturday nights have no clock rule.",
   "supplementAt": {
