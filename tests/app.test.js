@@ -169,6 +169,7 @@ test("a workout left unfiled survives the next open: filed, pushed, and still th
   const files = {
     "mise-data/fitness/daily.json": { days: [] },
     "anvil-data/workouts.json": { templates: [], sessions: [] },
+    "anvil-data/activities.json": { activities: [{ id: "r1", date: "2026-10-15", type: "tennis", minutes: 60 }] },
   };
   const ls = { "anvil.pat": "test-token" };
   globalThis.localStorage = { getItem: (k) => (k in ls ? ls[k] : null) };
@@ -192,6 +193,8 @@ test("a workout left unfiled survives the next open: filed, pushed, and still th
     assert.ok(store.get("sessions", []).some((s) => s.id === "d1"), "dropped from the local record");
     assert.ok(files["anvil-data/workouts.json"].sessions.some((s) => s.id === "d1"), "never reached anvil-data");
     assert.equal(C.filedFor(store, P).length, 1, "the filed workout counts for the queue");
+    assert.equal(store.get("sync.last", {}).ok, true, "the pull itself succeeded");
+    assert.deepEqual(store.get("activities", []).map((a) => a.kind), ["tennis"], "activities come down from anvil-data");
   } finally {
     delete globalThis.localStorage;
     delete globalThis.fetch;
@@ -203,6 +206,25 @@ test("an export never carries the GitHub token, and an import never replaces it"
   assert.equal(C.portableKey("anvil.pat.savedAt"), false);
   assert.equal(C.portableKey("anvil.v2.sessions"), true);
   assert.equal(C.portableKey("mise.pat"), false);
+  assert.equal(C.portableKey("anvil.v2.push"), false, "the reminder server's url and bearer key");
+  assert.equal(C.portableKey("anvil.v2.push.state"), false);
   const src = readFileSync(new URL("../app/app.js", import.meta.url), "utf8");
   assert.equal((src.match(/C\.portableKey/g) || []).length, 2);
+});
+
+test("activities sync to anvil-data in v1's shape; a removal deletes only that one", () => {
+  const file = { activities: [{ id: "a1", date: "2026-10-10", type: "walk", minutes: 20 }, { id: "a2", date: "2026-10-12", type: "run", minutes: 25 }] };
+  const local = [{ id: "a3", date: "2026-10-17", kind: "tennis", minutes: 60, conditioning: true }];
+  const out = Y.applyActivities(file, local, { put: ["a3"], del: ["a1"] });
+  assert.deepEqual(out.activities.map((a) => a.id), ["a2", "a3"]);
+  assert.deepEqual(out.activities[1], { id: "a3", date: "2026-10-17", type: "tennis", minutes: 60 });
+  const back = Y.activityToLocal(out.activities[0]);
+  assert.equal(back.kind, "run");
+  assert.equal(back.conditioning, true);
+});
+
+test("service worker: a slow network falls back to the cached shell instead of hanging", () => {
+  const sw = readFileSync(new URL("../sw.js", import.meta.url), "utf8");
+  assert.match(sw, /setTimeout\(resolve, 2500\)/);
+  assert.match(sw, /Promise\.race/);
 });

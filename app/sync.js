@@ -13,7 +13,7 @@
   "use strict";
   var API = "https://api.github.com";
   var MISE = { owner: "JannikSin", repo: "mise-data" };
-  var DAILY = "fitness/daily.json", WORKOUTS = "workouts.json";
+  var DAILY = "fitness/daily.json", WORKOUTS = "workouts.json", ACTIVITIES = "activities.json";
   // local field -> shared daily.json field
   var FIELD = { sleep: "sleepHours" };
   var BACK = { sleepHours: "sleep" };
@@ -137,6 +137,25 @@
     });
     return { date: rec.date, templateId: rec.template, exercises: ex, id: rec.id };
   }
+  // activities: local {id, date, kind, minutes, conditioning} <-> v1's {id, date, type, minutes}
+  function activityToRemote(a) { return { id: a.id, date: a.date, type: a.kind, minutes: a.minutes }; }
+  function activityToLocal(a) {
+    var kind = String(a.type || a.kind || "other").toLowerCase();
+    return { id: a.id, date: a.date, kind: kind, minutes: +a.minutes || 0, conditioning: kind === "tennis" || kind === "run" };
+  }
+  function applyActivities(file, local, ob) {
+    var doc = Object.assign({}, file || {});
+    var xs = (Array.isArray(doc.activities) ? doc.activities : []).filter(function (a) { return ob.del.indexOf(a.id) === -1; });
+    ob.put.forEach(function (id) {
+      var a = local.filter(function (x) { return x.id === id; })[0];
+      if (!a) return;
+      var i = xs.findIndex(function (x) { return x.id === id; });
+      if (i >= 0) xs[i] = activityToRemote(a); else xs.push(activityToRemote(a));
+    });
+    doc.activities = xs;
+    return doc;
+  }
+
   function upsertSession(file, remoteRec) {
     var doc = Object.assign({}, file || {});
     var ss = Array.isArray(doc.sessions) ? doc.sessions.slice() : [];
@@ -155,7 +174,7 @@
     function soon() { clearTimeout(timer); timer = setTimeout(function () { flush().then(retry); }, 2500); }
     // something still unsent: right away if the last push worked, a minute later if it failed
     function retry() {
-      if (!store.get("outbox.daily", []).length && !store.get("outbox.sessions", []).length) return;
+      if (!pending()) return;
       var ok = (store.get("sync.last", {}) || {}).ok;
       clearTimeout(timer); timer = setTimeout(function () { flush().then(retry); }, ok ? 2500 : 60000);
     }
@@ -171,10 +190,23 @@
       store.set("outbox.sessions", ob);
       soon();
     }
+    function queueActivity(id, removed) {
+      var ob = store.get("outbox.activities", { put: [], del: [] });
+      ob.put = ob.put.filter(function (x) { return x !== id; });
+      ob.del = ob.del.filter(function (x) { return x !== id; });
+      (removed ? ob.del : ob.put).push(id);
+      store.set("outbox.activities", ob);
+      soon();
+    }
+    function pending() {
+      var oa = store.get("outbox.activities", { put: [], del: [] });
+      return store.get("outbox.daily", []).length + store.get("outbox.sessions", []).length + oa.put.length + oa.del.length;
+    }
     function flush() {
       if (!has() || busy) return Promise.resolve();
       var od = store.get("outbox.daily", []), os = store.get("outbox.sessions", []);
-      if (!od.length && !os.length) return Promise.resolve();
+      var oa = store.get("outbox.activities", { put: [], del: [] });
+      if (!od.length && !os.length && !oa.put.length && !oa.del.length) return Promise.resolve();
       busy = true;
       var p = Promise.resolve();
       if (od.length) p = p.then(function () {
@@ -194,6 +226,15 @@
           store.set("outbox.sessions", store.get("outbox.sessions", []).filter(function (id) { return os.indexOf(id) === -1; }));
         });
       });
+      if (oa.put.length || oa.del.length) p = p.then(function () {
+        return update(anvilRepo(), ACTIVITIES, function (f) { return applyActivities(f, store.get("activities", []), oa); }, "anvil: activity").then(function () {
+          var now = store.get("outbox.activities", { put: [], del: [] });
+          store.set("outbox.activities", {
+            put: now.put.filter(function (id) { return oa.put.indexOf(id) === -1; }),
+            del: now.del.filter(function (id) { return oa.del.indexOf(id) === -1; })
+          });
+        });
+      });
       return p.then(function () { last = { ok: true, at: Date.now(), msg: "" }; },
         function (e) { last = { ok: false, at: Date.now(), msg: String(e && e.message || e) }; })
         .then(function () { busy = false; store.set("sync.last", last); if (onChange) onChange(); });
@@ -201,7 +242,7 @@
     function pull() {
       if (!has()) return Promise.resolve();
       return flush().then(function () {
-        return Promise.all([getFile(MISE, DAILY), getFile(anvilRepo(), WORKOUTS)]);
+        return Promise.all([getFile(MISE, DAILY), getFile(anvilRepo(), WORKOUTS), getFile(anvilRepo(), ACTIVITIES)]);
       }).then(function (fs) {
         var daily = dailyToLocal(fs[0].json);
         // whatever is still unsent wins over the remote copy
@@ -228,6 +269,12 @@
         all.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
         all.forEach(function (s, i) { s.seq = i + 1; });
         store.set("sessions", all);
+        // activities: GitHub's list, plus anything still unsent, minus anything removed and unsent
+        var oa = store.get("outbox.activities", { put: [], del: [] });
+        var mine = store.get("activities", []);
+        var acts = ((fs[2].json && fs[2].json.activities) || []).map(activityToLocal).filter(function (a) { return oa.del.indexOf(a.id) === -1 && oa.put.indexOf(a.id) === -1; });
+        mine.forEach(function (a) { if (oa.put.indexOf(a.id) !== -1) acts.push(a); });
+        store.set("activities", acts);
         last = { ok: true, at: Date.now(), msg: "" };
         store.set("sync.last", last);
         if (onChange) onChange();
@@ -237,9 +284,9 @@
         if (onChange) onChange();
       });
     }
-    return { has: has, queueDay: queueDay, queueSession: queueSession, flush: flush, pull: pull };
+    return { has: has, queueDay: queueDay, queueSession: queueSession, queueActivity: queueActivity, pending: pending, flush: flush, pull: pull };
   }
 
-  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm };
+  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.AnvilSync = api;
 })(this);

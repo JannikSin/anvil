@@ -376,8 +376,12 @@
     return fileSession(store, old, P);
   }
 
-  // The GitHub token never leaves the phone in an export, and an import never replaces it.
-  function portableKey(k) { return k.indexOf("anvil.") === 0 && k.indexOf("anvil.pat") !== 0; }
+  // Secrets never leave the phone in an export, and an import never replaces them: the GitHub
+  // token, and the reminder server's pairing (its url and bearer key, Tribunal 10/17).
+  var SECRET = ["anvil.pat", "anvil.v2.push"];
+  function portableKey(k) {
+    return k.indexOf("anvil.") === 0 && !SECRET.some(function (p) { return k.indexOf(p) === 0; });
+  }
 
   var api = {
     dateKey: dateKey, parseKey: parseKey, addDays: addDays, weekday: weekday, weekStart: weekStart, daysBetween: daysBetween,

@@ -60,7 +60,7 @@
 
   function syncLine() {
     if (!S.has()) return '<p class="small dim syncline">Saved on this phone only. Add your GitHub token in Settings to sync.</p>';
-    var l = store.get("sync.last", null), pend = store.get("outbox.daily", []).length + store.get("outbox.sessions", []).length;
+    var l = store.get("sync.last", null), pend = S.pending();
     if (l && l.ok === false) return '<p class="small syncline caution">Not synced yet (' + esc(l.msg) + '). Saved here; it retries on its own.</p>';
     return '<p class="small dim syncline">' + (pend ? "Syncing " + pend + " change" + (pend === 1 ? "" : "s") : l && l.at ? "Synced " + esc(C.hm(new Date(l.at).toTimeString().slice(0, 5))) : "Syncing") + "</p>";
   }
@@ -219,7 +219,7 @@
     if (a === "gotosession") { setTab("gym"); return; }
     if (a === "tab") { setTab(b.dataset.tab); return; }
     if (a === "activity") { openActivity(sel, b.dataset.key === "conditioning"); return; }
-    if (a === "unactivity") { store.set("activities", C.activities(store).filter(function (x) { return x.id !== b.dataset.id; })); render(); return; }
+    if (a === "unactivity") { store.set("activities", C.activities(store).filter(function (x) { return x.id !== b.dataset.id; })); S.queueActivity(b.dataset.id, true); render(); return; }
     if (a === "mobility") { openCore(sel, "mobility"); return; }
     if (a === "core") { openCore(sel); return; }
     if (a === "extra") { state.extra = true; render(); return; }
@@ -309,8 +309,10 @@
       if (b.dataset.m) { mins = Math.max(0, mins + +b.dataset.m); draw(); return; }
       if (b.dataset.x === "log") {
         var xs = C.activities(store);
-        xs.push({ id: C.uid(), date: date, kind: pick.toLowerCase(), minutes: mins, conditioning: pick === "Tennis" || pick === "Run" });
+        var act = { id: C.uid(), date: date, kind: pick.toLowerCase(), minutes: mins, conditioning: pick === "Tennis" || pick === "Run" };
+        xs.push(act);
         store.set("activities", xs);
+        S.queueActivity(act.id);
       }
       sheet.close(); render();
     };

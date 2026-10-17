@@ -7,7 +7,7 @@
 // The cache is anvil-shell-vN and activate deletes ONLY caches starting with anvil-shell-: every
 // one of David's PWAs shares janniksin.github.io, and Cache Storage is per origin, not per path.
 var CACHE_PREFIX = "anvil-shell-";
-var CACHE = CACHE_PREFIX + "v42";
+var CACHE = CACHE_PREFIX + "v43";
 var SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./app/app.css", "./app/profile.js", "./app/program.js", "./app/core.js", "./app/sync.js", "./app/app.js",
@@ -24,12 +24,15 @@ self.addEventListener("activate", function (e) {
 });
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(fetch(e.request).then(function (res) {
+  var net = fetch(e.request).then(function (res) {
     if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }
     return res;
-  }).catch(function () {
-    return caches.match(e.request).then(function (hit) { return hit || caches.match("./index.html"); });
-  }));
+  });
+  var cached = function () { return caches.match(e.request).then(function (hit) { return hit || caches.match("./index.html"); }); };
+  // Bars but no data at the CoRec: past 2.5 s the cached copy answers (the network still refreshes
+  // the cache when it lands). No cached copy: keep waiting on the network (Tribunal 10/17).
+  var slow = new Promise(function (resolve) { setTimeout(resolve, 2500); }).then(cached).then(function (hit) { return hit || net; });
+  e.respondWith(Promise.race([net.catch(cached), slow]).then(function (r) { return r || net; }));
 });
 self.addEventListener("notificationclick", function (e) {
   e.notification.close();
