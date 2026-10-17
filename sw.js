@@ -7,7 +7,7 @@
 // The cache is anvil-shell-vN and activate deletes ONLY caches starting with anvil-shell-: every
 // one of David's PWAs shares janniksin.github.io, and Cache Storage is per origin, not per path.
 var CACHE_PREFIX = "anvil-shell-";
-var CACHE = CACHE_PREFIX + "v44";
+var CACHE = CACHE_PREFIX + "v45";
 var SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./app/app.css", "./app/profile.js", "./app/program.js", "./app/core.js", "./app/sync.js", "./app/app.js",
@@ -15,7 +15,7 @@ var SHELL = [
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"
 ];
 self.addEventListener("install", function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: "reload" }); })); }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
