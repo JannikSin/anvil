@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
+import { Buffer } from "node:buffer";
 
 const require = createRequire(import.meta.url);
 const P = require("../app/program.js");
@@ -158,4 +159,50 @@ test("no app file reads or writes a mise.* key", () => {
     const src = readFileSync(new URL(`../app/${f}`, import.meta.url), "utf8");
     assert.ok(!/["']mise\./.test(src), f);
   }
+});
+
+// Tribunal 10/17 (vrony): a workout left without tapping File was filed locally on the next open,
+// then the pull right after replaced the local sessions with the remote copy and dropped it.
+// This drives the real boot sequence against a fake GitHub: file the stale draft, queue it, pull.
+test("a workout left unfiled survives the next open: filed, pushed, and still there after the pull", async () => {
+  const { store } = memStore();
+  const files = {
+    "mise-data/fitness/daily.json": { days: [] },
+    "anvil-data/workouts.json": { templates: [], sessions: [] },
+  };
+  const ls = { "anvil.pat": "test-token" };
+  globalThis.localStorage = { getItem: (k) => (k in ls ? ls[k] : null) };
+  globalThis.fetch = async (url, opt = {}) => {
+    const m = /repos\/JannikSin\/([^/]+)\/contents\/([^?]+)/.exec(url);
+    const key = `${m[1]}/${m[2]}`;
+    if ((opt.method || "GET") === "PUT") {
+      files[key] = JSON.parse(Buffer.from(JSON.parse(opt.body).content, "base64").toString("utf8"));
+      return { ok: true, status: 200, json: async () => ({}) };
+    }
+    const content = Buffer.from(JSON.stringify(files[key])).toString("base64");
+    return { ok: true, status: 200, json: async () => ({ content, sha: "s" }) };
+  };
+  try {
+    store.set("draft", { id: "d1", date: "2026-10-16", template: "pull-a", lifts: { "pull-a-cable-row": { key: "cable-row", w: 140, r: 8, logged: true } } });
+    const S = Y.make(store, P, null);
+    const rec = C.fileStaleDraft(store, "2026-10-17", P);
+    assert.ok(rec);
+    S.queueSession(rec.id);
+    await S.pull();
+    assert.ok(store.get("sessions", []).some((s) => s.id === "d1"), "dropped from the local record");
+    assert.ok(files["anvil-data/workouts.json"].sessions.some((s) => s.id === "d1"), "never reached anvil-data");
+    assert.equal(C.filedFor(store, P).length, 1, "the filed workout counts for the queue");
+  } finally {
+    delete globalThis.localStorage;
+    delete globalThis.fetch;
+  }
+});
+
+test("an export never carries the GitHub token, and an import never replaces it", () => {
+  assert.equal(C.portableKey("anvil.pat"), false);
+  assert.equal(C.portableKey("anvil.pat.savedAt"), false);
+  assert.equal(C.portableKey("anvil.v2.sessions"), true);
+  assert.equal(C.portableKey("mise.pat"), false);
+  const src = readFileSync(new URL("../app/app.js", import.meta.url), "utf8");
+  assert.equal((src.match(/C\.portableKey/g) || []).length, 2);
 });

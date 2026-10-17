@@ -365,6 +365,20 @@
     return rec;
   }
 
+  // A draft left from an earlier day: what was logged then was recorded then, so it is filed under
+  // its own date and nothing is lost. Returns the filed record (the caller must queue it for sync,
+  // or the next pull drops it: Tribunal 10/17), or null when the draft held nothing.
+  function fileStaleDraft(store, today, P) {
+    var old = store.get("draft", null);
+    if (!old || old.date === today) return null;
+    var kept = Object.keys(old.lifts || {}).some(function (k) { return old.lifts[k].logged || old.lifts[k].note; });
+    if (!kept) { store.del("draft"); return null; }
+    return fileSession(store, old, P);
+  }
+
+  // The GitHub token never leaves the phone in an export, and an import never replaces it.
+  function portableKey(k) { return k.indexOf("anvil.") === 0 && k.indexOf("anvil.pat") !== 0; }
+
   var api = {
     dateKey: dateKey, parseKey: parseKey, addDays: addDays, weekday: weekday, weekStart: weekStart, daysBetween: daysBetween,
     label: label, longLabel: longLabel, hm: hm, minutesOf: minutesOf, addMinutes: addMinutes, DAYS: DAYS,
@@ -376,7 +390,7 @@
     inDeload: inDeload, blockWeek: blockWeek, sessionsUntil: sessionsUntil,
     avg7: avg7, lastValue: lastValue, activities: activities, conditioningThisWeek: conditioningThisWeek,
     wallSquatsThisWeek: wallSquatsThisWeek, sessionFiledOn: sessionFiledOn,
-    routine: routine, dueNow: dueNow, fileSession: fileSession, lastNote: lastNote, moveOf: moveOf,
+    routine: routine, dueNow: dueNow, fileSession: fileSession, fileStaleDraft: fileStaleDraft, portableKey: portableKey, lastNote: lastNote, moveOf: moveOf,
     coreById: coreById, coreForDate: coreForDate, coreSteps: coreSteps, coreAt: coreAt, pushDay: pushDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.AnvilCore = api;

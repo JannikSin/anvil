@@ -483,7 +483,7 @@
     document.getElementById("st-file").onchange = function (e) {
       var f = e.target.files[0]; if (!f) return;
       f.text().then(function (txt) {
-        var data = JSON.parse(txt), keys = Object.keys(data).filter(function (k) { return k.indexOf("anvil.") === 0; });
+        var data = JSON.parse(txt), keys = Object.keys(data).filter(C.portableKey);
         if (!keys.length) { alert("That file holds no Anvil record."); return; }
         if (!confirm("Replace this device's record with the " + keys.length + " parts in the file?")) return;
         keys.forEach(function (k) { backing.setItem(k, data[k]); });
@@ -494,7 +494,7 @@
   }
   function exportRecord() {
     var out = {};
-    for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf("anvil.") === 0) out[k] = localStorage.getItem(k); }
+    for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (C.portableKey(k)) out[k] = localStorage.getItem(k); }
     var a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
     a.download = "anvil-record-" + today() + ".json"; a.click();
@@ -568,12 +568,10 @@
   function boot() {
     var t = today();
     state.sel = t;
-    var old = store.get("draft", null);
-    if (old && old.date !== t) {
-      // what was logged then was recorded then: file it under its own date, nothing is lost
-      if (Object.keys(old.lifts || {}).some(function (k) { return old.lifts[k].logged || old.lifts[k].note; })) C.fileSession(store, old, P);
-      else store.del("draft");
-    }
+    // what was logged then was recorded then: filed under its own date AND queued for sync, so the
+    // pull below cannot drop it (Tribunal 10/17: it used to file locally and then lose it)
+    var stale = C.fileStaleDraft(store, t, P);
+    if (stale) S.queueSession(stale.id);
     render();
     S.pull();
     // the check-in opens itself on the first open of each calendar day, on every device (P6)
