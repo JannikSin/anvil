@@ -67,7 +67,15 @@
     Object.keys(b).forEach(function (k) { out[k] = (a && typeof a[k] === "object" && !Array.isArray(a[k])) ? merge(a[k], b[k]) : b[k]; });
     return out;
   }
-  function profile(store, seed) { return merge(seed, { training: store.get("profile.training", {}) }); }
+  // Three layers: the blank template shipped with the app (public, nothing measured), then the
+  // person's own profile pulled from the private data repo (store key profile.mine, written only by
+  // sync), then the training edits made on this phone. template stays true only while no synced
+  // copy has ever arrived, and the Day tab says so.
+  function profile(store, seed) {
+    var mine = store.get("profile.mine", null), base = seed;
+    if (mine && typeof mine === "object" && !Array.isArray(mine)) base = merge(merge(seed, mine), { template: false });
+    return merge(base, { training: store.get("profile.training", {}) });
+  }
   function saveTraining(store, patch) { store.set("profile.training", merge(store.get("profile.training", {}), patch)); }
 
   // ---------- programme gate: P13 and P12, run before anything is drawn ----------
@@ -235,7 +243,7 @@
 
     morning.push({ key: "wake", label: "Up, standing. The Watch is the alarm", time: times.wake, kind: "tick", done: !!r.wake });
     morning.push({ key: "weigh", label: "Bathroom, then weigh in", time: null, kind: "checkin", done: row.weight != null, detail: "Before water or food. Recorded by the check-in" });
-    morning.push({ key: "pushups", label: T.pushups + " push-ups", time: null, kind: "checkin", done: row.pushups != null, detail: "Recorded by the check-in" });
+    morning.push({ key: "pushups", label: T.pushups != null ? T.pushups + " push-ups" : "Push-ups", time: null, kind: "checkin", done: row.pushups != null, detail: "Recorded by the check-in" });
     morning.push({ key: "checkin", label: "Check-in: weight, sleep, push-ups", time: null, kind: "checkin", done: hasCheckin, remind: addMinutes(times.wake, 10) });
     // Lights out is a clock fact about last night, ticked this morning. It is recorded on TODAY's row
     // (routine.lightsOutLastNight): the app never writes to a past day (David, 10/13).
@@ -243,15 +251,15 @@
     if (T.evening.rulesOn.indexOf(yWd) !== -1) {
       morning.push({ key: "lightsOutLastNight", label: "Lights out by " + hm(T.evening.lightsOut) + " last night", time: null, kind: "tick", done: !!r.lightsOutLastNight, detail: "A clock fact, ticked this morning" });
     }
-    // The order the morning actually happens (David, 10/16): supplements with breakfast at home,
-    // out the door, then the gym at the CoRec, shower there, straight to class. Nothing is taken
-    // after leaving except what goes with the noon caffeine.
+    // The order the morning actually happens (10/16): supplements with breakfast at home, out the
+    // door, then the gym. Nothing is taken after leaving except what goes with the noon caffeine.
+    // The gym's own line (where, what after) is the profile's, not the code's.
     T.supplements.filter(function (s) { return s.when === "morning"; }).forEach(function (s, i) {
       morning.push({ key: s.id, label: s.name + " " + s.dose, time: i === 0 ? times.supps : null, kind: "supp", done: !!sup[s.id], remind: times.supps, group: "breakfast supplements" });
     });
     if (times.out) morning.push({ key: "out", label: "Out the door", time: times.out, kind: "tick", done: !!r.out });
     var filed = sessionFiledOn(store, date);
-    morning.push({ key: "gym", label: "Gym at the CoRec, shower there, then class", time: times.gym, kind: "session", done: filed.length > 0, remind: addMinutes(times.gym, 80), detail: filed.length ? "Filed: " + filed.map(function (s) { return P.sessions[s.template] ? P.sessions[s.template].name : s.template; }).join(", ") : "Opens the Gym tab" });
+    morning.push({ key: "gym", label: T.gymLabel || "Gym", time: times.gym, kind: "session", done: filed.length > 0, remind: addMinutes(times.gym, 80), detail: filed.length ? "Filed: " + filed.map(function (s) { return P.sessions[s.template] ? P.sessions[s.template].name : s.template; }).join(", ") : "Opens the Gym tab" });
 
     T.supplements.filter(function (s) { return s.when === "noon"; }).forEach(function (s, i) {
       dayItems.push({ key: s.id, label: s.name + " " + s.dose, time: i === 0 ? T.noon : null, kind: "supp", done: !!sup[s.id], remind: T.noon, group: "noon caffeine", detail: s.note || null });
@@ -274,9 +282,9 @@
     var cs = coreForDate(date, P), cdone = r.core;
     evening.push({ key: "core", label: "Core Session: " + (cdone && coreById(P, cdone) ? coreById(P, cdone).name : cs.name) + ", about " + Math.round(coreSteps(P, cdone && coreById(P, cdone) ? coreById(P, cdone) : cs).total / 60) + " min", time: null, kind: "core", done: !!cdone, remind: T.core && T.core.remind, detail: cdone ? "Done" : "On the floor, no equipment. Morning or before bed" });
     evening.push({ key: "firstLine", label: "Tomorrow's first line: one physical action", time: rules ? E.firstLine : null, kind: "text", done: !!(r.firstLine && r.firstLine.trim()), value: r.firstLine || "", remind: E.firstLine });
-    evening.push({ key: "read", label: "Read " + T.readWhat, time: rules ? E.read : null, kind: "tick", done: !!r.read });
+    evening.push({ key: "read", label: T.readWhat ? "Read " + T.readWhat : "Read", time: rules ? E.read : null, kind: "tick", done: !!r.read });
     if (rules) evening.push({ key: "lightsOutNote", label: "Lights out " + hm(E.lightsOut) + ". Tick it tomorrow morning", time: E.lightsOut, kind: "note", done: false });
-    evening.push({ key: "reward", label: "Took it: " + T.reward, time: null, kind: "tick", done: !!r.reward, detail: "Earned when the spine and the day's work are done" });
+    if (T.reward) evening.push({ key: "reward", label: "Took it: " + T.reward, time: null, kind: "tick", done: !!r.reward, detail: "Earned when the spine and the day's work are done" });
 
     return {
       morning: morning, day: dayItems, evening: evening, weekend: weekend,

@@ -43,6 +43,7 @@
     if (state.tab === "gym") {
       h.push(sessionPlate(pr, sel));
     } else {
+      if (pr.template) h.push(templateNote());
       h.push(plate("Morning", R.weekend ? "weekend times" : "", R.morning, sel, isToday, R.lastFirstLine));
       h.push(plate("Day", "", R.day, sel, isToday).replace("</section>", activitiesHTML(sel) + '<button class="knob" style="width:100%;margin:8px 0 4px" data-act="activity">Something else today: tennis, run, walk</button></section>'));
       h.push(plate("Evening", R.weekend ? "no clock rule tonight" : "", R.evening, sel, isToday));
@@ -56,6 +57,14 @@
     if (focused) { var el = document.getElementById(focused); if (el) { el.focus(); try { el.setSelectionRange(caret, caret); } catch (e) {} } }
     renderDock();
     pushSync(false);
+  }
+
+  // The profile is private: it lives in the data repo and arrives with sync. Until a copy has
+  // arrived on this phone the Day tab runs on the blank template, and says so plainly.
+  function templateNote() {
+    return '<div class="note caution">' + (S.has()
+      ? "Your profile has not arrived from anvil-data yet, so this is the blank routine. It loads on the next sync."
+      : "This is the blank routine. Your profile is private and comes with sync: add your GitHub token in Settings.") + "</div>";
   }
 
   function syncLine() {
@@ -77,7 +86,7 @@
       var detail = it.detail ? "<small>" + esc(it.detail) + "</small>" : "";
       if (it.kind === "text") {
         h += '<div class="' + cls + ' plain"><span class="tick">&#10003;</span><span class="what">' + esc(it.label) +
-          '<textarea id="firstline" class="firstline" rows="2" data-act="firstline" placeholder="e.g. open the fatigue file and re-run the one case">' + esc(it.value) + '</textarea>' +
+          '<textarea id="firstline" class="firstline" rows="2" data-act="firstline" placeholder="e.g. shoes by the door, bag packed">' + esc(it.value) + '</textarea>' +
           '<small>Writing it is the tick.</small></span><span class="when">' + when + '</span></div>';
       } else if (it.kind === "number") {
         h += '<div class="' + cls + ' plain"><span class="tick">&#10003;</span><span class="what">' + esc(it.label) + detail +
@@ -430,9 +439,11 @@
       check.groups.map(function (gr) { return "<tr><td>" + esc(gr) + "</td><td>" + check.sets[gr] + "</td></tr>"; }).join("") + "</table>";
     h += "<p class='small'>The week is " + pr.training.sessionsIntent + " sessions. No set is dropped for a shorter week: a missed day is gone, and the next session is the next in the queue, in full.</p>";
     h += "<p class='small'>Plus one conditioning session, a Core Session every day, and mobility on " + P.mobility.days.map(function (d) { return C.DAYS[d]; }).join(", ") + ".</p>";
-    h += "<h3>The goal</h3><p class='small'>" + esc(g.what) + ", by " + esc(C.longLabel(g.date)) + ". Between today and then: about " + C.sessionsUntil(t, g.date, pr.training.sessionsIntent) + " sessions at " + pr.training.sessionsIntent + " a week.</p>";
+    h += "<h3>The goal</h3>" + (g && g.what && g.date
+      ? "<p class='small'>" + esc(g.what) + ", by " + esc(C.longLabel(g.date)) + ". Between today and then: about " + C.sessionsUntil(t, g.date, pr.training.sessionsIntent) + " sessions at " + pr.training.sessionsIntent + " a week.</p>"
+      : "<p class='small dim'>No goal on this phone yet. It comes with your profile from anvil-data.</p>");
     h += "<p class='small'>7-day average weight: " + (a7 != null ? "<b>" + a7 + " lb</b>" + (a7p != null ? ", the week before " + a7p : "") : "no weigh-ins yet") + ". Waist: " + (function () { var w = C.lastValue(store, C.addDays(sel, 1), "waist"); return w ? w.v + " in on " + C.label(w.date) : "measured on Sundays"; })() + ".</p>";
-    h += "<table>" + pr.training.strengthGoals.map(function (x) { return "<tr><td>" + esc(x.lift) + "</td><td class='dim'>now " + esc(x.now) + "</td><td>" + esc(x.goal) + "</td></tr>"; }).join("") + "</table>";
+    if ((pr.training.strengthGoals || []).length) h += "<table>" + pr.training.strengthGoals.map(function (x) { return "<tr><td>" + esc(x.lift) + "</td><td class='dim'>now " + esc(x.now) + "</td><td>" + esc(x.goal) + "</td></tr>"; }).join("") + "</table>";
     h += "<h3>Dates</h3><table>" + P.reviews.filter(function (r) { return r.date >= C.addDays(t, -1); }).map(function (r) { return "<tr><td>" + esc(C.label(r.date)) + "</td><td>" + esc(r.what) + "</td></tr>"; }).join("") + "</table>";
     h += '<div class="actions"><button class="knob arc" data-x="close">Close</button></div>';
     sheet.innerHTML = h;
@@ -445,7 +456,7 @@
     var T = prof().training, perm = typeof Notification === "undefined" ? "unsupported" : Notification.permission;
     // The routine is fixed and comes from the profile: nothing here builds it or asks for a time
     // ("Just tell me the routine. Don't make me create it on the spot", David, 10/13).
-    var h = "<h2>Settings</h2><p class='dim small'>Your routine is set: wake " + C.hm(T.days.weekday.wake) + " weekdays, " + C.hm(T.days.weekend.wake) + " weekends, lights out " + C.hm(T.evening.lightsOut) + " Sun to Thu, sessions about " + T.sessionMinutes + " min. There is nothing to set up.</p>";
+    var h = "<h2>Settings</h2>" + (prof().template ? "<p class='dim small'>This phone has only the blank routine; your own arrives from anvil-data with sync.</p>" : "<p class='dim small'>Your routine is set: wake " + C.hm(T.days.weekday.wake) + " weekdays, " + C.hm(T.days.weekend.wake) + " weekends, lights out " + C.hm(T.evening.lightsOut) + " Sun to Thu, sessions about " + T.sessionMinutes + " min. There is nothing to set up.</p>");
     var tok = S.has(), sl = store.get("sync.last", null);
     h += '<div class="set-row"><label>GitHub sync<small class="dim" style="display:block">' +
       (tok ? "Token saved on this phone" + (sl && sl.ok ? ", last synced " + esc(C.hm(new Date(sl.at).toTimeString().slice(0, 5))) : sl ? ", not reaching GitHub: " + esc(sl.msg) : "") + ". Check-ins go to mise-data, sessions to anvil-data." : "No token on this phone, so nothing leaves it. Paste the token the old Anvil used.") +

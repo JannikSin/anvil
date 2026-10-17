@@ -11,7 +11,35 @@ const require = createRequire(import.meta.url);
 const P = require("../app/program.js");
 const C = require("../app/core.js");
 const Y = require("../app/sync.js");
-const PROFILE = require("../app/profile.js");
+const TEMPLATE = require("../app/profile.js");
+
+// A neutral, invented profile in the shape of the private profile.json in anvil-data. The real one
+// never enters this public repo; these values describe nobody.
+const FIXTURE = {
+  template: false,
+  base: { goal: { what: "Example goal", target: 1, unit: "lb", date: "2027-01-01" }, units: "lb" },
+  training: {
+    days: {
+      weekday: { wake: "06:00", supps: "06:05", out: "06:15", gym: "06:30" },
+      weekend: { wake: "07:00", supps: "07:05", out: "07:15", gym: "07:30" },
+    },
+    gymLabel: "Gym, example",
+    evening: { rulesOn: [0, 1, 2, 3, 4], kitchen: "21:00", magnesium: "21:30", firstLine: "21:30", read: "22:00", lightsOut: "22:30" },
+    pushups: 10,
+    supplements: [
+      { id: "creatine", name: "Supp A", dose: "1 g", when: "morning" },
+      { id: "fishOil", name: "Supp B", dose: "1 g", when: "morning" },
+      { id: "caffeine", name: "Supp C", dose: "1 g", when: "noon" },
+      { id: "ltheanine", name: "Supp D", dose: "1 g", when: "noon" },
+      { id: "magnesium", name: "Supp E", dose: "1 g", when: "evening" },
+    ],
+    reward: "example reward",
+    readWhat: "example book",
+    reminders: { on: true, repeatMinutes: 15 },
+    startLoads: { "back-squat": 100 },
+    strengthGoals: [{ lift: "Example lift", now: "1", goal: "2" }],
+  },
+};
 
 function memStore() {
   const m = {};
@@ -73,7 +101,8 @@ test("every lift carries a cue and a source", () => {
 
 test("the morning happens in order: supplements, out the door, then the gym; caffeine at noon", () => {
   const { store } = memStore();
-  const R = C.routine(store, "2026-10-19", C.profile(store, PROFILE), P);
+  store.set("profile.mine", FIXTURE);
+  const R = C.routine(store, "2026-10-19", C.profile(store, TEMPLATE), P);
   const keys = R.morning.map((i) => i.key);
   const at = (k) => keys.indexOf(k);
   assert.ok(at("creatine") > at("checkin"));
@@ -85,9 +114,66 @@ test("the morning happens in order: supplements, out the door, then the gym; caf
   assert.equal(R.evening.filter((i) => i.key === "magnesium").length, 1);
 });
 
-test("supplement ids are Mise's, so both apps tick the same field", () => {
-  const ids = PROFILE.training.supplements.map((s) => s.id);
-  for (const id of ["creatine", "d3", "fishOil", "ltheanine", "magnesium"]) assert.ok(ids.includes(id), id);
+test("a supplement's row key is its profile id, so a tick lands on the same field Mise ticks", () => {
+  const { store } = memStore();
+  store.set("profile.mine", FIXTURE);
+  const R = C.routine(store, "2026-10-19", C.profile(store, TEMPLATE), P);
+  const supps = [].concat(R.morning, R.day, R.evening).filter((i) => i.kind === "supp");
+  assert.deepEqual(supps.map((i) => i.key).sort(), FIXTURE.training.supplements.map((s) => s.id).sort());
+  C.upsertDay(store, "2026-10-19", { supplements: { creatine: true } });
+  const R2 = C.routine(store, "2026-10-19", C.profile(store, TEMPLATE), P);
+  assert.equal(R2.morning.find((i) => i.key === "creatine").done, true);
+});
+
+// Audit A23: the public repo carries nothing measured about a person. The profile shipped with the
+// app is a blank template; the person's own lives in the private anvil-data repo.
+test("the shipped profile is a blank template that carries nothing measured", () => {
+  assert.equal(TEMPLATE.template, true);
+  assert.equal(TEMPLATE.base.goal, null);
+  assert.deepEqual(TEMPLATE.training.supplements, []);
+  assert.deepEqual(TEMPLATE.training.startLoads, {});
+  assert.deepEqual(TEMPLATE.training.strengthGoals, []);
+  assert.equal(TEMPLATE.training.pushups, null);
+  assert.equal(TEMPLATE.training.reward, "");
+  assert.equal(TEMPLATE.training.readWhat, "");
+  assert.equal(TEMPLATE.training.reminders.on, false);
+  assert.deepEqual(TEMPLATE.training.evening.rulesOn, []);
+  const src = readFileSync(new URL("../app/profile.js", import.meta.url), "utf8");
+  for (const word of ["David", "CoRec", "Instagram", "creatine", "caffeine", "200 lb", "275", "Crystal"])
+    assert.ok(!src.includes(word), `profile.js names ${word}`);
+  for (const f of ["app.js", "core.js", "sync.js", "program.js"]) {
+    const s = readFileSync(new URL(`../app/${f}`, import.meta.url), "utf8");
+    assert.ok(!/CoRec|fatigue file/.test(s), f);
+  }
+});
+
+test("the profile is three layers: template, then the synced copy, then this phone's training edits", () => {
+  const { store } = memStore();
+  const bare = C.profile(store, TEMPLATE);
+  assert.equal(bare.template, true);
+  assert.equal(bare.base.goal, null);
+  store.set("profile.mine", { base: FIXTURE.base, training: FIXTURE.training }); // no template field
+  C.saveTraining(store, { reminders: { on: false } });
+  const p = C.profile(store, TEMPLATE);
+  assert.equal(p.template, false, "a synced copy is never a template");
+  assert.equal(p.base.goal.what, "Example goal");
+  assert.equal(p.training.gymLabel, "Gym, example");
+  assert.equal(p.training.reminders.on, false, "the local edit wins");
+  assert.equal(p.training.reminders.repeatMinutes, 15);
+  assert.equal(p.training.sessionsIntent, TEMPLATE.training.sessionsIntent, "a field the synced copy lacks comes from the template");
+  assert.equal(TEMPLATE.base.goal, null, "the template object is never mutated");
+});
+
+test("the blank template runs every day's routine, reminders and phone push without a crash", () => {
+  const { store } = memStore();
+  const pr = C.profile(store, TEMPLATE);
+  for (let i = 0; i < 7; i++) {
+    const d = C.addDays("2026-10-18", i);
+    const R = C.routine(store, d, pr, P);
+    for (const it of [].concat(R.morning, R.day, R.evening)) assert.ok(!/undefined|null|NaN/.test(it.label), it.label);
+    C.dueNow(store, d, "23:59", pr, P);
+    C.pushDay(store, d, pr, P, () => 0);
+  }
 });
 
 test("the queue moves on completion, never the weekday", () => {
@@ -229,4 +315,67 @@ test("service worker: a slow network falls back to the cached shell instead of h
   assert.match(sw, /Promise\.race/);
   // index.html stands in only for a page load, never for a script, icon or JSON (Tribunal 10/17)
   assert.match(sw, /nav \? caches\.match\("\.\/index\.html"\) : undefined/);
+});
+
+// The private profile comes down with the pull, is kept on the phone, and a missing or unreadable
+// profile.json keeps the last copy without failing the record's sync.
+test("sync: the pull brings profile.json from anvil-data; a 404 or an error keeps the last copy", async () => {
+  const { store } = memStore();
+  const files = {
+    "mise-data/fitness/daily.json": { days: [] },
+    "anvil-data/workouts.json": { sessions: [] },
+    "anvil-data/activities.json": { activities: [] },
+    "anvil-data/profile.json": FIXTURE,
+  };
+  let profileStatus = 200;
+  const ls = { "anvil.pat": "test-token" };
+  globalThis.localStorage = { getItem: (k) => (k in ls ? ls[k] : null) };
+  globalThis.fetch = async (url) => {
+    const m = /repos\/JannikSin\/([^/]+)\/contents\/([^?]+)/.exec(url);
+    const key = `${m[1]}/${m[2]}`;
+    const status = key === "anvil-data/profile.json" ? profileStatus : 200;
+    if (status !== 200) return { ok: false, status, json: async () => ({}) };
+    const content = Buffer.from(JSON.stringify(files[key])).toString("base64");
+    return { ok: true, status: 200, json: async () => ({ content, sha: "s" }) };
+  };
+  try {
+    const S = Y.make(store, P, null);
+    assert.equal(C.profile(store, TEMPLATE).template, true, "before the first pull: the template");
+    await S.pull();
+    const p = C.profile(store, TEMPLATE);
+    assert.equal(p.template, false);
+    assert.equal(p.base.goal.what, "Example goal");
+    profileStatus = 404;
+    await S.pull();
+    assert.equal(C.profile(store, TEMPLATE).base.goal.what, "Example goal", "a 404 keeps the last copy");
+    profileStatus = 500;
+    await S.pull();
+    assert.equal(C.profile(store, TEMPLATE).base.goal.what, "Example goal", "an error keeps the last copy");
+    assert.equal(store.get("sync.last", {}).ok, true, "a profile failure never fails the record's sync");
+    profileStatus = 200;
+    files["anvil-data/profile.json"] = [1, 2];
+    await S.pull();
+    assert.equal(C.profile(store, TEMPLATE).base.goal.what, "Example goal", "a file that is not a profile is ignored");
+  } finally {
+    delete globalThis.localStorage;
+    delete globalThis.fetch;
+  }
+});
+
+test("with no token the pull does nothing and the template stays in use", async () => {
+  const { store } = memStore();
+  globalThis.localStorage = { getItem: () => null };
+  let called = false;
+  globalThis.fetch = async () => {
+    called = true;
+    throw new Error("no fetch without a token");
+  };
+  try {
+    await Y.make(store, P, null).pull();
+    assert.equal(called, false);
+    assert.equal(C.profile(store, TEMPLATE).template, true);
+  } finally {
+    delete globalThis.localStorage;
+    delete globalThis.fetch;
+  }
 });

@@ -5,6 +5,9 @@
 //                       the freshest copy, so Mise's fields (water, dailyDozen) are never dropped.
 //   workouts.json       in anvil-data: sessions upserted by id (the merge key); templates,
 //                       schedule and programVersion are left exactly as they are.
+//   profile.json        in anvil-data: the person's profile, READ only. The public app ships a blank
+//                       template (profile.js); this private copy is kept on the phone as profile.mine
+//                       so an offline open still has it. A 404 or a failed read keeps the last copy.
 //
 // Every local write goes into an outbox first (synchronously, localStorage), then flushes. A pull
 // rebuilds the local mirror from the repos and re-applies whatever is still in the outbox, so an
@@ -13,7 +16,7 @@
   "use strict";
   var API = "https://api.github.com";
   var MISE = { owner: "JannikSin", repo: "mise-data" };
-  var DAILY = "fitness/daily.json", WORKOUTS = "workouts.json", ACTIVITIES = "activities.json";
+  var DAILY = "fitness/daily.json", WORKOUTS = "workouts.json", ACTIVITIES = "activities.json", PROFILE = "profile.json";
   // local field -> shared daily.json field
   var FIELD = { sleep: "sleepHours" };
   var BACK = { sleepHours: "sleep" };
@@ -156,6 +159,9 @@
     return doc;
   }
 
+  // a profile is an object with a training section; anything else is ignored, never stored
+  function isProfile(j) { return !!(j && typeof j === "object" && !Array.isArray(j) && j.training && typeof j.training === "object"); }
+
   function upsertSession(file, remoteRec) {
     var doc = Object.assign({}, file || {});
     var ss = Array.isArray(doc.sessions) ? doc.sessions.slice() : [];
@@ -242,8 +248,12 @@
     function pull() {
       if (!has()) return Promise.resolve();
       return flush().then(function () {
-        return Promise.all([getFile(MISE, DAILY), getFile(anvilRepo(), WORKOUTS), getFile(anvilRepo(), ACTIVITIES)]);
+        // the profile is read on its own terms: a missing file or a failed read keeps the last copy
+        // and never fails the record's sync
+        var prof = getFile(anvilRepo(), PROFILE).catch(function () { return { json: null, sha: null }; });
+        return Promise.all([getFile(MISE, DAILY), getFile(anvilRepo(), WORKOUTS), getFile(anvilRepo(), ACTIVITIES), prof]);
       }).then(function (fs) {
+        if (isProfile(fs[3].json)) store.set("profile.mine", fs[3].json);
         var daily = dailyToLocal(fs[0].json);
         // whatever is still unsent wins over the remote copy
         store.get("outbox.daily", []).forEach(function (o) {
@@ -287,6 +297,6 @@
     return { has: has, queueDay: queueDay, queueSession: queueSession, queueActivity: queueActivity, pending: pending, flush: flush, pull: pull };
   }
 
-  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal };
+  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal, isProfile: isProfile };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.AnvilSync = api;
 })(this);

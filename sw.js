@@ -1,13 +1,13 @@
 // Anvil service worker.
 //
 // Network-first for everything on this origin, cache as the offline fallback: an online open
-// always gets the current deploy, an offline open (the CoRec basement) serves the last good copy.
+// always gets the current deploy, an offline open (a gym basement) serves the last good copy.
 // The GitHub API is another origin and is never intercepted.
 //
 // The cache is anvil-shell-vN and activate deletes ONLY caches starting with anvil-shell-: every
 // one of David's PWAs shares janniksin.github.io, and Cache Storage is per origin, not per path.
 var CACHE_PREFIX = "anvil-shell-";
-var CACHE = CACHE_PREFIX + "v46";
+var CACHE = CACHE_PREFIX + "v47";
 var SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./app/app.css", "./app/profile.js", "./app/program.js", "./app/core.js", "./app/sync.js", "./app/app.js",
@@ -34,7 +34,7 @@ self.addEventListener("fetch", function (e) {
   // be answered with HTML (it would break the page), so it returns nothing and waits on the network
   var nav = e.request.mode === "navigate";
   var cached = function () { return caches.match(e.request).then(function (hit) { return hit || (nav ? caches.match("./index.html") : undefined); }); };
-  // Bars but no data at the CoRec: past 2.5 s the cached copy answers (the network still refreshes
+  // Bars but no data at the gym: past 2.5 s the cached copy answers (the network still refreshes
   // the cache when it lands). No cached copy: keep waiting on the network (Tribunal 10/17).
   var slow = new Promise(function (resolve) { setTimeout(resolve, 2500); }).then(cached).then(function (hit) { return hit || net; });
   e.respondWith(Promise.race([net.catch(cached), slow]).then(function (r) { return r || net; }));

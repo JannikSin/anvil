@@ -535,7 +535,7 @@
          }
         ],
         "superset": true,
-        "where": "the two leg machines, side by side at the CoRec",
+        "where": "the two leg machines, side by side",
         "name": "C"
        },
        {
@@ -1091,7 +1091,7 @@
          }
         ],
         "superset": true,
-        "where": "the two leg machines, side by side at the CoRec",
+        "where": "the two leg machines, side by side",
         "name": "C"
        },
        {

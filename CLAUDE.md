@@ -70,6 +70,7 @@ ORIGIN, not per path. That means:
 | Path | Repo | Access |
 |---|---|---|
 | `workouts.json`, `vitals.json`, `activities.json` | `anvil-data` | read + write |
+| `profile.json` | `anvil-data` | read only. The person's profile (goal, routine times, supplements, starting loads, strength goals). `app/profile.js` in this PUBLIC repo is a blank template (`template: true`) and must never carry anything measured about a person; `tests/app.test.js` fails if it does. `core.profile()` = template, then the synced copy (store key `profile.mine`), then local training edits. A 404 or failed read keeps the last copy (audit A23, 2026-10-17) |
 | `fitness/daily.json` | `mise-data` | read + write, SHARED with Mise |
 | `fitness/targets.json` | `mise-data` | read only, enforced in `writeFile` |
 | `health/vitals.json` | `mise-data` | read only, enforced in `writeFile`. Apple Health rows still land here through MISE's worker until David re-points Health Auto Export at anvil's worker (a phone step); then anvil's own `vitals.json` wins (checked 2026-10-02) |
