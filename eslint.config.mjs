@@ -100,6 +100,32 @@ export default [
     },
   },
   {
+    // The app since 2026-10-16 (v2): classic browser scripts, ES5 style, no build, one global per
+    // file (AnvilCore, AnvilSync, ANVIL_PROGRAM, ANVIL_PROFILE). `module` is only for node tests.
+    files: ["app/**/*.js", "sw.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: {
+        ...browserGlobals,
+        module: "readonly",
+        Notification: "readonly",
+        AudioContext: "readonly",
+        prompt: "readonly",
+        alert: "readonly",
+        confirm: "readonly",
+        scrollTo: "readonly",
+      },
+    },
+    rules: {
+      "no-var": "off",
+      "prefer-const": "off",
+      "no-use-before-define": "off",
+      "no-unused-vars": ["error", { argsIgnorePattern: "^_", caughtErrors: "none" }],
+      "no-empty": ["error", { allowEmptyCatch: true }],
+    },
+  },
+  {
     // dev-only node scripts (git hooks, installers) — node globals, not browser
     files: ["tools/**/*.mjs"],
     languageOptions: {

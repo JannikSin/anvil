@@ -26,8 +26,21 @@ plan of record is Crystal `Lanes/Fitness-App-Build.md`.
 > as-of: 2026-10-02 (fast; repo routing, SW prefixes, live site and worker routes re-checked by prandtl). The live-state facts in this file (what is deployed, which repo holds what, what the worker accepts, what the sibling apps do) were last written on that date; the Crystal doctor files a ticket when this line is fourteen days old. Move the date when you re-verify them. The rules are stable and carry no date. This file is the plan's founding example: a claim about Mise below stayed wrong for eleven days because nothing said as of when. Rule: Crystal `System/Initial-Conditions`.
 
 Live at `janniksin.github.io/anvil`. Data in the private `JannikSin/anvil-data`.
-Zero build: static HTML, CSS and ES modules, `preact` + `htm` vendored, an
-import map in `index.html`. There is nothing to compile and nothing to bundle.
+
+> **v2 since 2026-10-16 (polaris), on David's word: "I like the new blind version better."** The
+> Preact app was replaced by iliad's blind rebuild (Crystal `Lanes/Anvil-Blind-Rebuild-2026-10-13`)
+> plus his 10/16 changes: two tabs (Day checklist, Gym workout; ticking Gym opens the Gym tab),
+> every day laid out as blocks (a lift alone, or a superset at ONE station, picked by a 10/16 panel:
+> Nippard notes, Norton, Phillips), the morning in the order it happens (supplements with breakfast,
+> out the door, gym at the CoRec), caffeine and L-theanine at noon, a note per lift that shows the
+> next time, mobility as a timed session, and sync over the token the phone already holds. The old
+> app is in git history (last commit before the swap: e2bf4fc). Some rules below describe the old
+> code paths (`lib/daily.js`, `lib/draft.js`, the date control); their v2 equivalents are named inline.
+
+Zero build: classic `<script>` files in `app/` (`profile.js`, `program.js`, `core.js`, `sync.js`,
+`app.js`), one global each, no framework. `app/package.json` marks them CommonJS so node tests can
+`require` them. Records live in localStorage under `anvil.v2.*` (the old app's `anvil.draft` has a
+different shape). The GitHub token stays `anvil.pat`, the old key, so a phone keeps syncing.
 
 ## The rules that are not negotiable
 
@@ -65,7 +78,7 @@ The PAT must be scoped to both repos or half the app silently does nothing.
 
 **3. The shared daily row.** `fitness/daily.json` carries anvil's fields
 (sleepHours, weight, pushups) beside Mise's (water, supplements, dailyDozen) on
-the same day object. `lib/daily.js` `upsertDay` must stay a shallow field patch
+the same day object. `lib/daily.js` `upsertDay` (v2: `app/sync.js` `applyDaily`, run on a fresh sha at write time) must stay a shallow field patch
 in BOTH repos; anything that rewrites the whole row drops the other app's data
 on every write. `tests/daily.test.js` pins this.
 
@@ -84,7 +97,8 @@ can be killed; an IDB transaction opened in a page's last moments is exactly
 the write that does not commit. `tests/draft.test.js` guards it. If you ever
 add another kind of in-progress state, it goes through the same door.
 
-**7. A session's date is data, not the clock.** Every session used to be
+**7. A session's date is data, not the clock.** (v2: today only, David 10/13, decision 0012. A
+draft left from an earlier day is filed under its own date on the next open.) Every session used to be
 stamped `localIsoDate(new Date())` at the point of writing. P4 says a late
 entry is a first-class entry, so the date lives in the draft, the session
 screen carries a control for it, and `handleSaveSession` files whatever date
@@ -131,9 +145,9 @@ node --test "tests/*.test.js"
 All three green, then **open the app and press the thing**. A source-scan test
 proves the file says the right words, not that the button responds.
 
-Bump `CACHE_VERSION` in `sw.js` whenever app code changes, and add any new
-module to the `SHELL` list — `tests/origin.test.js` walks the real import graph
-and will fail if you forget.
+Bump `CACHE` in `sw.js` (`anvil-shell-vN`) whenever app code changes, and add any new
+file the page loads to `SHELL`. `tests/app.test.js` fails if `index.html` loads a file the
+shell does not list. The app files are ES5-style classic scripts, so `tsc` checks only `worker/`.
 
 ## htm whitespace, learned the hard way
 

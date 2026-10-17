@@ -1,39 +1,30 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <!-- The sha256 below allows ONLY the inline import map (import maps cannot
-         be external files on iOS Safari). If the import map changes, the
-         browser console prints the new required hash — update it here. -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; connect-src 'self' https://api.github.com https://anvil-worker.janniksin.workers.dev https://crystal-brief.janniksin.workers.dev; img-src 'self' data:; style-src 'self'; script-src 'self' 'sha256-zHPloj1/u51aEEuFrwddKN7lXMQDwVXJEnJCeuO8lfI='; base-uri 'none'; form-action 'none'; object-src 'none'"
-    />
-    <meta name="theme-color" content="#0e1b38" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Anvil" />
-    <title>Anvil</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
-    <link rel="icon" href="./icons/icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./app/styles.css" />
-    <script type="importmap">
-      {
-        "imports": {
-          "preact": "./vendor/preact/preact.module.js",
-          "preact/hooks": "./vendor/preact/hooks.module.js",
-          "htm": "./vendor/htm/htm.module.js",
-          "htm/preact": "./vendor/htm/preact.module.js"
-        }
-      }
-    </script>
-    <script type="module" src="./app/main.js"></script>
-    <script src="./suggest.js"></script>
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- No inline scripts. Inline style attributes are used by the page, hence 'unsafe-inline' for styles only. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://api.github.com https://crystal-brief.janniksin.workers.dev; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Anvil">
+<title>Anvil</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="./app/app.css">
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<div id="dock" hidden></div>
+<dialog id="sheet"></dialog>
+<script src="./app/profile.js"></script>
+<script src="./app/program.js"></script>
+<script src="./app/core.js"></script>
+<script src="./app/sync.js"></script>
+<script src="./app/app.js"></script>
+<script src="./suggest.js"></script>
+</body>
 </html>
