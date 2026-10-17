@@ -491,7 +491,7 @@
           "id": "legs-a-single-leg-extension",
           "progressKey": "single-leg-extension",
           "name": "Single-Leg Extension",
-          "sets": 3,
+          "sets": 2,
           "lo": 12,
           "hi": 15,
           "side": true,
@@ -535,8 +535,7 @@
          }
         ],
         "superset": true,
-        "where": "the two leg machines",
-        "note": "Superset only if the two machines sit side by side; otherwise do them straight, one after the other.",
+        "where": "the two leg machines, side by side at the CoRec",
         "name": "C"
        },
        {
@@ -743,24 +742,24 @@
           "pair": "d"
          },
          {
-          "id": "push-b-pallof-press",
-          "progressKey": "pallof-press",
-          "name": "Pallof Press",
+          "id": "push-b-cable-crunch",
+          "progressKey": "cable-crunch",
+          "name": "Cable Crunch",
           "sets": 2,
           "lo": 10,
-          "hi": 10,
-          "side": true,
+          "hi": 12,
+          "side": false,
           "kind": "core",
-          "effortText": "controlled, 2 s hold",
+          "effortText": "last set to failure",
           "rest": 90,
           "inc": 5,
           "m": {
            "core": 1
           },
-          "cue": "Side-on to the cable, handle at the chest, press straight out and hold 2 seconds while it tries to twist you.",
+          "cue": "Kneel, rope beside the head, curl the ribs toward the hips (round the spine), not a hip hinge.",
           "source": {
-           "who": "No published study tests this exercise (checked 2026-10-13; the only record is a 4-person conference abstract). It stays on the general core evidence until it is kept or replaced.",
-           "status": "none"
+           "who": "Moraes et al. 2009, Phys Ther Sport: in loaded crunches from 20 to 100 percent of 1RM, abdominal activation rose with load and was highest at the top load (13 people). Measured on a weighted crunch, not the kneeling cable version.",
+           "status": "study"
           },
           "block": "D",
           "pair": "d"
@@ -768,7 +767,7 @@
         ],
         "superset": true,
         "where": "one cable tower",
-        "note": "On the pec deck instead, do the Pallof alone after.",
+        "note": "On the pec deck instead, do the crunch alone after.",
         "name": "D"
        }
       ]
@@ -1092,8 +1091,7 @@
          }
         ],
         "superset": true,
-        "where": "the two leg machines",
-        "note": "Superset only if the two machines sit side by side; otherwise do them straight, one after the other.",
+        "where": "the two leg machines, side by side at the CoRec",
         "name": "C"
        },
        {
@@ -1120,10 +1118,34 @@
            "status": "study"
           },
           "cut": true,
-          "block": "D"
+          "block": "D",
+          "pair": "d"
+         },
+         {
+          "id": "legs-b-calf-press-on-the-leg-press",
+          "progressKey": "calf-press-sled",
+          "name": "Calf Press on the Leg Press",
+          "sets": 3,
+          "lo": 10,
+          "hi": 15,
+          "side": false,
+          "kind": "iso",
+          "effortText": "last set to failure",
+          "rest": 90,
+          "inc": 5,
+          "m": {},
+          "cue": "Balls of the feet on the bottom edge of the platform, knees straight, lower into a deep stretch and pause 2 seconds, then press up tall.",
+          "source": {
+           "who": "Kinoshita, Maeo et al. 2023, Front Physiol: calf raises with the knee straight grew the gastrocnemius far more than seated (12 weeks, MRI). That study used a standing raise; the sled keeps the knee straight the same way, which is the point.",
+           "status": "study"
+          },
+          "cut": true,
+          "block": "D",
+          "pair": "d"
          }
         ],
-        "superset": false,
+        "superset": true,
+        "where": "the leg press",
         "name": "D"
        },
        {
@@ -1153,33 +1175,6 @@
         ],
         "superset": false,
         "name": "E"
-       },
-       {
-        "lifts": [
-         {
-          "id": "legs-b-standing-calf-raise",
-          "progressKey": "standing-calf-raise",
-          "name": "Standing Calf Raise",
-          "sets": 3,
-          "lo": 10,
-          "hi": 15,
-          "side": false,
-          "kind": "iso",
-          "effortText": "last set to failure",
-          "rest": 60,
-          "inc": 5,
-          "m": {},
-          "cue": "Optional. Pause 2 seconds at the bottom stretch.",
-          "source": {
-           "who": "Kinoshita, Maeo et al. 2023, Front Physiol: standing calf raises grew the gastrocnemius far more than seated (12 weeks, MRI).",
-           "status": "study"
-          },
-          "cut": true,
-          "block": "F"
-         }
-        ],
-        "superset": false,
-        "name": "F"
        }
       ]
      }
