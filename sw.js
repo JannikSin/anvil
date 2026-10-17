@@ -7,7 +7,7 @@
 // The cache is anvil-shell-vN and activate deletes ONLY caches starting with anvil-shell-: every
 // one of David's PWAs shares janniksin.github.io, and Cache Storage is per origin, not per path.
 var CACHE_PREFIX = "anvil-shell-";
-var CACHE = CACHE_PREFIX + "v45";
+var CACHE = CACHE_PREFIX + "v46";
 var SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./app/app.css", "./app/profile.js", "./app/program.js", "./app/core.js", "./app/sync.js", "./app/app.js",
@@ -30,7 +30,10 @@ self.addEventListener("fetch", function (e) {
     if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }
     return res;
   });
-  var cached = function () { return caches.match(e.request).then(function (hit) { return hit || caches.match("./index.html"); }); };
+  // only a page load falls back to index.html; a script, icon or JSON with no cached copy must not
+  // be answered with HTML (it would break the page), so it returns nothing and waits on the network
+  var nav = e.request.mode === "navigate";
+  var cached = function () { return caches.match(e.request).then(function (hit) { return hit || (nav ? caches.match("./index.html") : undefined); }); };
   // Bars but no data at the CoRec: past 2.5 s the cached copy answers (the network still refreshes
   // the cache when it lands). No cached copy: keep waiting on the network (Tribunal 10/17).
   var slow = new Promise(function (resolve) { setTimeout(resolve, 2500); }).then(cached).then(function (hit) { return hit || net; });

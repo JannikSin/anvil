@@ -227,4 +227,6 @@ test("service worker: a slow network falls back to the cached shell instead of h
   const sw = readFileSync(new URL("../sw.js", import.meta.url), "utf8");
   assert.match(sw, /setTimeout\(resolve, 2500\)/);
   assert.match(sw, /Promise\.race/);
+  // index.html stands in only for a page load, never for a script, icon or JSON (Tribunal 10/17)
+  assert.match(sw, /nav \? caches\.match\("\.\/index\.html"\) : undefined/);
 });
