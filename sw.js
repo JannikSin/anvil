@@ -7,7 +7,7 @@
 // The cache is anvil-shell-vN and activate deletes ONLY caches starting with anvil-shell-: every
 // one of David's PWAs shares janniksin.github.io, and Cache Storage is per origin, not per path.
 var CACHE_PREFIX = "anvil-shell-";
-var CACHE = CACHE_PREFIX + "v43";
+var CACHE = CACHE_PREFIX + "v44";
 var SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./app/app.css", "./app/profile.js", "./app/program.js", "./app/core.js", "./app/sync.js", "./app/app.js",
@@ -24,7 +24,9 @@ self.addEventListener("activate", function (e) {
 });
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
-  var net = fetch(e.request).then(function (res) {
+  // no-cache: revalidate with the server every time, so the browser's 10-minute HTTP cache (Pages
+  // sends max-age=600) can never keep serving the previous deploy's files after an update
+  var net = fetch(e.request.url, { cache: "no-cache", credentials: "same-origin" }).then(function (res) {
     if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }
     return res;
   });
