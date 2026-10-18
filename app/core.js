@@ -82,11 +82,12 @@
   // Without a shared copy the anvil-data base stands, so a phone that never read Mise still has a goal.
   function withShared(p, sh) {
     if (!sh || !sh.v) return p;
-    var v = sh.v, out = merge(p, { base: { shared: { at: sh.at } } });
+    var v = sh.v, out = Object.assign({}, p, { base: Object.assign({}, p.base) });   // never mutate the template
     if (v.body) out.base.body = v.body;
     if (v.phase) out.base.phase = v.phase;
-    if (v.goal) out.base.goal = v.goal;
-    if (v.milestone) out.base.milestone = v.milestone;
+    // the goal card says where it came from, so it says Mise only when Mise's copy carried the goal;
+    // a milestone without a goal drops the old anvil-data goal rather than showing the same target twice
+    if (v.goal || v.milestone) { out.base.goal = v.goal; out.base.milestone = v.milestone; out.base.shared = { at: sh.at }; }
     if (v.supplements && v.supplements.length) {
       var own = (p.training.supplements || []), seen = {};
       var list = own.map(function (s) {

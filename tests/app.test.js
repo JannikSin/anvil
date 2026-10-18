@@ -520,6 +520,11 @@ test("the shared profile is mapped field by field: no calorie number reaches Anv
     { id: "magnesium", name: "Magnesium", dose: "200 mg", when: "evening" },
   ] }, base: { goal: { what: "Old goal", date: "2026-12-30" } } });
   assert.equal(C.profile(store, TEMPLATE).base.goal.what, "Old goal", "no shared copy: the anvil-data base stands");
+  store.set("profile.shared", { at: 1, v: Y.sharedToAnvil({ body: SHARED.body, phase: "gain" }) });
+  assert.equal(C.profile(store, TEMPLATE).base.goal.what, "Old goal", "a shared copy with no goal yet: the anvil-data goal stands");
+  assert.equal(C.profile(store, TEMPLATE).base.shared, undefined, "and the card does not credit Mise for it");
+  store.set("profile.shared", { at: 1, v: Y.sharedToAnvil({ body: SHARED.body, base: { milestone: SHARED.base.milestone } }) });
+  assert.equal(C.profile(store, TEMPLATE).base.goal, null, "a milestone alone replaces the old goal, never shown twice");
   store.set("profile.shared", { at: 1, v });
   const p = C.profile(store, TEMPLATE);
   assert.equal(p.base.milestone.target, 200);
