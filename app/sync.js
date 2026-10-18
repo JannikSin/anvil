@@ -126,9 +126,11 @@
       var id = l ? l.id : norm(ex.name).replace(/ /g, "-");
       var key = l ? (l.progressKey || l.id) : id;
       if (!top && !ex.note) return;
-      lifts[id] = { key: key, w: top ? top.w : null, r: top ? top.r : null, note: ex.note || undefined };
+      lifts[id] = { key: key, w: top ? top.w : null, r: top ? top.r : null, note: ex.note || undefined, why: ex.why || undefined };
     });
-    return { id: s.id || ("r" + s.date + (s.templateId || "")), programme: tpl && s.date >= P.start ? P.id : "earlier", template: s.templateId || null, date: s.date, lifts: lifts, remote: true };
+    var rec = { id: s.id || ("r" + s.date + (s.templateId || "")), programme: tpl && s.date >= P.start ? P.id : "earlier", template: s.templateId || null, date: s.date, lifts: lifts, remote: true };
+    if (s.minutes) rec.minutes = s.minutes;
+    return rec;
   }
   function sessionToRemote(rec, P) {
     var tpl = P.sessions[rec.template];
@@ -136,9 +138,12 @@
       var t = rec.lifts[lid], l = tpl && tpl.lifts.filter(function (x) { return x.id === lid; })[0];
       var e = { name: l ? l.name : lid, sets: t.r != null ? [{ weight: t.w == null ? 0 : t.w, reps: t.r }] : [] };
       if (t.note) e.note = t.note;
+      if (t.why) e.why = t.why;
       return e;
     });
-    return { date: rec.date, templateId: rec.template, exercises: ex, id: rec.id };
+    var out = { date: rec.date, templateId: rec.template, exercises: ex, id: rec.id };
+    if (rec.minutes) out.minutes = rec.minutes;
+    return out;
   }
   // activities: local {id, date, kind, minutes, conditioning} <-> v1's {id, date, type, minutes}
   function activityToRemote(a) { return { id: a.id, date: a.date, type: a.kind, minutes: a.minutes }; }

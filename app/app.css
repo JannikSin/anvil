@@ -147,3 +147,12 @@ details.src summary { cursor: pointer; color: var(--dim); }
 .lastnote span { color: var(--dim); }
 .syncline { text-align: center; margin: 10px 0; }
 .syncline.caution { color: var(--caution); }
+
+/* the workout clock (D0017): cyan while live, amber only when the hour is tight */
+.clock { margin: 6px 0; font-size: 14px; color: var(--dim); }
+.clock b { font-size: 20px; color: var(--live); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.clock.tight b { color: var(--caution); }
+.knob.clockgo { width: 100%; margin: 4px 0 6px; }
+.whyshort { margin: 6px 0; }
+.whyshort p { margin: 0 0 6px; }
+.whyshort .knob { margin: 0 6px 6px 0; font-size: 14px; }

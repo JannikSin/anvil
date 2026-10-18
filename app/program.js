@@ -256,8 +256,8 @@
         "lifts": [
          {
           "id": "pull-a-lat-pulldown",
-          "progressKey": "lat-pulldown",
-          "name": "Lat Pulldown",
+          "progressKey": "cable-lat-pulldown",
+          "name": "Cable Lat Pulldown",
           "sets": 3,
           "lo": 6,
           "hi": 8,
@@ -270,7 +270,7 @@
            "back": 1,
            "arms": 0.25
           },
-          "cue": "Lean back slightly, elbows down to the back pockets, let the bar all the way up for the stretch. Same grip every week.",
+          "cue": "The cable pulldown station with the weight stack (David's pick, 10/18), not the Hammer Strength plate-loaded pulldown. Lean back slightly, elbows down to the back pockets, let the bar all the way up for the stretch. Same grip every week.",
           "source": {
            "who": "Wolf et al. 2025, PeerJ: 8 weeks of lat pulldowns in trained lifters raised pulldown 10RM and arm thickness (ultrasound) the same whether reps were full range or lengthened partials. Andersen et al. 2014, J Strength Cond Res: lat activation is the same at narrow, medium and wide grip. No study measures growth from pull-ups themselves.",
            "status": "study"
@@ -405,7 +405,7 @@
           "m": {
            "core": 1
           },
-          "cue": "Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
+          "cue": "Hang from the angled grips on the pull-up station; straps or chalk if your hands slip, because grip is not what this trains. Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
           "source": {
            "who": "Escamilla et al. 2006, Phys Ther: the hanging knee-up with straps was among the highest of 12 exercises for upper and lower rectus abdominis and the obliques, and the highest for the external oblique together with the Power Wheel (21 adults, surface EMG).",
            "status": "study"
@@ -416,7 +416,7 @@
          }
         ],
         "superset": true,
-        "where": "carry the dumbbells to the pull-up bar",
+        "where": "carry the dumbbells to the pull-up station with the angled grips",
         "name": "E"
        }
       ]
@@ -907,7 +907,7 @@
           "m": {
            "core": 1
           },
-          "cue": "Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
+          "cue": "Hang from the angled grips on the pull-up station; straps or chalk if your hands slip, because grip is not what this trains. Curl the pelvis up, knees toward the chest, tailbone tucks. No swinging.",
           "source": {
            "who": "Escamilla et al. 2006, Phys Ther: the hanging knee-up with straps was among the highest of 12 exercises for upper and lower rectus abdominis and the obliques, and the highest for the external oblique together with the Power Wheel (21 adults, surface EMG).",
            "status": "study"

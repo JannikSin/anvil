@@ -147,6 +147,10 @@
     // plan; any lift still logs at any time, several at once after the fact, for when a machine is taken.
     h += '<details class="howto"><summary>Warm-up and tempo</summary><p class="small dim">' + esc(P.warmup) + " " + esc(P.tempo) + "</p></details>";
     h += '<p class="small dim">Top to bottom is the plan. Machine taken? Do another and log it; any order logs.</p>';
+    // the workout clock: one tap to start, then what to do with the rest of the hour (D0017)
+    var pc = C.pace(s, draft, Date.now(), sel, P, budget);
+    if (pc) h += '<p class="clock' + (pc.kind === "tight" ? " tight" : "") + '" id="clock"><b id="clock-t">' + pc.clock + '</b> <span id="clock-l">' + esc(pc.line) + "</span></p>";
+    else if (sel === today()) h += '<button class="knob clockgo" data-act="clock">Start the workout clock</button>';
     var startLoads = pr.training.startLoads || {}, anyLogged = false;
     s.blocks.forEach(function (b) {
       h += '<div class="block"><h3 class="bhead">' + b.name + (b.superset ? ' <b>superset' + (b.where ? ", " + esc(b.where) : "") + "</b>" : "") + "</h3>";
@@ -184,6 +188,12 @@
         h += '<button class="knob ' + (d.logged ? "logged" : "arc") + '" data-act="log" data-id="' + l.id + '">' + (d.logged ? "Logged<small>tap to undo</small>" : "Log") + "</button></div>";
         h += '<div class="move">' + esc(rx.move) + "</div>";
         if (rx.stall) h += '<div class="note caution">' + esc(rx.stallNote) + "</div>";
+        // short of the range: say why, and the next prescription reads it (David, 10/18: grip, not core)
+        if (d.logged && d.r != null && d.r < l.lo) {
+          h += '<div class="whyshort"><p class="small dim">Short of ' + l.lo + "? Leave it blank if the weight was too heavy (it steps down). If it was something else:</p>";
+          Object.keys(WHY_LABEL).forEach(function (k) { h += '<button class="knob' + (d.why === k ? " arc" : "") + '" data-act="why" data-id="' + l.id + '" data-why="' + k + '" aria-pressed="' + (d.why === k) + '">' + WHY_LABEL[k] + "</button>"; });
+          h += "</div>";
+        }
         if (ln) h += '<p class="lastnote"><span>Your note, ' + esc(C.label(ln.date)) + ":</span> " + esc(ln.note) + "</p>";
         h += '<div class="strike"><button class="knob" data-act="notes" data-id="' + l.id + '" aria-expanded="' + (open === 2) + '">' + (open === 2 ? "Hide notes" : "Notes") + "</button>" +
           '<button class="knob" data-act="rest" data-id="' + l.id + '">Rest ' + C.restLabel(l).split(" ")[0] + "</button></div>";
@@ -228,6 +238,7 @@
     if (d && d.date === sel) return d;
     return { id: C.uid(), date: sel, template: C.nextInQueue(store, P), lifts: {} };
   }
+  var WHY_LABEL = { grip: "Grip", setup: "Machine or setup", time: "Out of time" };
   function liftById(tid, id) { return P.sessions[tid].lifts.filter(function (l) { return l.id === id; })[0]; }
   function touchLift(id, fn) {
     var d = draftFor(state.sel), l = liftById(d.template, id);
@@ -277,9 +288,12 @@
         cur.logged = !cur.logged;
       });
       if (missing) { missing.focus(); return; }
-      if (store.get("draft", null).lifts[lid].logged) delete state.open[lid];   // logged folds back into the list
+      var lg = store.get("draft", null).lifts[lid], ll = liftById(store.get("draft", null).template, lid);
+      if (lg.logged && !(lg.r < ll.lo)) delete state.open[lid];   // logged folds back into the list; short of the range stays open to ask why
       render(); return;
     }
+    if (a === "why") { var k = b.dataset.why; touchLift(b.dataset.id, function (cur) { cur.why = cur.why === k ? undefined : k; }); render(); return; }
+    if (a === "clock") { var dc = draftFor(sel); if (!dc.startedAt) dc.startedAt = Date.now(); store.set("draft", dc); render(); return; }
     if (a === "rest") {
       var d0 = store.get("draft", null), tid = d0 && d0.date === sel ? d0.template : C.nextInQueue(store, P), l = liftById(tid, b.dataset.id);
       store.set("timer", { name: l.name, start: Date.now(), secs: l.rest, pair: !!l.pair }); renderDock(); return;
@@ -604,8 +618,19 @@
 
   // ---------------------------------------------------------------- boot
   var lastMinute = nowHM();
+  // the workout clock ticks in place, without a full render (a full render would close the keyboard)
+  function renderClock() {
+    var el = document.getElementById("clock-t"), d = store.get("draft", null);
+    if (!el || !d || !d.startedAt) return;
+    var pc = C.pace(P.sessions[d.template], d, Date.now(), d.date, P, prof().training.sessionMinutes);
+    if (!pc) return;
+    el.textContent = pc.clock;
+    var ln = document.getElementById("clock-l"); if (ln && ln.textContent !== pc.line) ln.textContent = pc.line;
+    document.getElementById("clock").classList.toggle("tight", pc.kind === "tight");
+  }
   setInterval(function () {
     renderDock();
+    renderClock();
     if (nowHM() !== lastMinute) {
       lastMinute = nowHM();
       remind();

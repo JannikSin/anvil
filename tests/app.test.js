@@ -83,10 +83,10 @@ test("the main lift of each day is done alone (panel 10/16: the rest is what mak
 
 test("no day has two vertical pulls; Pull A is the pulldown, Pull B the pull-up, no 'or'", () => {
   const names = (id) => P.sessions[id].lifts.map((l) => l.name);
-  assert.ok(names("pull-a").includes("Lat Pulldown"));
+  assert.ok(names("pull-a").includes("Cable Lat Pulldown"));
   assert.ok(!names("pull-a").includes("Weighted Pull-up"));
   assert.ok(names("pull-b").includes("Weighted Pull-up"));
-  assert.ok(!names("pull-b").includes("Lat Pulldown"));
+  assert.ok(!names("pull-b").some((n) => /Lat Pulldown/.test(n)));
   for (const s of Object.values(P.sessions))
     for (const l of s.lifts) assert.ok(!/pull-up or|or lat pulldown/i.test(l.name), l.name);
 });
@@ -418,4 +418,55 @@ test("sessions from before the block feed a lift's history without moving the qu
   store.set("sessions", [Y.sessionToLocal(old, P)]);
   assert.equal(C.nextInQueue(store, P), P.queue[0]);
   assert.deepEqual(C.history(store, "back-squat").map((e) => [e.w, e.r]), [[235, 5]]);
+});
+
+test("short of the range for grip, setup or time holds the weight; the reason survives filing and sync (David 10/18)", () => {
+  const l = P.sessions["pull-a"].lifts.find((x) => x.progressKey === "cable-row");
+  const grip = C.prescribe(l, [{ date: "2026-10-18", w: 200, r: 4, why: "grip" }], {});
+  assert.deepEqual([grip.w, grip.r], [200, l.lo]);
+  assert.match(grip.move, /grip/);
+  const heavy = C.prescribe(l, [{ date: "2026-10-18", w: 200, r: 4 }], {});
+  assert.deepEqual([heavy.w, heavy.r], [195, l.lo]);
+  const hlr = P.sessions["pull-a"].lifts.find((x) => x.progressKey === "hanging-leg-raise");
+  assert.equal(C.prescribe(hlr, [{ date: "2026-10-18", w: 0, r: 2, why: "grip" }], {}).r, hlr.lo);
+  assert.match(hlr.cue, /angled grips/);
+
+  const { store } = memStore();
+  const draft = { id: "d1", date: "2026-10-18", template: "pull-a", startedAt: Date.now() - 52 * 60000,
+    lifts: { "pull-a-cable-row": { key: "cable-row", w: 200, r: 4, logged: true, why: "grip" }, "pull-a-face-pull": { key: "face-pull", w: 47.5, r: 8, logged: true, why: "bogus" } } };
+  const rec = C.fileSession(store, draft, P);
+  assert.equal(rec.lifts["pull-a-cable-row"].why, "grip");
+  assert.equal(rec.lifts["pull-a-face-pull"].why, undefined, "only known reasons are kept");
+  assert.equal(rec.minutes, 52);
+  const remote = Y.sessionToRemote(rec, P);
+  assert.equal(remote.minutes, 52);
+  assert.equal(remote.exercises.find((e) => e.name === "Cable Row").why, "grip");
+  const back = Y.sessionToLocal(remote, P);
+  assert.equal(back.lifts["pull-a-cable-row"].why, "grip");
+  assert.equal(back.minutes, 52);
+  assert.equal(C.history(store, "cable-row")[0].why, "grip");
+});
+
+test("the workout clock says what to do, never that he is behind (P9), and offers the first cut when the hour is tight", () => {
+  const s = P.sessions["pull-a"], t0 = Date.parse("2026-10-18T16:00:00");
+  assert.equal(C.pace(s, { lifts: {} }, t0, "2026-10-18", P, 60), null, "no clock until Start");
+  const d = { startedAt: t0, lifts: {} };
+  const lines = [];
+  for (const min of [0, 10, 30, 50, 70, 95]) {
+    for (const n of [0, 2, 4, 6]) {
+      const lifts = {};
+      s.lifts.slice(0, n).forEach((l) => { lifts[l.id] = { logged: true }; });
+      const p = C.pace(s, { ...d, lifts }, t0 + min * 60000 + 5000, "2026-10-18", P, 60);
+      assert.match(p.clock, /^\d+:\d\d$/);
+      lines.push(p.line);
+    }
+  }
+  for (const ln of lines) assert.doesNotMatch(ln, /behind|late|missed|fail|slow/i);
+  const tight = C.pace(s, { ...d, lifts: {} }, t0 + 50 * 60000, "2026-10-18", P, 60);
+  assert.equal(tight.kind, "tight");
+  assert.match(tight.line, /drop Hammer Curl/);
+  const ahead = C.pace(s, { ...d, lifts: { [s.lifts[0].id]: { logged: true }, [s.lifts[1].id]: { logged: true }, [s.lifts[2].id]: { logged: true } } }, t0 + 5 * 60000, "2026-10-18", P, 60);
+  assert.equal(ahead.kind, "ahead");
+  const all = {}; s.lifts.forEach((l) => { all[l.id] = { logged: true }; });
+  assert.equal(C.pace(s, { ...d, lifts: all }, t0 + 40 * 60000, "2026-10-18", P, 60).kind, "done");
 });

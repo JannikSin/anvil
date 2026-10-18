@@ -126,7 +126,7 @@
       .forEach(function (s) {
         Object.keys(s.lifts || {}).forEach(function (lid) {
           var t = s.lifts[lid];
-          if (t && t.key === key && t.w != null) out.push({ date: s.date, w: t.w, r: t.r, note: t.note });
+          if (t && t.key === key && t.w != null) out.push({ date: s.date, w: t.w, r: t.r, note: t.note, why: t.why });
         });
       });
     return out;
@@ -143,6 +143,8 @@
     });
     return hit;
   }
+  // why a set fell short of the range, when it was not the weight; read by prescribe
+  var WHY = { grip: "grip giving out", setup: "the machine or setup", time: "time running out" };
   function prescribe(l, hist, startLoads) {
     var key = pkey(l);
     if (!hist.length) {
@@ -157,6 +159,10 @@
     if (last.r >= l.hi) {
       if (!l.inc) p = { w: last.w, r: l.hi, move: "Top of the range at bodyweight: slow the lowering or add a light DB" };
       else p = { w: last.w + l.inc, r: l.lo, move: "+" + l.inc + " lb: you hit " + last.r + " at " + last.w + " last time. Back to " + l.lo + " reps" };
+    } else if (last.r < l.lo && WHY[last.why]) {
+      // short for a reason that is not strength (David, 10/18: "grip strength, or my hands were just
+      // sweaty"): the weight was right, so it stays, and the reps go back to the bottom of the range
+      p = { w: last.w, r: l.lo, move: "Same weight: " + last.r + " last time was " + WHY[last.why] + ", not strength. " + l.lo + " reps here" };
     } else if (last.r < l.lo && l.inc && last.w - l.inc > 0) {
       // under the bottom of the range: the weight was too heavy for the prescription, so one step
       // down and back to the bottom of the range (10/17 digest: 75 x 3 used to prefill 75 x 4)
@@ -223,6 +229,23 @@
       }
     });
     return Math.round(secs / 60);
+  }
+  // ---------- the workout clock (David, 10/18: "an overall stopwatch ... I am behind in workout or ahead
+  // to rest more or less"). Said as what to do, never as behind (P9). Pure: the caller passes now.
+  function pace(s, draft, now, date, P, budget) {
+    if (!draft || !draft.startedAt) return null;
+    var el = Math.max(0, Math.floor((now - draft.startedAt) / 1000)), min = Math.floor(el / 60);
+    var done = s.lifts.filter(function (l) { return draft.lifts[l.id] && draft.lifts[l.id].logged; });
+    var left = s.lifts.filter(function (l) { return done.indexOf(l) === -1; });
+    var clock = min + ":" + pad(el % 60);
+    if (!left.length) return { clock: clock, min: min, line: "All logged. File it.", kind: "done" };
+    var total = estimateMinutes(s, date, P), rest = estimateMinutes({ lifts: left }, date, P);
+    var finish = min + rest, plan = total - rest;   // where the estimate says you should be by now
+    var cut = left.filter(function (l) { return l.cut; })[0];
+    if (finish > budget + 5 && cut) return { clock: clock, min: min, line: "About " + finish + " min at this pace. To finish inside " + budget + ", drop " + cut.name + ".", kind: "tight" };
+    if (min > plan + 5) return { clock: clock, min: min, line: "To land near " + budget + ": start each set when the rest floor is up. About " + finish + " min.", kind: "tight" };
+    if (min < plan - 5) return { clock: clock, min: min, line: "Time in hand: take your full rests. About " + finish + " min.", kind: "ahead" };
+    return { clock: clock, min: min, line: "On plan. About " + finish + " min.", kind: "on" };
   }
   function effort(l, date, P) { return inDeload(date, P) ? "3 to 4 RIR, deload" : (l.effortText || P.effort[l.kind]); }
   function restLabel(l) {
@@ -398,11 +421,13 @@
     var logged = {};
     Object.keys(draft.lifts || {}).forEach(function (lid) {
       var t = draft.lifts[lid];
-      if (t.logged || (t.note && t.note.trim())) logged[lid] = { key: t.key, w: t.logged ? t.w : null, r: t.logged ? t.r : null, note: t.note || undefined };
+      if (t.logged || (t.note && t.note.trim())) logged[lid] = { key: t.key, w: t.logged ? t.w : null, r: t.logged ? t.r : null, note: t.note || undefined, why: t.logged && WHY[t.why] ? t.why : undefined };
     });
     var all = sessions(store);
     var seq = all.length ? Math.max.apply(null, all.map(function (s) { return s.seq || 0; })) + 1 : 1;
     var rec = { id: draft.id, programme: P.id, template: draft.template, date: draft.date, lifts: logged, seq: seq };
+    // the workout clock: minutes from Start to filing; an hour past the budget-plus-margin is a clock left running, not a session
+    if (draft.startedAt) { var m = Math.round((Date.now() - draft.startedAt) / 60000); if (m > 0 && m <= 240) rec.minutes = m; }
     var i = all.findIndex(function (s) { return s.id === rec.id; });
     if (i >= 0) all[i] = rec; else all.push(rec);
     store.set("sessions", all);
@@ -435,7 +460,7 @@
     profile: profile, saveTraining: saveTraining,
     planCheck: planCheck, nextInQueue: nextInQueue, filedFor: filedFor, sessions: sessions,
     pkey: pkey, history: history, prescribe: prescribe, progressChart: progressChart,
-    estimateMinutes: estimateMinutes, liveSets: liveSets, effort: effort, restLabel: restLabel,
+    estimateMinutes: estimateMinutes, pace: pace, WHY: WHY, liveSets: liveSets, effort: effort, restLabel: restLabel,
     inDeload: inDeload, blockWeek: blockWeek, sessionsUntil: sessionsUntil,
     avg7: avg7, lastValue: lastValue, activities: activities, conditioningThisWeek: conditioningThisWeek,
     wallSquatsThisWeek: wallSquatsThisWeek, sessionFiledOn: sessionFiledOn,
