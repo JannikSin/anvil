@@ -239,7 +239,12 @@
     var left = s.lifts.filter(function (l) { return done.indexOf(l) === -1; });
     var clock = min + ":" + pad(el % 60);
     if (!left.length) return { clock: clock, min: min, line: "All logged. File it.", kind: "done" };
-    var total = estimateMinutes(s, date, P), rest = estimateMinutes({ lifts: left }, date, P);
+    // time on the lift in hand counts as progress, up to that lift's own estimate (Tribunal 10/18:
+    // without it, minute 6 of the first lift read as running long and the line swung after every log)
+    var lastAt = draft.startedAt;
+    done.forEach(function (l) { var t = draft.lifts[l.id].at; if (t && t > lastAt) lastAt = t; });
+    var inHand = Math.min(Math.max(0, (now - lastAt) / 60000), estimateMinutes({ lifts: [left[0]] }, date, P));
+    var total = estimateMinutes(s, date, P), rest = Math.max(0, Math.round(estimateMinutes({ lifts: left }, date, P) - inHand));
     var finish = min + rest, plan = total - rest;   // where the estimate says you should be by now
     var cut = left.filter(function (l) { return l.cut; })[0];
     if (finish > budget + 5 && cut) return { clock: clock, min: min, line: "About " + finish + " min at this pace. To finish inside " + budget + ", drop " + cut.name + ".", kind: "tight" };
@@ -416,12 +421,13 @@
     return { date: date, on: !!rem.on, every: rem.repeatMinutes * 60000, from: atMs(date, "00:00"), until: atMs(addDays(date, 1), "00:00"), items: items };
   }
 
+  function liftLo(P, tid, lid) { var t = P.sessions[tid], l = t && t.lifts.filter(function (x) { return x.id === lid; })[0]; return l ? l.lo : null; }
   // ---------- filing a session: id is the merge key (decision 0007); partial counts (decision 0009) ----------
   function fileSession(store, draft, P) {
     var logged = {};
     Object.keys(draft.lifts || {}).forEach(function (lid) {
       var t = draft.lifts[lid];
-      if (t.logged || (t.note && t.note.trim())) logged[lid] = { key: t.key, w: t.logged ? t.w : null, r: t.logged ? t.r : null, note: t.note || undefined, why: t.logged && WHY[t.why] ? t.why : undefined };
+      if (t.logged || (t.note && t.note.trim())) logged[lid] = { key: t.key, w: t.logged ? t.w : null, r: t.logged ? t.r : null, note: t.note || undefined, why: t.logged && WHY[t.why] && t.r != null && t.r < (liftLo(P, draft.template, lid) || Infinity) ? t.why : undefined };
     });
     var all = sessions(store);
     var seq = all.length ? Math.max.apply(null, all.map(function (s) { return s.seq || 0; })) + 1 : 1;

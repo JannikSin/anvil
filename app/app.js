@@ -149,7 +149,7 @@
     h += '<p class="small dim">Top to bottom is the plan. Machine taken? Do another and log it; any order logs.</p>';
     // the workout clock: one tap to start, then what to do with the rest of the hour (D0017)
     var pc = C.pace(s, draft, Date.now(), sel, P, budget);
-    if (pc) h += '<p class="clock' + (pc.kind === "tight" ? " tight" : "") + '" id="clock"><b id="clock-t">' + pc.clock + '</b> <span id="clock-l">' + esc(pc.line) + "</span></p>";
+    if (pc) h += '<p class="clock" id="clock"><b id="clock-t">' + pc.clock + '</b> <span id="clock-l">' + esc(pc.line) + "</span></p>";
     else if (sel === today()) h += '<button class="knob clockgo" data-act="clock">Start the workout clock</button>';
     var startLoads = pr.training.startLoads || {}, anyLogged = false;
     s.blocks.forEach(function (b) {
@@ -286,6 +286,7 @@
         if (l.load === "bodyweight" && cur.w == null) cur.w = 0;
         if (!cur.logged && (cur.w == null || cur.r == null)) { missing = cur.w == null ? wi : ri; return; }
         cur.logged = !cur.logged;
+        cur.at = cur.logged ? Date.now() : undefined;   // the workout clock counts from the last log
       });
       if (missing) { missing.focus(); return; }
       var lg = store.get("draft", null).lifts[lid], ll = liftById(store.get("draft", null).template, lid);
@@ -621,12 +622,11 @@
   // the workout clock ticks in place, without a full render (a full render would close the keyboard)
   function renderClock() {
     var el = document.getElementById("clock-t"), d = store.get("draft", null);
-    if (!el || !d || !d.startedAt) return;
+    if (!el || !d || !d.startedAt || !P.sessions[d.template]) return;
     var pc = C.pace(P.sessions[d.template], d, Date.now(), d.date, P, prof().training.sessionMinutes);
     if (!pc) return;
     el.textContent = pc.clock;
     var ln = document.getElementById("clock-l"); if (ln && ln.textContent !== pc.line) ln.textContent = pc.line;
-    document.getElementById("clock").classList.toggle("tight", pc.kind === "tight");
   }
   setInterval(function () {
     renderDock();

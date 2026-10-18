@@ -437,6 +437,8 @@ test("short of the range for grip, setup or time holds the weight; the reason su
   const rec = C.fileSession(store, draft, P);
   assert.equal(rec.lifts["pull-a-cable-row"].why, "grip");
   assert.equal(rec.lifts["pull-a-face-pull"].why, undefined, "only known reasons are kept");
+  const inRange = C.fileSession(memStore().store, { id: "d2", date: "2026-10-18", template: "pull-a", lifts: { "pull-a-cable-row": { key: "cable-row", w: 200, r: 8, logged: true, why: "grip" } } }, P);
+  assert.equal(inRange.lifts["pull-a-cable-row"].why, undefined, "a reason is kept only for a set short of the range");
   assert.equal(rec.minutes, 52);
   const remote = Y.sessionToRemote(rec, P);
   assert.equal(remote.minutes, 52);
@@ -462,11 +464,13 @@ test("the workout clock says what to do, never that he is behind (P9), and offer
     }
   }
   for (const ln of lines) assert.doesNotMatch(ln, /behind|late|missed|fail|slow/i);
-  const tight = C.pace(s, { ...d, lifts: {} }, t0 + 50 * 60000, "2026-10-18", P, 60);
+  const tight = C.pace(s, { ...d, lifts: { [s.lifts[0].id]: { logged: true, at: t0 + 30 * 60000 } } }, t0 + 50 * 60000, "2026-10-18", P, 60);
   assert.equal(tight.kind, "tight");
   assert.match(tight.line, /drop Hammer Curl/);
   const ahead = C.pace(s, { ...d, lifts: { [s.lifts[0].id]: { logged: true }, [s.lifts[1].id]: { logged: true }, [s.lifts[2].id]: { logged: true } } }, t0 + 5 * 60000, "2026-10-18", P, 60);
   assert.equal(ahead.kind, "ahead");
+  // minutes spent on the lift in hand are progress, not lateness (Tribunal 10/18)
+  for (const m of [3, 6, 9]) assert.equal(C.pace(s, { ...d, lifts: {} }, t0 + m * 60000, "2026-10-18", P, 60).kind, "on", "minute " + m + " of the first lift");
   const all = {}; s.lifts.forEach((l) => { all[l.id] = { logged: true }; });
   assert.equal(C.pace(s, { ...d, lifts: all }, t0 + 40 * 60000, "2026-10-18", P, 60).kind, "done");
 });
