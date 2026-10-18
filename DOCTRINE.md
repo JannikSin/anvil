@@ -56,12 +56,12 @@ Absolute, testable, each with its cause and the thing that enforces it.
 |---|---|---|
 | Nothing logged lives only in memory | a morning of lifting lost to a backgrounded tab (incidents) | `lib/draft.js`, synchronous localStorage; `tests/draft.test.js` |
 | A write is never stamped with the clock; the date is data | late entries filed as today (incidents) | the date in the draft; `tests/promises.test.js` P4 |
-| Anvil never writes a calorie number | 210 g against 190 g, two writers (incidents) | `writeFile` refuses `fitness/targets.json`; `tests/promises.test.js` |
+| Anvil never writes a calorie number | 210 g against 190 g, two writers (incidents) | `putFile` in `app/sync.js` refuses every `targets.json` and `profiles/` path in mise-data; the shared profile is mapped field by field with no macros (`sharedToAnvil`); `tests/app.test.js` (corrected 2026-10-18: the earlier `writeFile` and `promises.test.js` named here did not exist) |
 | A person is never rendered as behind | Core Purpose P9 | `tests/design.test.js`, `tests/promises.test.js` P9 |
 | Anvil never resembles Mise, and uses no green | the split carried Mise's sheet (decision 0008) | `tests/design.test.js` |
 | The shared daily row is patched field by field, never rewritten | Mise's fields dropped by a full-row write (incidents) | `upsertDay`; `tests/daily.test.js` |
 | Every storage key, cache and database is `anvil`-prefixed, and cleanup deletes only its own | one origin, six PWAs (decision 0006) | `tests/origin.test.js` |
-| One profile per person; Anvil writes only the training section | two apps writing one number (decision 0002) | not yet; owed by the redo |
+| One profile per person; Anvil writes only the training section | two apps writing one number (decision 0002) | Anvil reads Mise's `profile/targets.json` (v51, decision 0018) and cannot write it (`putFile`); `tests/app.test.js` |
 | A reminder never fires for an item already recorded | the reason "No notifications" existed (decision 0004) | not yet; gate register P15 |
 | A reminder never breaks through Do Not Disturb | David's ruling, 2026-10-12 (decision 0004) | not yet; gate register P15 |
 | Every view, module, route and worker route traces to a document (a promise, decision, tenet or invariant), or is listed as unforced for David to rule on | the app and the documents drifted with no check in that direction (2026-10-13, decision 0015) | `docs/features.json`; `tests/features.test.js` fails on anything unregistered |

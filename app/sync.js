@@ -41,7 +41,11 @@
         return r.json().then(function (j) { return { json: JSON.parse(b64dec(j.content)), sha: j.sha }; });
       });
   }
+  // The shared profile (Mise owns it, decision 0002, plan 10/18) is never written from here. The refusal
+  // sits in the one function every write goes through, so no future caller can get round it.
+  function writable(repo, path) { return !(repo.repo === MISE.repo && (/targets\.json$/.test(path) || /^profiles?\//.test(path))); }
   function putFile(repo, path, json, sha, msg) {
+    if (!writable(repo, path)) return Promise.reject(new Error("Anvil never writes " + path + ": the shared profile is Mise's"));
     var body = { message: msg, content: b64enc(JSON.stringify(json, null, 2) + "\n") };
     if (sha) body.sha = sha;
     return fetch(API + "/repos/" + repo.owner + "/" + repo.repo + "/contents/" + path, {
@@ -165,6 +169,24 @@
   }
 
   // a profile is an object with a training section; anything else is ignored, never stored
+  // ---------- the shared profile (Mise's, read only): mapped field by field, never merged raw, so no
+  // calorie or macro number ever reaches Anvil (non-goal: nutrition)
+  function isShared(j) { return !!(j && typeof j === "object" && !Array.isArray(j) && ((j.body && typeof j.body === "object") || (j.base && typeof j.base === "object"))); }
+  function sharedPath(person) { return !person || person === "david" ? "profile/targets.json" : "profiles/" + person + "/profile/targets.json"; }
+  function num(v) { return typeof v === "number" && isFinite(v) ? v : null; }
+  function str(v) { return typeof v === "string" && v.trim() ? v : null; }
+  function sharedToAnvil(j) {
+    var b = (j.body && typeof j.body === "object") ? j.body : {}, base = (j.base && typeof j.base === "object") ? j.base : {};
+    var out = { body: { weightLb: num(b.weightLb), goalWeightLb: num(b.goalWeightLb), heightIn: num(b.heightIn) }, phase: str(j.phase), goal: null, milestone: null, supplements: [] };
+    var g = base.goal;
+    if (g && typeof g === "object" && num(g.target) != null) out.goal = { what: (str(g.what) ? g.what.charAt(0).toUpperCase() + g.what.slice(1) : "Goal") + ", " + g.target + " " + (str(g.unit) || "lb"), target: g.target, unit: str(g.unit) || "lb", date: str(g.date), note: str(g.note) };
+    var m = base.milestone;
+    if (m && typeof m === "object" && num(m.target) != null) out.milestone = { target: m.target, unit: str(m.unit) || "lb", date: str(m.date), dateFlexible: !!m.dateFlexible, noFatGain: !!m.noFatGain, checkpoint: str(m.checkpoint) };
+    (Array.isArray(j.supplementPlan) ? j.supplementPlan : []).forEach(function (s) {
+      if (s && str(s.id) && str(s.name)) out.supplements.push({ id: s.id, name: s.name, dose: str(s.dose) || "", timing: str(s.timing) || "" });
+    });
+    return out;
+  }
   function isProfile(j) { return !!(j && typeof j === "object" && !Array.isArray(j) && j.training && typeof j.training === "object"); }
 
   function upsertSession(file, remoteRec) {
@@ -259,6 +281,10 @@
         return Promise.all([getFile(MISE, DAILY), getFile(anvilRepo(), WORKOUTS), getFile(anvilRepo(), ACTIVITIES), prof]);
       }).then(function (fs) {
         if (isProfile(fs[3].json)) store.set("profile.mine", fs[3].json);
+        // the shared profile, read on its own: a 404, a bad file or a failed read keeps the last copy
+        var pm = store.get("profile.mine", null), path = sharedPath(pm && pm.person);
+        var sharedRead = getFile(MISE, path).then(function (f) { return f.json || path !== "profile/targets.json" ? f : getFile(MISE, "fitness/targets.json"); })
+          .then(function (f) { if (isShared(f.json)) { store.set("profile.shared", { at: Date.now(), v: sharedToAnvil(f.json) }); if (onChange) onChange(); } }, function () {});
         var daily = dailyToLocal(fs[0].json);
         // whatever is still unsent wins over the remote copy
         store.get("outbox.daily", []).forEach(function (o) {
@@ -293,6 +319,7 @@
         last = { ok: true, at: Date.now(), msg: "" };
         store.set("sync.last", last);
         if (onChange) onChange();
+        return sharedRead;
       }, function (e) {
         last = { ok: false, at: Date.now(), msg: String(e && e.message || e) };
         store.set("sync.last", last);
@@ -302,6 +329,6 @@
     return { has: has, queueDay: queueDay, queueSession: queueSession, queueActivity: queueActivity, pending: pending, flush: flush, pull: pull };
   }
 
-  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal, isProfile: isProfile };
+  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal, isProfile: isProfile, isShared: isShared, sharedToAnvil: sharedToAnvil, sharedPath: sharedPath, writable: writable };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.AnvilSync = api;
 })(this);

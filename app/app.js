@@ -473,13 +473,28 @@
   }
   function stopCoreLoop() { if (coreLoop) { clearInterval(coreLoop); coreLoop = null; } holdScreen(false); }
 
+  // The goal card: the next milestone, then the goal it leads to, from the shared profile when this
+  // phone has read it. Counted in sessions between now and then, never as distance still to cover (P9).
+  function goalHTML(pr, t) {
+    var g = pr.base.goal, ms = pr.base.milestone, n = pr.training.sessionsIntent, x = "";
+    if (ms && ms.date) {
+      x += "<p class='small'><b>Next: " + ms.target + " " + esc(ms.unit) + (ms.noFatGain ? ", lean" : "") + "</b>, by " + esc(C.longLabel(ms.date)) + (ms.dateFlexible ? " (the date can move)" : "") +
+        ". Between today and then: about " + C.sessionsUntil(t, ms.date, n) + " sessions at " + n + " a week.</p>";
+      if (ms.checkpoint) x += "<p class='small dim'>At " + ms.target + ": " + esc(ms.checkpoint.replace(/^at \d+:\s*/i, "")) + ".</p>";
+    }
+    if (g && g.what) x += "<p class='small'>" + (ms && ms.date ? "Then: " : "") + esc(g.what) + (g.date ? ", by " + esc(C.longLabel(g.date)) + ". Between today and then: about " + C.sessionsUntil(t, g.date, n) + " sessions at " + n + " a week" : "") + (g.note ? ". " + esc(g.note.charAt(0).toUpperCase() + g.note.slice(1)) : "") + ".</p>";
+    if (!x) return "<p class='small dim'>No goal on this phone yet. It comes with your profile.</p>";
+    var sh = pr.base.shared;
+    return x + "<p class='small dim'>" + (sh ? "From your profile in Mise, read " + esc(C.label(C.dateKey(new Date(sh.at)))) + " " + esc(C.hm(new Date(sh.at).toTimeString().slice(0, 5))) : "From this phone's copy of your Anvil profile") + ".</p>";
+  }
+
   // ---------------------------------------------------------------- the week: queue, plan check, the dated goal
   function openWeek() {
     var pr = prof(), sel = state.sel, t = today(), ws = C.weekStart(sel), we = C.addDays(ws, 6);
     var next = C.nextInQueue(store, P), filed = C.filedFor(store, P);
     var thisWeek = filed.filter(function (s) { return s.date >= ws && s.date <= we; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
     var check = C.planCheck(P, pr.training.sessionsIntent);
-    var g = pr.base.goal, a7 = C.avg7(store, sel), a7p = C.avg7(store, C.addDays(sel, -7));
+    var a7 = C.avg7(store, sel), a7p = C.avg7(store, C.addDays(sel, -7));
     var h = "<h2>The week</h2><p class='dim small'>" + esc(C.label(ws)) + " to " + esc(C.label(we)) + "</p>";
     h += "<h3>The queue</h3><table>" + P.queue.map(function (q) {
       return "<tr><td>" + esc(P.sessions[q].name) + "</td><td class='dim'>" + esc(P.sessions[q].focus) + "</td><td>" + (q === next ? "<b style='color:var(--arc)'>next</b>" : "") + "</td></tr>";
@@ -491,9 +506,7 @@
       check.groups.map(function (gr) { return "<tr><td>" + esc(gr) + "</td><td>" + check.sets[gr] + "</td></tr>"; }).join("") + "</table>";
     h += "<p class='small'>The week is " + pr.training.sessionsIntent + " sessions. No set is dropped for a shorter week: a missed day is gone, and the next session is the next in the queue, in full.</p>";
     h += "<p class='small'>Plus one conditioning session, a Core Session every day, and mobility on " + P.mobility.days.map(function (d) { return C.DAYS[d]; }).join(", ") + ".</p>";
-    h += "<h3>The goal</h3>" + (g && g.what && g.date
-      ? "<p class='small'>" + esc(g.what) + ", by " + esc(C.longLabel(g.date)) + ". Between today and then: about " + C.sessionsUntil(t, g.date, pr.training.sessionsIntent) + " sessions at " + pr.training.sessionsIntent + " a week.</p>"
-      : "<p class='small dim'>No goal on this phone yet. It comes with your profile from anvil-data.</p>");
+    h += "<h3>The goal</h3>" + goalHTML(pr, t);
     h += "<p class='small'>7-day average weight: " + (a7 != null ? "<b>" + a7 + " lb</b>" + (a7p != null ? ", the week before " + a7p : "") : "no weigh-ins yet") + ". Waist: " + (function () { var w = C.lastValue(store, C.addDays(sel, 1), "waist"); return w ? w.v + " in on " + C.label(w.date) : "measured on Sundays"; })() + ".</p>";
     if ((pr.training.strengthGoals || []).length) h += "<table>" + pr.training.strengthGoals.map(function (x) { return "<tr><td>" + esc(x.lift) + "</td><td class='dim'>now " + esc(x.now) + "</td><td>" + esc(x.goal) + "</td></tr>"; }).join("") + "</table>";
     h += "<h3>Dates</h3><table>" + P.reviews.filter(function (r) { return r.date >= C.addDays(t, -1); }).map(function (r) { return "<tr><td>" + esc(C.label(r.date)) + "</td><td>" + esc(r.what) + "</td></tr>"; }).join("") + "</table>";

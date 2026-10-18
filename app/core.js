@@ -74,8 +74,33 @@
   function profile(store, seed) {
     var mine = store.get("profile.mine", null), base = seed;
     if (mine && typeof mine === "object" && !Array.isArray(mine)) base = merge(merge(seed, mine), { template: false });
-    return merge(base, { training: store.get("profile.training", {}) });
+    var p = merge(base, { training: store.get("profile.training", {}) });
+    return withShared(p, store.get("profile.shared", null));
   }
+  // The shared profile (Mise's, mapped by sync.sharedToAnvil) wins for who the person is: body, phase,
+  // goal, the milestone, and the supplement names and doses. Anvil keeps only WHEN each one is taken.
+  // Without a shared copy the anvil-data base stands, so a phone that never read Mise still has a goal.
+  function withShared(p, sh) {
+    if (!sh || !sh.v) return p;
+    var v = sh.v, out = merge(p, { base: { shared: { at: sh.at } } });
+    if (v.body) out.base.body = v.body;
+    if (v.phase) out.base.phase = v.phase;
+    if (v.goal) out.base.goal = v.goal;
+    if (v.milestone) out.base.milestone = v.milestone;
+    if (v.supplements && v.supplements.length) {
+      var own = (p.training.supplements || []), seen = {};
+      var list = own.map(function (s) {
+        var m = v.supplements.filter(function (x) { return x.id === s.id; })[0];
+        seen[s.id] = 1;
+        return m ? Object.assign({}, s, { name: m.name, dose: m.dose || s.dose }) : s;
+      });
+      v.supplements.forEach(function (x) { if (!seen[x.id]) list.push({ id: x.id, name: x.name, dose: x.dose, when: whenOf(x.timing) }); });
+      out.training = Object.assign({}, out.training, { supplements: list });
+    }
+    return out;
+  }
+  // a supplement Mise adds that Anvil has never seen: its time of day from Mise's own words
+  function whenOf(t) { t = String(t || "").toLowerCase(); return /bed|evening|night|dinner/.test(t) ? "evening" : /noon|lunch|afternoon/.test(t) ? "noon" : "morning"; }
   function saveTraining(store, patch) { store.set("profile.training", merge(store.get("profile.training", {}), patch)); }
 
   // ---------- programme gate: P13 and P12, run before anything is drawn ----------
@@ -463,7 +488,7 @@
     dateKey: dateKey, parseKey: parseKey, addDays: addDays, weekday: weekday, weekStart: weekStart, daysBetween: daysBetween,
     label: label, longLabel: longLabel, hm: hm, minutesOf: minutesOf, addMinutes: addMinutes, DAYS: DAYS,
     makeStore: makeStore, upsertDay: upsertDay, day: day, uid: uid,
-    profile: profile, saveTraining: saveTraining,
+    profile: profile, withShared: withShared, saveTraining: saveTraining,
     planCheck: planCheck, nextInQueue: nextInQueue, filedFor: filedFor, sessions: sessions,
     pkey: pkey, history: history, prescribe: prescribe, progressChart: progressChart,
     estimateMinutes: estimateMinutes, pace: pace, WHY: WHY, liveSets: liveSets, effort: effort, restLabel: restLabel,

@@ -474,3 +474,92 @@ test("the workout clock says what to do, never that he is behind (P9), and offer
   const all = {}; s.lifts.forEach((l) => { all[l.id] = { logged: true }; });
   assert.equal(C.pace(s, { ...d, lifts: all }, t0 + 40 * 60000, "2026-10-18", P, 60).kind, "done");
 });
+
+// ---------- the shared profile (plan 10/18, polaris + monolith): Mise owns it, Anvil reads it
+const SHARED = {
+  body: { sex: "m", age: 20, heightIn: 73, weightLb: 192.6, goalWeightLb: 215 },
+  phase: "gain",
+  macros: { calories: 3700, protein: 190 },
+  base: {
+    goal: { what: "lean gain", target: 215, unit: "lb", date: null, note: "eventual, spring or later, not a deadline" },
+    milestone: { target: 200, unit: "lb", date: "2026-12-30", dateFlexible: true, noFatGain: true, checkpoint: "at 200: judge how much was muscle and how much fat, then hold 200 and recomp, or keep a slow gain" },
+  },
+  supplementPlan: [
+    { id: "creatine", name: "Creatine monohydrate", dose: "5g", timing: "anytime, in the smoothie" },
+    { id: "magnesium", name: "Magnesium glycinate", dose: "200mg", timing: "30 to 60 min before bed" },
+    { id: "zinc", name: "Zinc", dose: "15mg", timing: "with dinner" },
+  ],
+};
+
+test("Anvil never writes the shared profile: the one write path refuses it", async () => {
+  const MISE = { owner: "JannikSin", repo: "mise-data" }, ANVIL = { owner: "JannikSin", repo: "anvil-data" };
+  assert.equal(Y.writable(MISE, "profile/targets.json"), false);
+  assert.equal(Y.writable(MISE, "fitness/targets.json"), false);
+  assert.equal(Y.writable(MISE, "profiles/elliot/profile/targets.json"), false);
+  assert.equal(Y.writable(MISE, "profiles.json"), true, "only the profile files are refused, by name");
+  assert.equal(Y.writable(MISE, "fitness/daily.json"), true);
+  assert.equal(Y.writable(ANVIL, "profile.json"), true);
+  assert.equal(Y.sharedPath("david"), "profile/targets.json");
+  assert.equal(Y.sharedPath(undefined), "profile/targets.json");
+  assert.equal(Y.sharedPath("elliot"), "profiles/elliot/profile/targets.json");
+});
+
+test("the shared profile is mapped field by field: no calorie number reaches Anvil, Anvil keeps the when", () => {
+  const v = Y.sharedToAnvil(SHARED);
+  assert.equal(JSON.stringify(v).includes("3700"), false, "macros never mapped");
+  assert.equal(JSON.stringify(v).includes("calories"), false);
+  assert.equal(v.milestone.target, 200);
+  assert.equal(v.goal.date, null);
+  assert.equal(Y.isShared(SHARED), true);
+  assert.equal(Y.isShared([1]), false);
+  assert.equal(Y.isShared({ macros: {} }), false);
+  const { store } = memStore();
+  store.set("profile.mine", { training: { supplements: [
+    { id: "creatine", name: "Creatine", dose: "5 g", when: "morning" },
+    { id: "caffeine", name: "Caffeine", dose: "100 mg", when: "noon" },
+    { id: "magnesium", name: "Magnesium", dose: "200 mg", when: "evening" },
+  ] }, base: { goal: { what: "Old goal", date: "2026-12-30" } } });
+  assert.equal(C.profile(store, TEMPLATE).base.goal.what, "Old goal", "no shared copy: the anvil-data base stands");
+  store.set("profile.shared", { at: 1, v });
+  const p = C.profile(store, TEMPLATE);
+  assert.equal(p.base.milestone.target, 200);
+  assert.match(p.base.goal.what, /215/);
+  assert.equal(p.base.phase, "gain");
+  const sup = Object.fromEntries(p.training.supplements.map((s) => [s.id, s]));
+  assert.equal(sup.creatine.name, "Creatine monohydrate");
+  assert.equal(sup.creatine.when, "morning", "Anvil keeps when");
+  assert.equal(sup.caffeine.when, "noon", "Anvil's own row stays until Mise lists it");
+  assert.equal(sup.zinc.when, "evening", "a new one takes its time of day from Mise's words");
+});
+
+test("the shared read: a 404 falls back to the mirror, a bad file or an error keeps the last copy, the record still syncs", async () => {
+  const { store } = memStore();
+  const files = {
+    "mise-data/fitness/daily.json": { days: [] }, "anvil-data/workouts.json": { sessions: [] }, "anvil-data/activities.json": { activities: [] },
+    "anvil-data/profile.json": { training: {}, base: {} }, "mise-data/fitness/targets.json": SHARED,
+  };
+  const status = { "mise-data/profile/targets.json": 404 };
+  globalThis.localStorage = { getItem: (k) => (k === "anvil.pat" ? "t" : null) };
+  globalThis.fetch = async (url, opt) => {
+    if (opt && opt.method === "PUT") throw new Error("no writes in this test");
+    const m = /repos\/JannikSin\/([^/]+)\/contents\/([^?]+)/.exec(url), key = `${m[1]}/${m[2]}`;
+    const st = status[key] || (key in files ? 200 : 404);
+    if (st !== 200) return { ok: false, status: st, json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => ({ content: Buffer.from(JSON.stringify(files[key])).toString("base64"), sha: "s" }) };
+  };
+  try {
+    const S = Y.make(store, P, null);
+    await S.pull();
+    assert.equal(C.profile(store, TEMPLATE).base.milestone.target, 200, "404 at the root: the mirror is read");
+    files["mise-data/fitness/targets.json"] = { nonsense: true };
+    await S.pull();
+    assert.equal(C.profile(store, TEMPLATE).base.milestone.target, 200, "a file that is not a profile keeps the last copy");
+    status["mise-data/fitness/targets.json"] = 500;
+    await S.pull();
+    assert.equal(C.profile(store, TEMPLATE).base.milestone.target, 200, "an error keeps the last copy");
+    assert.equal(store.get("sync.last", {}).ok, true, "the record's sync never fails on the shared profile");
+  } finally {
+    delete globalThis.localStorage;
+    delete globalThis.fetch;
+  }
+});
