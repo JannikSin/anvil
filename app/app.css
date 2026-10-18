@@ -156,3 +156,8 @@ details.src summary { cursor: pointer; color: var(--dim); }
 .whyshort { margin: 6px 0; }
 .whyshort p { margin: 0 0 6px; }
 .whyshort .knob { margin: 0 6px 6px 0; font-size: 14px; }
+
+/* the ✎ note button (suggest.js, shared by every app) sits above the tab bar and the home indicator,
+   and lifts clear of the rest dock while a rest is running so it never covers the dock's close button */
+body .sg-btn { bottom: calc(68px + env(safe-area-inset-bottom)); }
+body:has(#dock:not([hidden])) .sg-btn { bottom: calc(150px + env(safe-area-inset-bottom)); }
