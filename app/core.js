@@ -157,6 +157,10 @@
     if (last.r >= l.hi) {
       if (!l.inc) p = { w: last.w, r: l.hi, move: "Top of the range at bodyweight: slow the lowering or add a light DB" };
       else p = { w: last.w + l.inc, r: l.lo, move: "+" + l.inc + " lb: you hit " + last.r + " at " + last.w + " last time. Back to " + l.lo + " reps" };
+    } else if (last.r < l.lo && l.inc && last.w - l.inc > 0) {
+      // under the bottom of the range: the weight was too heavy for the prescription, so one step
+      // down and back to the bottom of the range (10/17 digest: 75 x 3 used to prefill 75 x 4)
+      p = { w: last.w - l.inc, r: l.lo, move: "-" + l.inc + " lb: " + last.r + " at " + last.w + " is under the " + l.lo + " to " + l.hi + " range. " + l.lo + " reps here" };
     } else {
       p = { w: last.w, r: last.r + 1, move: "Same weight, one more rep than last time (" + last.w + " x " + last.r + ")" };
     }

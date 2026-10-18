@@ -56,26 +56,40 @@ button { cursor: pointer; }
 .carry { font-size: 14px; color: var(--ink); background: var(--plate-2); padding: 8px 10px; margin: 0 0 6px; clip-path: var(--plate-cut); }
 .carry span { color: var(--dim); }
 
-/* the session: rack of lifts */
-.lift { border-top: 1px solid var(--line); padding: 12px 0; }
+/* the session: rack of lifts, folded to one line each until tapped (David, 10/18) */
+.lift { border-top: 1px solid var(--line); }
 .lift:first-of-type { border-top: 0; }
-.lift h3 { margin: 0; font-size: 17px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; background: var(--plate-2); color: var(--dim); }
+.lifthead { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 0; padding: 10px 0; min-height: 52px; }
+.lifthead .name { flex: 1; font-size: 16px; font-weight: 600; }
+.lifthead .name small { display: block; font-size: 13px; font-weight: 400; color: var(--dim); }
+.lifthead .shown { font-size: 15px; color: var(--dim); white-space: nowrap; }
+.lift.done .lifthead .shown { color: var(--arc); font-weight: 600; }
+.lift.done .lifthead .name { color: var(--dim); }
+.lift.open { padding-bottom: 10px; }
+.lift.open .lifthead .shown { visibility: hidden; }
+.tag { white-space: nowrap; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 5px; background: var(--plate-2); color: var(--dim); vertical-align: 2px; font-weight: 500; }
 .tag.main { background: var(--arc); color: #fff; }
 .tag.cut { color: var(--caution); }
-.rx { color: var(--dim); font-size: 14px; margin: 2px 0 8px; }
-.setpad { display: grid; grid-template-columns: 44px 1fr 44px 44px 1fr 44px; gap: 6px; align-items: center; }
-.setpad .val { text-align: center; font-size: 22px; font-weight: 600; }
-.setpad .val small { display: block; font-size: 11px; font-weight: 400; color: var(--dim); }
-.setpad input { width: 100%; text-align: center; font-size: 20px; background: var(--plate-2); border: 1px solid var(--arc); min-height: 44px; }
+.rx { color: var(--dim); font-size: 14px; margin: 2px 0 6px; }
+.setpad { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 8px; align-items: start; }
+.setpad .val { text-align: center; font-size: 22px; font-weight: 600; display: block; }
+.setpad .val small { display: block; font-size: 11px; font-weight: 400; color: var(--dim); margin-top: 2px; }
+.setpad input { width: 100%; text-align: center; font-size: 22px; font-weight: 600; background: var(--plate-2); border: 1px solid var(--arc); min-height: 48px; }
+.setpad input::-webkit-outer-spin-button, .setpad input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.setpad input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.setpad .knob { min-height: 48px; }
+.setpad .knob small { display: block; font-size: 11px; font-weight: 400; }
+.setpad .knob.logged { background: var(--plate-2); color: var(--arc); }
 .move { font-size: 13px; color: var(--dim); margin: 6px 0; }
 .strike { display: flex; gap: 8px; margin: 8px 0 4px; }
-.strike .knob { flex: 1; min-height: 48px; }
-.strike .knob.logged { background: var(--plate-2); color: var(--arc); }
+.strike .knob { flex: 1; min-height: 44px; }
+.coach { padding-top: 4px; }
 .cue { font-size: 14px; margin: 6px 0 2px; }
 .cue b { color: var(--arc); }
 .why, .src { font-size: 13px; color: var(--dim); margin: 2px 0; }
 .lift textarea { width: 100%; margin-top: 6px; background: var(--plate-2); border: 1px solid var(--line); padding: 8px; min-height: 40px; font-size: 14px; }
+details.howto { margin: 4px 0; font-size: 13px; }
+details.howto summary { cursor: pointer; color: var(--dim); }
 
 /* the dock: rest timer ring, cyan while live */
 #dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: #05070c; border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
@@ -118,9 +132,9 @@ main { padding-bottom: calc(170px + env(safe-area-inset-bottom)); }
 #dock { bottom: calc(57px + env(safe-area-inset-bottom)); padding-bottom: 10px; }
 
 /* blocks: one lift alone, or two done as a superset at one station */
-.block { border-top: 2px solid var(--line); padding: 12px 0 2px; }
+.block { border-top: 2px solid var(--line); padding: 6px 0 0; }
 .block:first-of-type { border-top: 0; }
-.bhead { margin: 0 0 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--arc); }
+.bhead { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--arc); }
 .bhead b { color: var(--dim); letter-spacing: 0; text-transform: none; font-weight: 500; }
 .block .lift:first-of-type { border-top: 0; }
 .filler { background: var(--plate-2); padding: 8px 10px; clip-path: var(--plate-cut); }

@@ -379,3 +379,23 @@ test("with no token the pull does nothing and the template stays in use", async 
     delete globalThis.fetch;
   }
 });
+
+test("a top set under the range steps the weight down to the bottom of the range; in range adds a rep", () => {
+  const l = P.sessions["push-a"].lifts.find((x) => x.progressKey === "incline-db-press");
+  const under = C.prescribe(l, [{ date: "2026-10-13", w: 75, r: 3 }], {});
+  assert.deepEqual([under.w, under.r], [70, l.lo]);
+  const inRange = C.prescribe(l, [{ date: "2026-10-13", w: 75, r: 7 }], {});
+  assert.deepEqual([inRange.w, inRange.r], [75, 8]);
+  const top = C.prescribe(l, [{ date: "2026-10-13", w: 75, r: l.hi }], {});
+  assert.deepEqual([top.w, top.r], [80, l.lo]);
+});
+
+test("the gym tab (David 10/18): typed numbers, no plus/minus, rest timer off by default and never started by LOG", () => {
+  const src = readFileSync(new URL("../app/app.js", import.meta.url), "utf8");
+  assert.ok(!/data-act="adj"/.test(src), "no stepper buttons on a lift");
+  assert.ok(/data-act="setr"/.test(src) && /data-act="setw"/.test(src), "weight and reps are typed boxes");
+  assert.equal(TEMPLATE.training.restTimer, false);
+  assert.ok(/restOn \? '<button class="knob" data-act="rest"/.test(src), "the Rest button exists only when the timer is turned on");
+  const logBranch = src.slice(src.indexOf('if (a === "log")'), src.indexOf('if (a === "rest")'));
+  assert.ok(!/store\.set\("timer"/.test(logBranch), "LOG never starts the timer");
+});

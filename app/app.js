@@ -20,7 +20,8 @@
 
   function today() { return C.dateKey(new Date()); }
   function nowHM() { var d = new Date(); return (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(); }
-  var state = { sel: today(), extra: false, tab: "day" };
+  // open: lift id -> 1 (the log row) or 2 (the log row and its coaching notes); absent is folded
+  var state = { sel: today(), extra: false, tab: "day", open: {} };
   try { if (sessionStorage.getItem("anvil.v2.tab") === "gym") state.tab = "gym"; } catch (e) {}
   function setTab(t) { state.tab = t; try { sessionStorage.setItem("anvil.v2.tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
   function prof() { return C.profile(store, SEED); }
@@ -141,42 +142,60 @@
     h += "<h2>Next in the queue <b>about " + mins + " min" + (mins <= budget ? ", inside your " + budget : ", over your " + budget + ": the first cut goes") + "</b></h2>";
     h += '<h3 style="margin:0 0 4px;font-size:22px">' + esc(s.name) + ' <span class="dim" style="font-size:15px;font-weight:400">' + esc(s.focus) + "</span></h3>";
     if (C.inDeload(sel, P)) h += '<div class="note">Deload week: same lifts, same weights, half the sets, 3 to 4 RIR.</div>';
-    h += '<p class="small dim">' + esc(P.warmup) + " " + esc(P.tempo) + "</p>";
-    var startLoads = pr.training.startLoads || {}, anyLogged = false;
+    // Compact by default (David, 10/18: "just looking at it, it should basically just show all the
+    // exercises"). Tap a lift to log it, tap Notes inside for the coaching. Any lift logs at any
+    // time, in any order, several at once after the fact; nothing here assumes the listed order.
+    h += '<details class="howto"><summary>Warm-up and tempo</summary><p class="small dim">' + esc(P.warmup) + " " + esc(P.tempo) + "</p></details>";
+    h += '<p class="small dim">Any order. Tap a lift to log it, now or later.</p>';
+    var startLoads = pr.training.startLoads || {}, anyLogged = false, restOn = !!pr.training.restTimer;
     s.blocks.forEach(function (b) {
-      h += '<div class="block"><h3 class="bhead">Block ' + b.name + ' <b>' + (b.superset ? "superset" + (b.where ? ", " + esc(b.where) : "") : "alone") + "</b></h3>";
-      if (b.superset) h += '<p class="small">One set of ' + esc(b.lifts[0].name) + ", straight into " + esc(b.lifts[1].name) + ", rest " + C.restLabel(b.lifts[1]).split(" ")[0] + ", repeat." +
-        (C.liveSets(b.lifts[0], sel, P) !== C.liveSets(b.lifts[1], sel, P) ? " The extra sets of the one with more are done alone at the end." : "") + "</p>";
-      if (b.note) h += '<p class="small dim">' + esc(b.note) + "</p>";
-      if (b.filler) h += '<p class="small filler"><b>In the rest:</b> ' + esc(b.filler) + "</p>";
-      b.lifts.forEach(liftCard);
+      h += '<div class="block"><h3 class="bhead">' + b.name + (b.superset ? ' <b>superset' + (b.where ? ", " + esc(b.where) : "") + "</b>" : "") + "</h3>";
+      b.lifts.forEach(function (l, i) { liftCard(l, i === b.lifts.length - 1 ? b : null); });
       h += "</div>";
     });
-    function liftCard(l) {
+    // the block's own coaching (how the superset runs, what fills the rest) sits in the last lift's notes
+    function blockNotes(b, sel) {
+      var x = "";
+      if (b.superset) x += '<p class="small">One set of ' + esc(b.lifts[0].name) + ", straight into " + esc(b.lifts[1].name) + ", rest " + C.restLabel(b.lifts[1]).split(" ")[0] + ", repeat." +
+        (C.liveSets(b.lifts[0], sel, P) !== C.liveSets(b.lifts[1], sel, P) ? " The extra sets of the one with more are done alone at the end." : "") + "</p>";
+      if (b.note) x += '<p class="small dim">' + esc(b.note) + "</p>";
+      if (b.filler) x += '<p class="small filler"><b>In the rest:</b> ' + esc(b.filler) + "</p>";
+      return x;
+    }
+    function liftCard(l, b) {
       var key = C.pkey(l), rx = C.prescribe(l, C.history(store, key), startLoads);
       var d = draft && draft.lifts[l.id] || {};
       var w = d.w !== undefined ? d.w : rx.w, r = d.r !== undefined ? d.r : rx.r;
       if (d.logged) anyLogged = true;
-      var unit = l.load === "per hand" ? "lb each" : l.load === "added" ? "lb added" : l.load === "bodyweight" ? "bodyweight" : "lb";
-      h += '<div class="lift" id="lift-' + l.id + '"><h3>' + esc(l.name) +
-        (l.main ? ' <span class="tag main">main lift</span>' : "") + (l.cut ? ' <span class="tag cut">first cut</span>' : "") +
-        "</h3>";
-      h += '<div class="rx">' + C.liveSets(l, sel, P) + " x " + l.lo + (l.hi !== l.lo ? "-" + l.hi : "") + (l.side ? " each side" : "") + " · " + esc(C.effort(l, sel, P)) + " · rest " + C.restLabel(l) + "</div>";
-      h += '<div class="setpad">';
-      if (l.load === "bodyweight") h += '<span></span><div class="val">BW<small>bodyweight</small></div><span></span>';
-      else if (w == null) h += '<span></span><input id="w-' + l.id + '" type="number" inputmode="decimal" placeholder="lb" data-act="setw" data-id="' + l.id + '"><span></span>';
-      else h += '<button class="knob" data-act="adj" data-id="' + l.id + '" data-f="w" data-d="-5" aria-label="5 lb less">&#8722;</button><div class="val">' + fmt(w) + '<small>' + unit + '</small></div><button class="knob" data-act="adj" data-id="' + l.id + '" data-f="w" data-d="5" aria-label="5 lb more">+</button>';
-      h += '<button class="knob" data-act="adj" data-id="' + l.id + '" data-f="r" data-d="-1" aria-label="one rep less">&#8722;</button><div class="val">' + r + '<small>reps, top set</small></div><button class="knob" data-act="adj" data-id="' + l.id + '" data-f="r" data-d="1" aria-label="one rep more">+</button></div>';
-      h += '<div class="move">' + esc(rx.move) + "</div>";
-      if (rx.stall) h += '<div class="note caution">' + esc(rx.stallNote) + "</div>";
-      h += '<div class="strike"><button class="knob ' + (d.logged ? "logged" : "arc") + '" data-act="log" data-id="' + l.id + '"' + (w == null && l.load !== "bodyweight" ? " disabled" : "") + ">" +
-        (d.logged ? "Logged " + (l.load === "bodyweight" ? "" : fmt(d.w) + " x ") + d.r + " · tap to undo" : "Log top set") + '</button><button class="knob" data-act="rest" data-id="' + l.id + '">Rest ' + C.restLabel(l).split(" ")[0] + "</button></div>";
-      h += '<p class="cue"><b>Cue:</b> ' + esc(l.cue) + "</p>";
-      if (l.why) h += '<p class="why">' + esc(l.why) + "</p>";
-      h += '<details class="src"><summary>Source</summary>' + esc(l.source.who) + "</details>";
-      var ln = C.lastNote(store, C.pkey(l));
-      if (ln) h += '<p class="lastnote"><span>Your note, ' + esc(C.label(ln.date)) + ":</span> " + esc(ln.note) + "</p>";
-      h += '<textarea id="note-' + l.id + '" data-act="note" data-id="' + l.id + '" placeholder="Note: a form question, a concern, keep or swap. It shows here next time.">' + esc(d.note || "") + "</textarea>";
+      var bw = l.load === "bodyweight";
+      var unit = l.load === "per hand" ? "lb each" : l.load === "added" ? "lb added" : "lb";
+      var open = state.open[l.id], ln = C.lastNote(store, key);
+      var rxs = C.liveSets(l, sel, P) + " x " + l.lo + (l.hi !== l.lo ? "-" + l.hi : "") + (l.side ? " each side" : "");
+      var shown = d.logged ? "&#10003; " + (bw ? "" : fmt(d.w) + " x ") + d.r : (bw ? "BW" : w == null ? "set weight" : fmt(w) + " " + unit);
+      h += '<div class="lift' + (open ? " open" : "") + (d.logged ? " done" : "") + '" id="lift-' + l.id + '">';
+      h += '<button class="lifthead" data-act="open" data-id="' + l.id + '" aria-expanded="' + !!open + '"><span class="tick">&#10003;</span><span class="name">' + esc(l.name) +
+        (l.main ? ' <span class="tag main">main</span>' : "") + (l.cut ? ' <span class="tag cut">first cut</span>' : "") +
+        '<small>' + rxs + '</small></span><span class="shown">' + shown + "</span></button>";
+      if (open) {
+        h += '<div class="setpad">';
+        if (bw) h += '<div class="val">BW<small>bodyweight</small></div>';
+        else h += '<label class="val"><input id="w-' + l.id + '" type="number" inputmode="decimal" step="any" placeholder="lb" data-act="setw" data-id="' + l.id + '" value="' + fmt(w) + '"><small>' + unit + "</small></label>";
+        h += '<label class="val"><input id="r-' + l.id + '" type="number" inputmode="numeric" placeholder="reps" data-act="setr" data-id="' + l.id + '" value="' + (r == null ? "" : r) + '"><small>reps, top set</small></label>';
+        h += '<button class="knob ' + (d.logged ? "logged" : "arc") + '" data-act="log" data-id="' + l.id + '">' + (d.logged ? "Logged<small>tap to undo</small>" : "Log") + "</button></div>";
+        h += '<div class="move">' + esc(rx.move) + "</div>";
+        if (rx.stall) h += '<div class="note caution">' + esc(rx.stallNote) + "</div>";
+        if (ln) h += '<p class="lastnote"><span>Your note, ' + esc(C.label(ln.date)) + ":</span> " + esc(ln.note) + "</p>";
+        h += '<div class="strike"><button class="knob" data-act="notes" data-id="' + l.id + '" aria-expanded="' + (open === 2) + '">' + (open === 2 ? "Hide notes" : "Notes") + "</button>" +
+          (restOn ? '<button class="knob" data-act="rest" data-id="' + l.id + '">Rest ' + C.restLabel(l).split(" ")[0] + "</button>" : "") + "</div>";
+        if (open === 2) {
+          h += '<div class="coach"><div class="rx">' + esc(C.effort(l, sel, P)) + " · rest " + C.restLabel(l) + "</div>";
+          h += '<p class="cue"><b>Cue:</b> ' + esc(l.cue) + "</p>";
+          if (l.why) h += '<p class="why">' + esc(l.why) + "</p>";
+          if (b) h += blockNotes(b, sel);
+          h += '<details class="src"><summary>Source</summary>' + esc(l.source.who) + "</details>";
+          h += '<textarea id="note-' + l.id + '" data-act="note" data-id="' + l.id + '" placeholder="Note: a form question, a concern, keep or swap. It shows here next time.">' + esc(d.note || "") + "</textarea></div>";
+        }
+      }
       h += "</div>";
     }
     var kind = tid.split("-")[0];
@@ -232,16 +251,21 @@
     if (a === "mobility") { openCore(sel, "mobility"); return; }
     if (a === "core") { openCore(sel); return; }
     if (a === "extra") { state.extra = true; render(); return; }
-    if (a === "adj") {
-      touchLift(b.dataset.id, function (cur) {
-        var dlt = +b.dataset.d;
-        if (b.dataset.f === "w") cur.w = Math.max(0, (cur.w || 0) + dlt); else cur.r = Math.max(0, (cur.r || 0) + dlt);
-        cur.logged = false;
-      });
-      render(); return;
-    }
+    if (a === "open") { var id0 = b.dataset.id; if (state.open[id0]) delete state.open[id0]; else state.open[id0] = 1; render(); return; }
+    if (a === "notes") { state.open[b.dataset.id] = state.open[b.dataset.id] === 2 ? 1 : 2; render(); return; }
     if (a === "log") {
-      touchLift(b.dataset.id, function (cur, l) { if (l.load === "bodyweight" && cur.w == null) cur.w = 0; cur.logged = !cur.logged; });
+      // LOG files what the boxes show, read straight from them, so a number typed and never blurred still counts
+      var lid = b.dataset.id, wi = document.getElementById("w-" + lid), ri = document.getElementById("r-" + lid), missing = null;
+      function num(i) { return i && i.value !== "" && isFinite(+i.value) ? +i.value : null; }
+      touchLift(lid, function (cur, l) {
+        if (wi) cur.w = num(wi);
+        if (ri) cur.r = num(ri);
+        if (l.load === "bodyweight" && cur.w == null) cur.w = 0;
+        if (!cur.logged && (cur.w == null || cur.r == null)) { missing = cur.w == null ? wi : ri; return; }
+        cur.logged = !cur.logged;
+      });
+      if (missing) { missing.focus(); return; }
+      if (store.get("draft", null).lifts[lid].logged) delete state.open[lid];   // logged folds back into the list
       render(); return;
     }
     if (a === "rest") {
@@ -260,11 +284,12 @@
     var t = e.target, a = t.dataset && t.dataset.act;
     if (a === "firstline") { C.upsertDay(store, state.sel, { routine: { firstLine: t.value || null } }); pushSync(false); var row = t.closest(".row"); if (row) row.classList.toggle("done", !!t.value.trim()); }
     if (a === "note") touchLift(t.dataset.id, function (cur) { cur.note = t.value; });
+    // typed numbers land in the draft on every keystroke (nothing logged lives only in memory)
+    if (a === "setw" || a === "setr") touchLift(t.dataset.id, function (cur) { var f = a === "setw" ? "w" : "r"; cur[f] = t.value === "" ? null : +t.value; });
   });
   app.addEventListener("change", function (e) {
     var t = e.target, a = t.dataset && t.dataset.act;
     if (a === "waist") { C.upsertDay(store, state.sel, { waist: t.value === "" ? null : +t.value }); render(); }
-    if (a === "setw" && t.value !== "") { touchLift(t.dataset.id, function (cur) { cur.w = +t.value; }); render(); }
   });
 
   // ---------------------------------------------------------------- the check-in: three fields, once a day (P6)
@@ -464,6 +489,9 @@
     h += '<div class="set-row"><label>Reminders until recorded<small class="dim" style="display:block">Every ' + T.reminders.repeatMinutes + ' min, normal priority, so Do Not Disturb holds. While Anvil is open or in the background.</small></label><button class="knob' + (T.reminders.on ? " arc" : "") + '" data-x="rem">' + (T.reminders.on ? "On" : "Off") + "</button></div>";
     if (perm !== "granted" && perm !== "unsupported") h += '<div class="set-row"><label>Notifications are ' + esc(perm) + '</label><button class="knob arc" data-x="perm">Allow</button></div>';
     if (perm === "unsupported") h += '<p class="small dim">This browser has no notifications. On an iPhone, add Anvil to the home screen first.</p>';
+    // Off unless asked for, and never started by LOG (David, 10/18: "I might log three at one time")
+    h += '<div class="set-row"><label>Rest timer<small class="dim" style="display:block">' + (T.restTimer ? "A Rest button sits beside Notes on each lift. It starts only when you tap it." : "Off. Turn it on to get a Rest button on each lift; it never starts by itself.") +
+      '</small></label><button class="knob' + (T.restTimer ? " arc" : "") + '" data-x="resttimer">' + (T.restTimer ? "On" : "Off") + "</button></div>";
     var push = store.get("push", null), ps = store.get("push.state", null);
     h += '<div class="set-row"><label>Reminders on the phone, app closed<small class="dim" style="display:block">' +
       (push ? "Connected" + (ps && ps.ok ? ", last sent " + esc(new Date(ps.at).toTimeString().slice(0, 5)) : ps ? ", not reaching the server yet" : "") + ". Through the ntfy app; Do Not Disturb holds." : "Paste the pairing link once. Until then, reminders come only while Anvil is open.") +
@@ -475,6 +503,7 @@
       var b = e.target.closest("[data-x]"); if (!b) return;
       var x = b.dataset.x;
       if (x === "rem") { C.saveTraining(store, { reminders: { on: !T.reminders.on } }); openSettings(); return; }
+      if (x === "resttimer") { C.saveTraining(store, { restTimer: !T.restTimer }); if (T.restTimer) store.del("timer"); renderDock(); openSettings(); return; }
       if (x === "perm") { Notification.requestPermission().then(openSettings); return; }
       if (x === "export") { exportRecord(); return; }
       if (x === "token") {
