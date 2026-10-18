@@ -33,7 +33,6 @@
       reward: "",
       readWhat: "",
       reminders: { on: false, repeatMinutes: 15 },
-      restTimer: false,            // the Rest button on each lift; off unless turned on in Settings
       core: { remind: "21:30" },
       startLoads: {},
       strengthGoals: []

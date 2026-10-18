@@ -1,4 +1,4 @@
-# 0016. The Gym tab is folded, numbers are typed, the rest timer is off
+# 0016. The Gym tab is folded, numbers are typed, the rest timer waits for a tap
 
 - **Status:** accepted
 - **Date:** 2026-10-18
@@ -20,9 +20,15 @@ he does the lifts out of order rather than swapping.
   why, the block's superset rule, source, the note box). Tap the lift again to fold it. A logged
   lift folds itself.
 - No plus or minus buttons. The P4 "no keyboard" clause gives way to his word.
-- Any lift logs at any time, in any order. No swap button.
-- The rest timer is off by default (Settings > Rest timer). When on, it is a Rest button beside
-  Notes; LOG never starts it. The timer code stays.
+- The listed order is the plan and stays the default. Any lift still logs at any time, in any
+  order, for when a machine is taken (David, 10/18). No swap button.
+- The rest timer is a Rest button beside Notes on the open lift; it starts only on that tap and
+  LOG never starts it ("if I want to start the timer it should still be a button there", 10/18;
+  a first cut put it behind Settings, reversed the same day).
+- History: the open lift's Notes show its dated top sets, and once the record spans 28 days and
+  holds 3 sessions, a chart of the top set by date with the y-axis from zero (his plot rule).
+  The four sessions of 8/25 to 8/31, dropped from workouts.json by a 10/14 write from an older
+  build, are restored; they are filed as earlier than the block, so they feed history, not the queue.
 - A top set under the bottom of its range steps the next prefill down one increment, back to the
   bottom of the range (75 x 3 used to prefill 75 x 4).
 

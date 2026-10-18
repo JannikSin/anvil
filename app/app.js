@@ -143,11 +143,11 @@
     h += '<h3 style="margin:0 0 4px;font-size:22px">' + esc(s.name) + ' <span class="dim" style="font-size:15px;font-weight:400">' + esc(s.focus) + "</span></h3>";
     if (C.inDeload(sel, P)) h += '<div class="note">Deload week: same lifts, same weights, half the sets, 3 to 4 RIR.</div>';
     // Compact by default (David, 10/18: "just looking at it, it should basically just show all the
-    // exercises"). Tap a lift to log it, tap Notes inside for the coaching. Any lift logs at any
-    // time, in any order, several at once after the fact; nothing here assumes the listed order.
+    // exercises"). Tap a lift to log it, tap Notes inside for the coaching. The listed order is the
+    // plan; any lift still logs at any time, several at once after the fact, for when a machine is taken.
     h += '<details class="howto"><summary>Warm-up and tempo</summary><p class="small dim">' + esc(P.warmup) + " " + esc(P.tempo) + "</p></details>";
-    h += '<p class="small dim">Any order. Tap a lift to log it, now or later.</p>';
-    var startLoads = pr.training.startLoads || {}, anyLogged = false, restOn = !!pr.training.restTimer;
+    h += '<p class="small dim">Top to bottom is the plan. Machine taken? Do another and log it; any order logs.</p>';
+    var startLoads = pr.training.startLoads || {}, anyLogged = false;
     s.blocks.forEach(function (b) {
       h += '<div class="block"><h3 class="bhead">' + b.name + (b.superset ? ' <b>superset' + (b.where ? ", " + esc(b.where) : "") + "</b>" : "") + "</h3>";
       b.lifts.forEach(function (l, i) { liftCard(l, i === b.lifts.length - 1 ? b : null); });
@@ -186,12 +186,13 @@
         if (rx.stall) h += '<div class="note caution">' + esc(rx.stallNote) + "</div>";
         if (ln) h += '<p class="lastnote"><span>Your note, ' + esc(C.label(ln.date)) + ":</span> " + esc(ln.note) + "</p>";
         h += '<div class="strike"><button class="knob" data-act="notes" data-id="' + l.id + '" aria-expanded="' + (open === 2) + '">' + (open === 2 ? "Hide notes" : "Notes") + "</button>" +
-          (restOn ? '<button class="knob" data-act="rest" data-id="' + l.id + '">Rest ' + C.restLabel(l).split(" ")[0] + "</button>" : "") + "</div>";
+          '<button class="knob" data-act="rest" data-id="' + l.id + '">Rest ' + C.restLabel(l).split(" ")[0] + "</button></div>";
         if (open === 2) {
           h += '<div class="coach"><div class="rx">' + esc(C.effort(l, sel, P)) + " · rest " + C.restLabel(l) + "</div>";
           h += '<p class="cue"><b>Cue:</b> ' + esc(l.cue) + "</p>";
           if (l.why) h += '<p class="why">' + esc(l.why) + "</p>";
           if (b) h += blockNotes(b, sel);
+          h += historyHTML(l, C.history(store, key));
           h += '<details class="src"><summary>Source</summary>' + esc(l.source.who) + "</details>";
           h += '<textarea id="note-' + l.id + '" data-act="note" data-id="' + l.id + '" placeholder="Note: a form question, a concern, keep or swap. It shows here next time.">' + esc(d.note || "") + "</textarea></div>";
         }
@@ -208,6 +209,17 @@
     h += '<div class="actions"><button class="knob arc" data-act="file"' + (anyLogged ? "" : " disabled") + ">File session</button></div>";
     h += '<p class="small dim">A short session counts. Filing with only the main lift logged moves the queue on exactly as a full one does.</p>';
     return h + "</section>";
+  }
+
+  // ---------------------------------------------------------------- a lift's history: the record, then the chart once there is a month of it
+  function historyHTML(l, hist) {
+    if (!hist.length) return "";
+    var c = C.progressChart(hist, l.load === "bodyweight");
+    var x = '<div class="hist"><h4>History</h4>';
+    if (c.ready) x += c.svg;
+    else x += '<p class="small dim">' + esc(c.why) + "</p>";
+    x += '<p class="small">' + hist.slice(-6).reverse().map(function (e) { return esc(C.label(e.date)) + " " + (l.load === "bodyweight" ? "" : fmt(e.w) + " x ") + e.r; }).join(" · ") + "</p>";
+    return x + "</div>";
   }
 
   // ---------------------------------------------------------------- draft door: synchronous, every change
@@ -489,9 +501,6 @@
     h += '<div class="set-row"><label>Reminders until recorded<small class="dim" style="display:block">Every ' + T.reminders.repeatMinutes + ' min, normal priority, so Do Not Disturb holds. While Anvil is open or in the background.</small></label><button class="knob' + (T.reminders.on ? " arc" : "") + '" data-x="rem">' + (T.reminders.on ? "On" : "Off") + "</button></div>";
     if (perm !== "granted" && perm !== "unsupported") h += '<div class="set-row"><label>Notifications are ' + esc(perm) + '</label><button class="knob arc" data-x="perm">Allow</button></div>';
     if (perm === "unsupported") h += '<p class="small dim">This browser has no notifications. On an iPhone, add Anvil to the home screen first.</p>';
-    // Off unless asked for, and never started by LOG (David, 10/18: "I might log three at one time")
-    h += '<div class="set-row"><label>Rest timer<small class="dim" style="display:block">' + (T.restTimer ? "A Rest button sits beside Notes on each lift. It starts only when you tap it." : "Off. Turn it on to get a Rest button on each lift; it never starts by itself.") +
-      '</small></label><button class="knob' + (T.restTimer ? " arc" : "") + '" data-x="resttimer">' + (T.restTimer ? "On" : "Off") + "</button></div>";
     var push = store.get("push", null), ps = store.get("push.state", null);
     h += '<div class="set-row"><label>Reminders on the phone, app closed<small class="dim" style="display:block">' +
       (push ? "Connected" + (ps && ps.ok ? ", last sent " + esc(new Date(ps.at).toTimeString().slice(0, 5)) : ps ? ", not reaching the server yet" : "") + ". Through the ntfy app; Do Not Disturb holds." : "Paste the pairing link once. Until then, reminders come only while Anvil is open.") +
@@ -503,7 +512,6 @@
       var b = e.target.closest("[data-x]"); if (!b) return;
       var x = b.dataset.x;
       if (x === "rem") { C.saveTraining(store, { reminders: { on: !T.reminders.on } }); openSettings(); return; }
-      if (x === "resttimer") { C.saveTraining(store, { restTimer: !T.restTimer }); if (T.restTimer) store.del("timer"); renderDock(); openSettings(); return; }
       if (x === "perm") { Notification.requestPermission().then(openSettings); return; }
       if (x === "export") { exportRecord(); return; }
       if (x === "token") {

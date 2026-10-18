@@ -390,12 +390,32 @@ test("a top set under the range steps the weight down to the bottom of the range
   assert.deepEqual([top.w, top.r], [80, l.lo]);
 });
 
-test("the gym tab (David 10/18): typed numbers, no plus/minus, rest timer off by default and never started by LOG", () => {
+test("the gym tab (David 10/18): typed numbers, no plus/minus, a Rest button that LOG never starts", () => {
   const src = readFileSync(new URL("../app/app.js", import.meta.url), "utf8");
   assert.ok(!/data-act="adj"/.test(src), "no stepper buttons on a lift");
   assert.ok(/data-act="setr"/.test(src) && /data-act="setw"/.test(src), "weight and reps are typed boxes");
-  assert.equal(TEMPLATE.training.restTimer, false);
-  assert.ok(/restOn \? '<button class="knob" data-act="rest"/.test(src), "the Rest button exists only when the timer is turned on");
+  assert.ok(/'<button class="knob" data-act="rest"/.test(src), "a Rest button on the lift, not behind Settings");
   const logBranch = src.slice(src.indexOf('if (a === "log")'), src.indexOf('if (a === "rest")'));
   assert.ok(!/store\.set\("timer"/.test(logBranch), "LOG never starts the timer");
+});
+
+test("a lift's chart waits for a month and three sessions, and its y-axis starts at zero", () => {
+  const h = [{ date: "2026-10-01", w: 100, r: 8 }, { date: "2026-10-15", w: 100, r: 9 }];
+  assert.equal(C.progressChart(h).ready, false);
+  assert.equal(C.progressChart(h.concat([{ date: "2026-10-20", w: 105, r: 6 }])).ready, false, "under 28 days");
+  const c = C.progressChart(h.concat([{ date: "2026-10-29", w: 105, r: 6 }]));
+  assert.ok(c.ready);
+  assert.equal(c.ymin, 0);
+  assert.ok(c.ymax >= 105);
+  assert.ok(/>0<\/text>/.test(c.svg), "the zero tick is drawn");
+  const bw = C.progressChart([{ date: "2026-09-01", w: 0, r: 8 }, { date: "2026-09-15", w: 0, r: 10 }, { date: "2026-10-01", w: 0, r: 12 }], true);
+  assert.equal(bw.unit, "reps");
+});
+
+test("sessions from before the block feed a lift's history without moving the queue", () => {
+  const { store } = memStore();
+  const old = { date: "2026-08-25", templateId: "lower-a", id: "29605187", exercises: [{ name: "Back Squat", sets: [{ weight: 235, reps: 5 }] }] };
+  store.set("sessions", [Y.sessionToLocal(old, P)]);
+  assert.equal(C.nextInQueue(store, P), P.queue[0]);
+  assert.deepEqual(C.history(store, "back-squat").map((e) => [e.w, e.r]), [[235, 5]]);
 });

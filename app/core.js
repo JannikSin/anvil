@@ -170,6 +170,39 @@
     return p;
   }
 
+  // ---------- a lift's progression chart (David, 10/18: "after about a month show a progression chart") ----------
+  // One series: the top-set weight (reps for a bodyweight lift) by date. The y-axis always starts at
+  // zero (his plot rule), so a 5 lb gain looks like 5 lb, not a cliff. Drawn once the record spans
+  // CHART_DAYS and holds CHART_MIN entries; until then the caller shows the dated list alone.
+  var CHART_DAYS = 28, CHART_MIN = 3;
+  function progressChart(hist, byReps) {
+    var span = hist.length ? daysBetween(hist[0].date, hist[hist.length - 1].date) : 0;
+    if (hist.length < CHART_MIN || span < CHART_DAYS) {
+      return { ready: false, why: "The chart starts once this lift has " + CHART_MIN + " sessions over " + CHART_DAYS + " days (" + hist.length + " so far" + (hist.length > 1 ? ", over " + span + " days" : "") + ")." };
+    }
+    var v = function (e) { return byReps || !e.w ? e.r : e.w; }, unit = byReps || hist.every(function (e) { return !e.w; }) ? "reps" : "lb";
+    var top = Math.max.apply(null, hist.map(v)), step = top <= 30 ? 5 : top <= 100 ? 10 : top <= 300 ? 25 : 50;
+    var ymax = Math.ceil(top / step) * step || step;
+    var W = 320, H = 160, L = 34, R = 12, T = 24, B = 22, pw = W - L - R, ph = H - T - B;
+    var X = function (e) { return L + (span ? daysBetween(hist[0].date, e.date) / span : 0) * pw; };
+    var Y = function (n) { return T + ph - n / ymax * ph; };
+    var g = "";
+    [0, ymax / 2, ymax].forEach(function (t) {
+      g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="#1f2a40" stroke-width="1"/>' +
+        '<text x="' + (L - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end" fill="#8b95aa" font-size="11">' + (Math.round(t * 10) / 10) + "</text>";
+    });
+    var first = hist[0], last = hist[hist.length - 1];
+    g += '<text x="' + L + '" y="' + (H - 6) + '" fill="#8b95aa" font-size="11">' + label(first.date) + "</text>" +
+      '<text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end" fill="#8b95aa" font-size="11">' + label(last.date) + "</text>";
+    g += '<polyline fill="none" stroke="#2f6bff" stroke-width="2" stroke-linejoin="round" points="' + hist.map(function (e) { return X(e) + "," + Y(v(e)); }).join(" ") + '"/>';
+    hist.forEach(function (e) {
+      g += '<circle cx="' + X(e) + '" cy="' + Y(v(e)) + '" r="4.5" fill="#2f6bff" stroke="#0c111c" stroke-width="2"><title>' + label(e.date) + ": " + (e.w ? e.w + " x " : "") + e.r + "</title></circle>";
+    });
+    g += '<text x="' + Math.min(X(last), W - R) + '" y="' + (Y(v(last)) - 9) + '" text-anchor="end" fill="#e9edf6" font-size="12" font-weight="600">' + (e2s(last)) + "</text>";
+    function e2s(e) { return (e.w && unit === "lb" ? e.w + " x " : "") + e.r; }
+    return { ready: true, ymin: 0, ymax: ymax, unit: unit, svg: '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Top set by date, ' + unit + ', from zero">' + g + "</svg>" };
+  }
+
   // ---------- session time, from the sets and rests actually prescribed (P12, decision 0011) ----------
   var WORK = 45; // seconds per working set, per side
   function liveSets(l, date, P) { return inDeload(date, P) ? Math.ceil(l.sets / 2) : l.sets; }
@@ -401,7 +434,7 @@
     makeStore: makeStore, upsertDay: upsertDay, day: day, uid: uid,
     profile: profile, saveTraining: saveTraining,
     planCheck: planCheck, nextInQueue: nextInQueue, filedFor: filedFor, sessions: sessions,
-    pkey: pkey, history: history, prescribe: prescribe,
+    pkey: pkey, history: history, prescribe: prescribe, progressChart: progressChart,
     estimateMinutes: estimateMinutes, liveSets: liveSets, effort: effort, restLabel: restLabel,
     inDeload: inDeload, blockWeek: blockWeek, sessionsUntil: sessionsUntil,
     avg7: avg7, lastValue: lastValue, activities: activities, conditioningThisWeek: conditioningThisWeek,

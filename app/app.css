@@ -88,6 +88,9 @@ button { cursor: pointer; }
 .cue b { color: var(--arc); }
 .why, .src { font-size: 13px; color: var(--dim); margin: 2px 0; }
 .lift textarea { width: 100%; margin-top: 6px; background: var(--plate-2); border: 1px solid var(--line); padding: 8px; min-height: 40px; font-size: 14px; }
+.hist { margin-top: 8px; }
+.hist h4 { margin: 0 0 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.hist .chart { width: 100%; height: auto; display: block; }
 details.howto { margin: 4px 0; font-size: 13px; }
 details.howto summary { cursor: pointer; color: var(--dim); }
 
