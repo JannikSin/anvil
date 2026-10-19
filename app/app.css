@@ -38,6 +38,7 @@ button { cursor: pointer; }
 .note { background: var(--plate-2); clip-path: var(--plate-cut); padding: 10px 12px; margin: 8px 0; color: var(--ink); font-size: 14px; }
 .note.caution { border-left: 3px solid var(--caution); }
 .note.pipe { border-left: 3px solid var(--pipe); }
+.note.live { border-left: 3px solid var(--live); }
 
 /* routine rows: one tap each */
 .row { display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 11px 0; min-height: 48px; }

@@ -1,0 +1,15 @@
+# 0019: recovery holds the weight; the day's training goes to Mise
+
+Status: built 2026-10-18 (polaris), ships on David's yes.
+
+David via kenai, 10/18 (Crystal d2714ab, 71a543e): sleep and missed meals should shape the next set's weight, with a "get more sleep" nudge; these signals only hold or lower a weight, never raise it, because the Watch's sleep is an estimate. Anvil writes only its own part of the day: the training and a recovery note, never body, phase, goal or calories.
+
+- `recovery(store, date)` says recover first when either held over the last week:
+  - sleep under 7 hours on 4 or more of the last 7 nights, with 5 or more known (the check-in's hours, else the Watch's)
+  - resting HR's 7-day median above the mean of the 28 days before it by more than one standard deviation, or HRV's median below it the same way, with 5 of 7 and 14 of 28 days known. The median is used so one odd day can't decide it.
+- Meals are not in this version. The Tribunal found that Mise marks only dining-swipe meals eaten (`eatenAt` on `out` entries) and that a cooked batch is eaten over later days, so an inferred "missed meal" would be wrong in both directions. Mise's `ateToPlan`, an explicit answer, brings meals in once it ships. Anvil never says a meal was missed (non-goal: nutrition).
+- `prescribe` in a poor week: nothing progresses. A lift in or at the top of its range repeats last time's weight and reps. A lift under its range steps down exactly as in a good week, with the reason added. A grip, setup or time short keeps its own rule. The rule is checked against the same history in a good week: the weight is never heavier and, at the same weight, the reps are never more (`tests/app.test.js`). A three-in-a-row stall says recover first. A session filed in a poor week is marked `recover` (kept in anvil-data), and its prescribed repeats never count toward a stall later.
+- When sleep was the reason, the Day page shows his own lights-out time and the hours it leaves before tomorrow's wake. On a night with no clock rule it names no time. It never invents a second bedtime, because the phone test showed a computed one contradicting the routine's. Every note is cyan, never red or amber (P9).
+- On filing a session, a stale draft, or logging or removing an activity, the day's row gets `trained` keyed by kind, in minutes (`{lift: 55, tennis: 60}`; a session without the clock counts its planned minutes), and `recovery`, the reason, when the week called for it. A removed kind is sent as null. Mise keeps unknown keys: `upsertDay` spreads the old row (mise `app/lib/targets.js`) and the merge unions keys (mise `app/lib/merge.js`).
+- Input: anvil-data `vitals.json` (the Worker's days), read on its own. A failed read keeps the last copy and never fails the record's sync, and its arrival re-renders the page. A session holding only a note is not counted as training.
+- Not in this version: meals (above). Waist stays a Sunday field and is judged on a 4-week trend later. The Sunday calorie change is Mise's, suggested and applied only on David's yes.

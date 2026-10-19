@@ -152,7 +152,7 @@
       .forEach(function (s) {
         Object.keys(s.lifts || {}).forEach(function (lid) {
           var t = s.lifts[lid];
-          if (t && t.key === key && t.w != null) out.push({ date: s.date, w: t.w, r: t.r, note: t.note, why: t.why });
+          if (t && t.key === key && t.w != null) out.push({ date: s.date, w: t.w, r: t.r, note: t.note, why: t.why, held: !!s.recover });
         });
       });
     return out;
@@ -171,7 +171,8 @@
   }
   // why a set fell short of the range, when it was not the weight; read by prescribe
   var WHY = { grip: "grip giving out", setup: "the machine or setup", time: "time running out" };
-  function prescribe(l, hist, startLoads) {
+  // rec: recovery(store, date), optional. In a poor week nothing progresses; it never adds weight.
+  function prescribe(l, hist, startLoads, rec) {
     var key = pkey(l);
     if (!hist.length) {
       if (l.load === "bodyweight") return { w: 0, r: l.lo, move: "First time: aim for " + l.lo + " clean reps", first: true };
@@ -180,9 +181,15 @@
       return { w: null, r: l.lo, move: "First time: set the weight once. The app will not guess it", first: true };
     }
     var last = hist[hist.length - 1];
-    var stall = hist.length >= 3 && hist.slice(-3).every(function (h) { return h.w === last.w && h.r === last.r; });
+    // a repeat prescribed in a poor week is not a plateau, so it never counts toward one (Tribunal 10/18)
+    var stall = hist.length >= 3 && hist.slice(-3).every(function (h) { return h.w === last.w && h.r === last.r && !h.held; });
     var p;
-    if (last.r >= l.hi) {
+    var poor = rec && rec.recover;
+    if (poor && !(last.r < l.lo && (WHY[last.why] || (l.inc && last.w - l.inc > 0)))) {
+      // a week of poor recovery: nothing goes up, the lift repeats what it did (David via kenai, 10/18:
+      // these signals only hold or lower a weight, never raise it). A short lift still steps down below.
+      p = { w: last.w, r: last.r, move: "Repeat " + last.w + " x " + last.r + ", recover first: " + rec.why + ". It goes up when the week is better", recover: true };
+    } else if (last.r >= l.hi) {
       if (!l.inc) p = { w: last.w, r: l.hi, move: "Top of the range at bodyweight: slow the lowering or add a light DB" };
       else p = { w: last.w + l.inc, r: l.lo, move: "+" + l.inc + " lb: you hit " + last.r + " at " + last.w + " last time. Back to " + l.lo + " reps" };
     } else if (last.r < l.lo && WHY[last.why]) {
@@ -196,8 +203,10 @@
     } else {
       p = { w: last.w, r: last.r + 1, move: "Same weight, one more rep than last time (" + last.w + " x " + last.r + ")" };
     }
+    if (poor && !p.recover) p.move += ". Recover first: " + rec.why;
     p.stall = stall;
-    if (stall) p.stallNote = "Same load and reps three times in a row. Make the reps cleaner today; if it holds again, it goes on the week-review list";
+    if (stall) p.stallNote = rec && rec.recover ? "Same load and reps three times in a row, and " + rec.why + ". Recover first; the weight holds"
+      : "Same load and reps three times in a row. Make the reps cleaner today; if it holds again, it goes on the week-review list";
     p.last = last;
     return p;
   }
@@ -307,6 +316,52 @@
     var all = store.get("daily", {});
     var keys = Object.keys(all).filter(function (k) { return k < date && all[k][field] != null; }).sort();
     return keys.length ? { date: keys[keys.length - 1], v: all[keys[keys.length - 1]][field] } : null;
+  }
+
+  // ---------- recovery: is a miss the weight, or the week? (plan Step 2A, decision 0019) ----------
+  // Sleep: the check-in's hours, else the Watch's. Short when under 7 hours on 4 or more of the last
+  // 7 nights, with 5 or more known. Resting HR and HRV: the last 7 days' median (one odd day cannot move
+  // it) against the mean of the 28 days before them, beyond one standard deviation (RHR up, HRV down), with 5 of 7 and 14 of 28 known.
+  // Meals wait for Mise's ateToPlan answer: Mise marks only dining-swipe meals eaten, so an inferred
+  // "missed" would be wrong both ways (Tribunal 10/18).
+  // A trend only, never one bad night; it only holds a weight, never raises one (David via kenai,
+  // 10/18: the Watch's sleep is an estimate); and it never decides anything medical (DOCTRINE non-goals).
+  var SHORT_SLEEP = 7;
+  function recovery(store, date) {
+    var all = store.get("daily", {}), vit = store.get("vitals", {});
+    function val(d, f) {
+      var r = all[d] || {}, v = vit[d] || {};
+      var x = f === "sleep" ? (r.sleep != null ? r.sleep : v.sleepHours) : v[f];
+      return typeof x === "number" && isFinite(x) ? x : null;
+    }
+    function span(f, from, n) { var xs = []; for (var i = from; i < from + n; i++) { var x = val(addDays(date, -i), f); if (x != null) xs.push(x); } return xs; }
+    function mean(xs) { return xs.reduce(function (a, b) { return a + b; }, 0) / xs.length; }
+    function median(xs) { var y = xs.slice().sort(function (a, b) { return a - b; }), h = y.length >> 1; return y.length % 2 ? y[h] : (y[h - 1] + y[h]) / 2; }
+    function sd(xs) { var m = mean(xs); return Math.sqrt(mean(xs.map(function (x) { return (x - m) * (x - m); }))); }
+    var why = [];
+    var nights = span("sleep", 0, 7), short = nights.filter(function (h) { return h < SHORT_SLEEP; }).length;
+    if (nights.length >= 5 && short >= 4) why.push("sleep was under " + SHORT_SLEEP + " hours on " + short + " of the last " + nights.length + " nights");
+    [["restingHR", 1, "resting heart rate has run above your usual for a week"], ["hrvMs", -1, "HRV has run below your usual for a week"]].forEach(function (t) {
+      var wk = span(t[0], 0, 7), base = span(t[0], 7, 28);
+      if (wk.length < 5 || base.length < 14) return;
+      if (t[1] * (median(wk) - mean(base)) > sd(base) && sd(base) > 0) why.push(t[2]);
+    });
+    return { recover: why.length > 0, why: why.join(", and "), sleep: nights.length >= 5 && short >= 4 };
+  }
+
+  // ---------- what was trained on a day, for Mise: minutes keyed by kind (plan Step 2B) ----------
+  // {lift: 55, tennis: 60}. A session without the clock counts its planned minutes. Kinds no longer
+  // there are sent as null, so the patch removes them; nothing trained removes the field.
+  function trainedPatch(store, date, P) {
+    var out = {}, n = 0;
+    sessionFiledOn(store, date).filter(function (s) { return Object.keys(s.lifts || {}).some(function (k) { return s.lifts[k].r != null; }); }).forEach(function (s) {
+      var t = P.sessions[s.template], m = s.minutes || (t ? estimateMinutes(t, date, P) : 0);
+      out.lift = (out.lift || 0) + m; n++;
+    });
+    activities(store).filter(function (a) { return a.date === date; }).forEach(function (a) { out[a.kind] = (out[a.kind] || 0) + (+a.minutes || 0); n++; });
+    if (!n) return { trained: null };
+    Object.keys(day(store, date).trained || {}).forEach(function (k) { if (!(k in out)) out[k] = null; });
+    return { trained: out };
   }
 
   // ---------- activities: everything trained is in the record (P5) ----------
@@ -460,6 +515,8 @@
     var rec = { id: draft.id, programme: P.id, template: draft.template, date: draft.date, lifts: logged, seq: seq };
     // the workout clock: minutes from Start to filing; an hour past the budget-plus-margin is a clock left running, not a session
     if (draft.startedAt) { var m = Math.round((Date.now() - draft.startedAt) / 60000); if (m > 0 && m <= 240) rec.minutes = m; }
+    // filed in a poor week: its repeats were prescribed, so the stall check skips them
+    if (recovery(store, draft.date).recover) rec.recover = true;
     var i = all.findIndex(function (s) { return s.id === rec.id; });
     if (i >= 0) all[i] = rec; else all.push(rec);
     store.set("sessions", all);
@@ -492,7 +549,7 @@
     profile: profile, withShared: withShared, saveTraining: saveTraining,
     planCheck: planCheck, nextInQueue: nextInQueue, filedFor: filedFor, sessions: sessions,
     pkey: pkey, history: history, prescribe: prescribe, progressChart: progressChart,
-    estimateMinutes: estimateMinutes, pace: pace, WHY: WHY, liveSets: liveSets, effort: effort, restLabel: restLabel,
+    estimateMinutes: estimateMinutes, pace: pace, recovery: recovery, trainedPatch: trainedPatch, WHY: WHY, liveSets: liveSets, effort: effort, restLabel: restLabel,
     inDeload: inDeload, blockWeek: blockWeek, sessionsUntil: sessionsUntil,
     avg7: avg7, lastValue: lastValue, activities: activities, conditioningThisWeek: conditioningThisWeek,
     wallSquatsThisWeek: wallSquatsThisWeek, sessionFiledOn: sessionFiledOn,

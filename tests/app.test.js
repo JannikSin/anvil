@@ -568,3 +568,125 @@ test("the shared read: a 404 falls back to the mirror, a bad file or an error ke
     delete globalThis.fetch;
   }
 });
+
+// v52 (plan Step 2A and 2B, David via kenai 10/18): short sleep and the heart trend only hold or lower
+// a weight; the day's training goes to Mise keyed by kind. Meals wait for Mise's ateToPlan.
+function daysBack(n, from = "2026-10-18") { return C.addDays(from, -n); }
+test("recovery: a week of short sleep or a heart trend says recover first; one bad night does not", () => {
+  const { store } = memStore();
+  const set = (daily, vitals = {}, meals = {}) => { store.set("daily", daily); store.set("vitals", vitals); store.set("meals", meals); return C.recovery(store, "2026-10-18"); };
+  const sleep = (hs) => Object.fromEntries(hs.map((h, i) => [daysBack(i), { sleep: h }]));
+  assert.equal(set(sleep([6, 6, 6, 6, 8, 8, 8])).recover, true);
+  assert.match(set(sleep([6, 6, 6, 6, 8, 8, 8])).why, /under 7 hours on 4 of the last 7 nights/);
+  assert.equal(set(sleep([6, 6, 6, 6, 8, 8, 8])).sleep, true);
+  assert.equal(set(sleep([6, 6, 6, 8, 8, 8, 8])).recover, false, "3 short nights is not a pattern");
+  assert.equal(set(sleep([5, 5, 5, 5])).recover, false, "under 5 nights known: no verdict");
+  // the Watch fills a night the check-in did not
+  const watch = Object.fromEntries([0, 1, 2, 3, 4].map((i) => [daysBack(i), { sleepHours: 6 }]));
+  assert.equal(set({}, watch).recover, true);
+  // resting HR: 28 days at 59 to 61, then a week at 64
+  const vit = {};
+  for (let i = 7; i < 35; i++) vit[daysBack(i)] = { restingHR: i % 2 ? 59 : 61, hrvMs: i % 2 ? 70 : 80 };
+  for (let i = 0; i < 7; i++) vit[daysBack(i)] = { restingHR: 64, hrvMs: 75 };
+  assert.match(set({}, vit).why, /resting heart rate/);
+  assert.doesNotMatch(set({}, vit).why, /HRV/);
+  for (let i = 0; i < 7; i++) vit[daysBack(i)] = { restingHR: 60, hrvMs: 60 };
+  assert.match(set({}, vit).why, /HRV has run below/);
+  for (let i = 1; i < 7; i++) vit[daysBack(i)] = { restingHR: 60, hrvMs: 75 };
+  vit[daysBack(0)] = { restingHR: 75, hrvMs: 40 };
+  assert.equal(set({}, vit).recover, false, "one bad day is never a verdict");
+});
+
+test("recovery only holds or lowers: never heavier, never more reps than the same history in a good week", () => {
+  const rec = { recover: true, why: "sleep was under 7 hours on 5 of the last 7 nights" };
+  const lifts = [{ id: "x", name: "Row", sets: 3, lo: 8, hi: 12, inc: 5, rest: 90 }, { id: "b", name: "Dip", sets: 3, lo: 6, hi: 12, load: "bodyweight", rest: 90 }];
+  const hists = [[{ date: "a", w: 100, r: 6 }], [{ date: "a", w: 100, r: 9 }], [{ date: "a", w: 100, r: 12 }], [{ date: "a", w: 100, r: 6, why: "grip" }], [{ date: "a", w: 0, r: 4 }], [{ date: "a", w: 5, r: 3 }]];
+  for (const l of lifts) for (const h of hists) {
+    const poor = C.prescribe(l, h, {}, rec), good = C.prescribe(l, h, {}, null);
+    assert.ok(poor.w <= good.w, `${l.name} ${JSON.stringify(h)}: ${poor.w} > ${good.w}`);
+    assert.ok(poor.w <= h[0].w || h[0].w === 0, "never above last time");
+    if (poor.w === good.w) assert.ok(poor.r <= good.r, `${l.name} ${JSON.stringify(h)}: reps ${poor.r} > ${good.r}`);
+  }
+  const top = C.prescribe(lifts[0], [{ date: "a", w: 100, r: 12 }], {}, rec);
+  assert.deepEqual([top.w, top.r], [100, 12], "top of the range in a poor week: repeat, no +5");
+  assert.match(top.move, /recover first: sleep/);
+  const short = C.prescribe(lifts[0], [{ date: "a", w: 100, r: 6 }], {}, rec);
+  assert.equal(short.w, 95, "a short lift still steps down");
+  assert.match(short.move, /Recover first: sleep/);
+  const stuck = [1, 2, 3].map((i) => ({ date: "2026-10-0" + i, w: 100, r: 9 }));
+  assert.match(C.prescribe(lifts[0], stuck, {}, rec).stallNote, /Recover first/);
+  assert.equal(C.prescribe(lifts[0], stuck.map((h, i) => (i === 1 ? { ...h, held: true } : h)), {}, null).stall, false, "a prescribed repeat is not a plateau");
+  // filed in a poor week: the record says so, and it survives the round trip to anvil-data
+  const { store } = memStore();
+  const nights = {};
+  for (let i = 0; i < 7; i++) nights[C.addDays("2026-10-18", -i)] = { sleep: 6 };
+  store.set("daily", nights);
+  const filed = C.fileSession(store, { id: "z", template: "pull-a", date: "2026-10-18", lifts: { x: { key: "row", w: 100, r: 9, logged: true } } }, P);
+  assert.equal(filed.recover, true);
+  assert.equal(Y.sessionToLocal(Y.sessionToRemote(filed, P), P).recover, true);
+  assert.equal(C.history(store, "row")[0].held, true);
+  // the wording, every new string (P9): what to do, never behind, never a meal verdict
+  const app = readFileSync(new URL("../app/app.js", import.meta.url), "utf8");
+  const said = [top.move, short.move, C.prescribe(lifts[0], stuck, {}, rec).stallNote, ...(app.match(/Recover first this week[^<]*|Sleep has run short[^<]*/g) || [])].join(" ");
+  assert.ok((app.match(/Sleep has run short/g) || []).length === 2 && /Recover first this week/.test(app));
+  assert.doesNotMatch(said, /behind|fail|missed|streak|calorie|kcal|eat to plan/i);
+});
+
+test("trained goes to Mise keyed by kind; a removed kind is sent as null; nothing trained removes the field", () => {
+  const { store } = memStore();
+  const d = "2026-10-18";
+  assert.deepEqual(C.trainedPatch(store, d, P), { trained: null });
+  store.set("sessions", [{ id: "s0", template: "pull-a", date: d, lifts: { x: { key: "x", w: null, r: null, note: "only a note" } } }]);
+  assert.deepEqual(C.trainedPatch(store, d, P), { trained: null }, "a note-only draft is not a session");
+  store.set("sessions", [{ id: "s1", template: "pull-a", date: d, lifts: { x: { key: "x", w: 100, r: 8 } }, minutes: 55 }]);
+  store.set("activities", [{ id: "a1", date: d, kind: "tennis", minutes: 60 }, { id: "a2", date: "2026-10-17", kind: "run", minutes: 30 }]);
+  assert.deepEqual(C.trainedPatch(store, d, P), { trained: { lift: 55, tennis: 60 } });
+  C.upsertDay(store, d, C.trainedPatch(store, d, P));
+  store.set("activities", []);
+  assert.deepEqual(C.trainedPatch(store, d, P), { trained: { lift: 55, tennis: null } });
+  store.set("sessions", [{ id: "s1", template: "pull-a", date: d, lifts: { x: { key: "x", w: 100, r: 8 } } }]);
+  assert.equal(C.trainedPatch(store, d, P).trained.lift, C.estimateMinutes(P.sessions["pull-a"], d, P), "no clock: the planned minutes");
+  // the patch reaches Mise's row field by field, next to Mise's own fields
+  const out = Y.applyDaily({ days: [{ date: d, water: 6 }] }, [{ date: d, patch: { trained: { lift: 55, tennis: 60 }, recovery: "sleep was short" } }]);
+  assert.deepEqual(out.days[0], { date: d, water: 6, trained: { lift: 55, tennis: 60 }, recovery: "sleep was short" });
+  assert.deepEqual(Y.dailyToLocal(out)[d].trained, { lift: 55, tennis: 60 });
+  const cleared = Y.applyDaily(out, [{ date: d, patch: { trained: null, recovery: null } }]);
+  assert.deepEqual(cleared.days[0], { date: d, water: 6 }, "nothing trained leaves Mise's fields alone");
+});
+
+test("the recovery input: the Watch's days, read only; a failure keeps the last copy and re-renders on arrival", async () => {
+  assert.deepEqual(Y.vitalsToLocal({ days: [{ date: "d", restingHR: 58 }, null, { x: 1 }] }), { d: { date: "d", restingHR: 58 } });
+  assert.deepEqual(Y.vitalsToLocal(null), {});
+  const { store } = memStore();
+  const files = {
+    "mise-data/fitness/daily.json": { days: [] }, "anvil-data/workouts.json": { sessions: [] }, "anvil-data/activities.json": { activities: [] },
+    "anvil-data/profile.json": { training: {}, base: {} },
+    "anvil-data/vitals.json": { days: [{ date: "2026-10-17", restingHR: 58, sleepHours: 7.5 }] },
+  };
+  const status = {};
+  const puts = [];
+  let changes = 0;
+  globalThis.localStorage = { getItem: (k) => (k === "anvil.pat" ? "t" : null) };
+  globalThis.fetch = async (url, opt) => {
+    const m = /repos\/JannikSin\/([^/]+)\/contents\/([^?]+)/.exec(url), key = `${m[1]}/${m[2]}`;
+    if (opt && opt.method === "PUT") { puts.push(key); throw new Error("no writes in this test"); }
+    const st = status[key] || (key in files ? 200 : 404);
+    if (st !== 200) return { ok: false, status: st, json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => ({ content: Buffer.from(JSON.stringify(files[key])).toString("base64"), sha: "s" }) };
+  };
+  try {
+    const S = Y.make(store, P, () => { changes++; });
+    await S.pull();
+    assert.equal(store.get("vitals", {})["2026-10-17"].restingHR, 58);
+    const before = changes;
+    status["anvil-data/vitals.json"] = 500;
+    await S.pull();
+    assert.equal(store.get("vitals", {})["2026-10-17"].restingHR, 58, "a failed read keeps the last copy");
+    assert.equal(store.get("sync.last", {}).ok, true);
+    assert.ok(before >= 2, "the vitals' arrival re-renders on its own");
+    assert.equal(puts.length, 0);
+  } finally {
+    delete globalThis.localStorage;
+    delete globalThis.fetch;
+  }
+});

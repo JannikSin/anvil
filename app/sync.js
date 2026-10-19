@@ -20,7 +20,7 @@
   // local field -> shared daily.json field
   var FIELD = { sleep: "sleepHours" };
   var BACK = { sleepHours: "sleep" };
-  var MINE = ["weight", "sleep", "pushups", "supplements", "routine", "waist"];
+  var MINE = ["weight", "sleep", "pushups", "supplements", "routine", "waist", "trained", "recovery"];
 
   function anvilRepo() {
     var raw = "";
@@ -134,6 +134,7 @@
     });
     var rec = { id: s.id || ("r" + s.date + (s.templateId || "")), programme: tpl && s.date >= P.start ? P.id : "earlier", template: s.templateId || null, date: s.date, lifts: lifts, remote: true };
     if (s.minutes) rec.minutes = s.minutes;
+    if (s.recover) rec.recover = true;
     return rec;
   }
   function sessionToRemote(rec, P) {
@@ -147,6 +148,7 @@
     });
     var out = { date: rec.date, templateId: rec.template, exercises: ex, id: rec.id };
     if (rec.minutes) out.minutes = rec.minutes;
+    if (rec.recover) out.recover = true;
     return out;
   }
   // activities: local {id, date, kind, minutes, conditioning} <-> v1's {id, date, type, minutes}
@@ -199,6 +201,12 @@
   }
 
   // ---------- the runtime side: outbox, flush, pull ----------
+  // the Watch's days (worker/src/lib.js writes anvil-data vitals.json) -> {date: row}
+  function vitalsToLocal(j) {
+    var out = {};
+    ((j && Array.isArray(j.days)) ? j.days : []).forEach(function (r) { if (r && typeof r.date === "string") out[r.date] = r; });
+    return out;
+  }
   function make(store, P, onChange) {
     var busy = false, last = { ok: null, at: null, msg: "" };
     function has() { return !!token(); }
@@ -281,6 +289,8 @@
         return Promise.all([getFile(MISE, DAILY), getFile(anvilRepo(), WORKOUTS), getFile(anvilRepo(), ACTIVITIES), prof]);
       }).then(function (fs) {
         if (isProfile(fs[3].json)) store.set("profile.mine", fs[3].json);
+        // the Watch's days for the recovery check (plan Step 2A), read on its own: a failure keeps the last copy
+        var recRead = getFile(anvilRepo(), "vitals.json").then(function (f) { if (f.json) { store.set("vitals", vitalsToLocal(f.json)); if (onChange) onChange(); } }, function () {});
         // the shared profile, read on its own: a 404, a bad file or a failed read keeps the last copy
         var pm = store.get("profile.mine", null), path = sharedPath(pm && pm.person);
         var sharedRead = getFile(MISE, path).then(function (f) { return f.json || path !== "profile/targets.json" ? f : getFile(MISE, "fitness/targets.json"); })
@@ -319,7 +329,7 @@
         last = { ok: true, at: Date.now(), msg: "" };
         store.set("sync.last", last);
         if (onChange) onChange();
-        return sharedRead;
+        return Promise.all([sharedRead, recRead]);
       }, function (e) {
         last = { ok: false, at: Date.now(), msg: String(e && e.message || e) };
         store.set("sync.last", last);
@@ -329,6 +339,6 @@
     return { has: has, queueDay: queueDay, queueSession: queueSession, queueActivity: queueActivity, pending: pending, flush: flush, pull: pull };
   }
 
-  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal, isProfile: isProfile, isShared: isShared, sharedToAnvil: sharedToAnvil, sharedPath: sharedPath, writable: writable };
+  var api = { make: make, patchRow: patchRow, applyDaily: applyDaily, dailyToLocal: dailyToLocal, sessionToLocal: sessionToLocal, sessionToRemote: sessionToRemote, upsertSession: upsertSession, topSet: topSet, norm: norm, applyActivities: applyActivities, activityToLocal: activityToLocal, isProfile: isProfile, isShared: isShared, sharedToAnvil: sharedToAnvil, sharedPath: sharedPath, writable: writable, vitalsToLocal: vitalsToLocal };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.AnvilSync = api;
 })(this);

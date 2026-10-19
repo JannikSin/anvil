@@ -19,6 +19,24 @@
   C.upsertDay = function (st, date, patch) { var row = rawUpsert(st, date, patch); S.queueDay(date, patch); return row; };
 
   function today() { return C.dateKey(new Date()); }
+  // the day's training for Mise, plus the recovery note when the week called for one (plan Step 2B,
+  // David via kenai 10/18). Anvil's own fields only: never body, phase, goal or calories.
+  function markTrained(date) {
+    var patch = C.trainedPatch(store, date, P), rc = C.recovery(store, date);
+    patch.recovery = patch.trained && rc.recover ? rc.why : null;
+    C.upsertDay(store, date, patch);
+  }
+  // "get more sleep" (David via kenai, 10/18): only when the week's sleep ran short, and said as his own
+  // lights-out time, so the page never shows two bedtimes (phone test 10/18)
+  function sleepNudge(pr, sel) {
+    var rc = C.recovery(store, sel), T = pr.training;
+    if (!rc.sleep || !T.evening || !T.evening.lightsOut) return "";
+    // a night with no clock rule has no lights-out on the card, so none is named here (Tribunal 10/18)
+    if ((T.evening.rulesOn || []).indexOf(C.weekday(sel)) === -1) return '<div class="note live">Sleep has run short this week. No clock rule tonight, but an early night pays back first.</div>';
+    var nx = C.addDays(sel, 1), wd = C.weekday(nx), wake = (wd === 0 || wd === 6 ? T.days.weekend : T.days.weekday).wake;
+    var hrs = Math.round(((C.minutesOf(wake) - C.minutesOf(T.evening.lightsOut) + 1440) % 1440) / 30) / 2;
+    return '<div class="note live">Sleep has run short this week. Tonight, lights out at ' + esc(C.hm(T.evening.lightsOut)) + " on the dot: about " + hrs + " hours before your " + esc(C.hm(wake)) + " wake.</div>";
+  }
   function nowHM() { var d = new Date(); return (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(); }
   // open: lift id -> 1 (the log row) or 2 (the log row and its coaching notes); absent is folded
   var state = { sel: today(), extra: false, tab: "day", open: {} };
@@ -47,6 +65,7 @@
       if (pr.template) h.push(templateNote());
       h.push(plate("Morning", R.weekend ? "weekend times" : "", R.morning, sel, isToday, R.lastFirstLine));
       h.push(plate("Day", "", R.day, sel, isToday).replace("</section>", activitiesHTML(sel) + '<button class="knob" style="width:100%;margin:8px 0 4px" data-act="activity">Something else today: tennis, run, walk</button></section>'));
+      h.push(sleepNudge(pr, sel));
       h.push(plate("Evening", R.weekend ? "no clock rule tonight" : "", R.evening, sel, isToday));
       h.push('<div class="actions"><button class="knob" data-act="week">The week</button><button class="knob" data-act="settings">Settings</button></div>');
     }
@@ -151,7 +170,8 @@
     var pc = C.pace(s, draft, Date.now(), sel, P, budget);
     if (pc) h += '<p class="clock" id="clock"><b id="clock-t">' + pc.clock + '</b> <span id="clock-l">' + esc(pc.line) + "</span></p>";
     else if (sel === today()) h += '<button class="knob clockgo" data-act="clock">Start the workout clock</button>';
-    var startLoads = pr.training.startLoads || {}, anyLogged = false;
+    var startLoads = pr.training.startLoads || {}, anyLogged = false, rec = C.recovery(store, sel);
+    if (rec.recover) h += '<p class="note live">Recover first this week: ' + esc(rec.why) + ". No lift adds weight or reps today: each repeats last time, and one that came up short steps down as usual.</p>";
     s.blocks.forEach(function (b) {
       h += '<div class="block"><h3 class="bhead">' + b.name + (b.superset ? ' <b>superset' + (b.where ? ", " + esc(b.where) : "") + "</b>" : "") + "</h3>";
       b.lifts.forEach(function (l, i) { liftCard(l, i === b.lifts.length - 1 ? b : null); });
@@ -167,7 +187,7 @@
       return x;
     }
     function liftCard(l, b) {
-      var key = C.pkey(l), rx = C.prescribe(l, C.history(store, key), startLoads);
+      var key = C.pkey(l), rx = C.prescribe(l, C.history(store, key), startLoads, rec);
       var d = draft && draft.lifts[l.id] || {};
       var w = d.w !== undefined ? d.w : rx.w, r = d.r !== undefined ? d.r : rx.r;
       if (d.logged) anyLogged = true;
@@ -244,7 +264,7 @@
     var d = draftFor(state.sel), l = liftById(d.template, id);
     var cur = d.lifts[id];
     if (!cur) {
-      var rx = C.prescribe(l, C.history(store, C.pkey(l)), prof().training.startLoads || {});
+      var rx = C.prescribe(l, C.history(store, C.pkey(l)), prof().training.startLoads || {}, C.recovery(store, state.sel));
       cur = { key: C.pkey(l), w: rx.w, r: rx.r };
     }
     fn(cur, l);
@@ -270,7 +290,7 @@
     if (a === "gotosession") { setTab("gym"); return; }
     if (a === "tab") { setTab(b.dataset.tab); return; }
     if (a === "activity") { openActivity(sel, b.dataset.key === "conditioning"); return; }
-    if (a === "unactivity") { store.set("activities", C.activities(store).filter(function (x) { return x.id !== b.dataset.id; })); S.queueActivity(b.dataset.id, true); render(); return; }
+    if (a === "unactivity") { var gone = C.activities(store).filter(function (x) { return x.id === b.dataset.id; })[0]; store.set("activities", C.activities(store).filter(function (x) { return x.id !== b.dataset.id; })); S.queueActivity(b.dataset.id, true); if (gone) markTrained(gone.date); render(); return; }
     if (a === "mobility") { openCore(sel, "mobility"); return; }
     if (a === "core") { openCore(sel); return; }
     if (a === "extra") { state.extra = true; render(); return; }
@@ -302,7 +322,7 @@
     if (a === "file") {
       var dd = store.get("draft", null);
       if (!dd) return;
-      var rec = C.fileSession(store, dd, P); S.queueSession(rec.id); state.extra = false; render(); return;
+      var rec = C.fileSession(store, dd, P); S.queueSession(rec.id); markTrained(rec.date); state.extra = false; render(); return;
     }
     if (a === "week") { openWeek(); return; }
     if (a === "settings") { openSettings(); return; }
@@ -374,6 +394,7 @@
         xs.push(act);
         store.set("activities", xs);
         S.queueActivity(act.id);
+        markTrained(date);
       }
       sheet.close(); render();
     };
@@ -659,7 +680,7 @@
     // what was logged then was recorded then: filed under its own date AND queued for sync, so the
     // pull below cannot drop it (Tribunal 10/17: it used to file locally and then lose it)
     var stale = C.fileStaleDraft(store, t, P);
-    if (stale) S.queueSession(stale.id);
+    if (stale) { S.queueSession(stale.id); markTrained(stale.date); }
     render();
     S.pull();
     // the check-in opens itself on the first open of each calendar day, on every device (P6)

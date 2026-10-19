@@ -57,7 +57,7 @@ Absolute, testable, each with its cause and the thing that enforces it.
 | Nothing logged lives only in memory | a morning of lifting lost to a backgrounded tab (incidents) | `lib/draft.js`, synchronous localStorage; `tests/draft.test.js` |
 | A write is never stamped with the clock; the date is data | late entries filed as today (incidents) | the date in the draft; `tests/promises.test.js` P4 |
 | Anvil never writes a calorie number | 210 g against 190 g, two writers (incidents) | `putFile` in `app/sync.js` refuses every `targets.json` and `profiles/` path in mise-data; the shared profile is mapped field by field with no macros (`sharedToAnvil`); `tests/app.test.js` (corrected 2026-10-18: the earlier `writeFile` and `promises.test.js` named here did not exist) |
-| A person is never rendered as behind | Core Purpose P9 | `tests/design.test.js`, `tests/promises.test.js` P9 |
+| A person is never rendered as behind | Core Purpose P9 | the clock and recovery wording checks in `tests/app.test.js` (corrected 2026-10-18: the `design.test.js` and `promises.test.js` named here did not exist) |
 | Anvil never resembles Mise, and uses no green | the split carried Mise's sheet (decision 0008) | `tests/design.test.js` |
 | The shared daily row is patched field by field, never rewritten | Mise's fields dropped by a full-row write (incidents) | `upsertDay`; `tests/daily.test.js` |
 | Every storage key, cache and database is `anvil`-prefixed, and cleanup deletes only its own | one origin, six PWAs (decision 0006) | `tests/origin.test.js` |
